@@ -1,0 +1,3 @@
+# Keep LF everywhere (generated headers are compared byte for byte in CI).
+* text=auto eol=lf
+*.ps1 text eol=crlf

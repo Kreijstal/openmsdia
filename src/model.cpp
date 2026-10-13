@@ -434,6 +434,7 @@ public:
 
     bool fromGlobals = false;
     bool localConst = false;  // S_CONSTANT inside a function
+    bool tls = false;         // S_GTHREAD32 / S_LTHREAD32
     bool noChildren() const override { return (k == Constant && !localConst) || fromGlobals; }
 
     bool prop(Prop p, Val &v) const override
@@ -459,7 +460,7 @@ public:
         case P_locationType:
             if (k == Constant || k == Enumerator || staticConst) v = Val::u_((uint32_t)PDB_LocType::Constant);
             else if (k == Member) v = Val::u_((uint32_t)(bitfield ? PDB_LocType::BitField : PDB_LocType::ThisRel));
-            else v = Val::u_((uint32_t)PDB_LocType::Static);
+            else v = Val::u_((uint32_t)(tls ? PDB_LocType::TLS : PDB_LocType::Static));
             return true;
         case P_offset:
             if (k != Member) return false;
@@ -475,8 +476,8 @@ public:
             return true;
         case P_addressSection: if (!hasAddr) return false; v = Val::u_(seg); return true;
         case P_addressOffset: if (!hasAddr) return false; v = Val::u_(off); return true;
-        case P_relativeVirtualAddress: if (!hasAddr) return false; v = Val::u_(M->rva(seg, off)); return true;
-        case P_virtualAddress: if (!hasAddr) return false; v = Val::u_(M->rva(seg, off) + M->loadAddress); return true;
+        case P_relativeVirtualAddress: if (!hasAddr || tls) return false; v = Val::u_(M->rva(seg, off)); return true;
+        case P_virtualAddress: if (!hasAddr || tls) return false; v = Val::u_(M->rva(seg, off) + M->loadAddress); return true;
         case P_value:
             if (k != Constant && k != Enumerator && !staticConst) return false;
             v.kind = Val::Var;
@@ -781,9 +782,37 @@ bool Model::sectOff(uint32_t r, uint32_t &sect, uint32_t &off) const
     return ns.addressForRVA(r, sect, off);
 }
 
+// A base type LLVM's native reader has no symbol for (__int128,
+// __float128, 16-bit floats, wider booleans...).
+class OmBuiltin : public OmSym {
+public:
+    OmBuiltin(NativeSession &s, SymIndexId id, uint32_t bt, uint32_t len)
+        : OmSym(s, PDB_SymType::BuiltinType, id), bt(bt), len(len) {}
+    uint32_t bt, len;
+    bool prop(Prop p, Val &v) const override
+    {
+        switch (p) {
+        case P_baseType: v = Val::u_(bt); return true;
+        case P_length: v = Val::u_(len); return true;
+        case P_lexicalParent: case P_lexicalParentId: v = Val::sym(M->exe); return true;
+        case P_unmodifiedType: case P_unmodifiedTypeId: v = Val::sym(getSymIndexId()); return true;
+        case P_constType: case P_volatileType: case P_unalignedType: case P_constantExport: v = Val::b_(false); return true;
+        default: return false;
+        }
+    }
+};
+
 SymIndexId Model::typeSym(TypeIndex ti)
 {
-    return ns.getSymbolCache().findSymbolByTypeIndex(fullDecl(ti));
+    SymIndexId id = ns.getSymbolCache().findSymbolByTypeIndex(fullDecl(ti));
+    if (id || !ti.isSimple() || ti.getSimpleMode() != SimpleTypeMode::Direct) return id;
+    auto it = extraBuiltins.find(ti.getIndex());
+    if (it != extraBuiltins.end()) return it->second;
+    uint32_t bt = 0, len = 0;
+    if (!simpleBasicType((uint32_t)ti.getSimpleKind(), bt, len)) return 0;
+    id = make<OmBuiltin>(bt, len);
+    extraBuiltins[ti.getIndex()] = id;
+    return id;
 }
 
 // Forward references resolved to their definition. LLVM's
@@ -1386,7 +1415,8 @@ void Model::moduleChildren(uint16_t modi, SymIndexId parent, uint32_t begin, uin
                 d->off = ds.DataOffset;
                 d->hasAddr = true;
                 d->dataKind = func ? PDB_DataKind::StaticLocal
-                                   : (k == S_GDATA32 ? PDB_DataKind::Global : PDB_DataKind::FileStatic);
+                                   : ((k == S_GDATA32 || k == S_GTHREAD32) ? PDB_DataKind::Global : PDB_DataKind::FileStatic);
+                d->tls = k == S_GTHREAD32 || k == S_LTHREAD32;
                 d->lexParent = parent;
                 recordSyms[key] = id;
             }
@@ -1877,6 +1907,7 @@ SymIndexId Model::globalData(const DataSym &ds, SymbolKind k)
         // The globals stream's copy is a symbol of its own, under the exe,
         // whose findChildren fails with S_FALSE (as observed).
         d->dataKind = (k == S_GDATA32 || k == S_GTHREAD32) ? PDB_DataKind::Global : PDB_DataKind::FileStatic;
+        d->tls = k == S_GTHREAD32 || k == S_LTHREAD32;
         d->lexParent = exe;
         d->fromGlobals = true;
         return id;
@@ -2059,31 +2090,29 @@ const std::vector<SymIndexId> &Model::publics()
         publicList.push_back(id);
         pubs.push_back(static_cast<OmPublic *>(ours(id)));
     }
-    // Length: up to the next public at a higher address in the same
-    // section, but not past the end of the section contribution.
+    // Length (as observed): up to the next public at a higher RVA, in any
+    // section, but not past the end of the section contribution holding
+    // the symbol; 0 for the last one.
     std::vector<OmPublic *> sorted = pubs;
-    std::sort(sorted.begin(), sorted.end(), [](OmPublic *a, OmPublic *b) {
-        return std::make_pair(a->ps.Segment, a->ps.Offset) < std::make_pair(b->ps.Segment, b->ps.Offset);
-    });
+    auto rvaOf = [&](OmPublic *p) { return rva(p->ps.Segment, p->ps.Offset); };
+    std::stable_sort(sorted.begin(), sorted.end(), [&](OmPublic *a, OmPublic *b) { return rvaOf(a) < rvaOf(b); });
     const auto &sc = sectionContribs();
     for (size_t i = 0; i < sorted.size(); i++) {
         OmPublic *p = sorted[i];
-        uint64_t end = UINT64_MAX;
-        for (size_t j = i + 1; j < sorted.size(); j++) {
-            if (sorted[j]->ps.Segment != p->ps.Segment) break;
-            if (sorted[j]->ps.Offset > p->ps.Offset) {
-                end = sorted[j]->ps.Offset;
+        uint32_t r = rvaOf(p);
+        uint64_t end = 0;
+        for (size_t j = i + 1; j < sorted.size(); j++)
+            if (rvaOf(sorted[j]) > r) {
+                end = rvaOf(sorted[j]);
                 break;
             }
-        }
-        for (auto &c : sc) {
-            if (c.sect == p->ps.Segment && p->ps.Offset >= c.off && p->ps.Offset < c.off + c.size) {
-                end = std::min<uint64_t>(end, c.off + c.size);
-                break;
-            }
-        }
-        if (end == UINT64_MAX) end = p->ps.Offset;
-        p->len = (uint32_t)(end - p->ps.Offset);
+        if (end)
+            for (auto &c : sc)
+                if (c.sect == p->ps.Segment && p->ps.Offset >= c.off && p->ps.Offset < c.off + c.size) {
+                    end = std::min<uint64_t>(end, rva(c.sect, c.off) + c.size);
+                    break;
+                }
+        p->len = end ? (uint32_t)(end - r) : 0;
     }
     return publicList;
 }
@@ -2228,7 +2257,7 @@ std::vector<LineEntry> Model::linesByRVA(uint32_t r, uint32_t len)
     for (uint32_t i = 0, n = moduleCount(); i < n; i++)
         for (auto &e : lines((uint16_t)i)) {
             uint32_t a = rva(e.sect, e.off);
-            if (a + e.len > r && a < r + len) out.push_back(e);
+            if ((a + e.len > r && a < r + len) || (e.len == 0 && a == r)) out.push_back(e);
         }
     std::sort(out.begin(), out.end(), [&](const LineEntry &a, const LineEntry &b) {
         return rva(a.sect, a.off) < rva(b.sect, b.off);
@@ -2331,7 +2360,7 @@ uint32_t Model::segmentCount()
     return (uint32_t)dbi->getSectionMap().size();
 }
 
-bool Model::basicType(SymIndexId id, uint32_t &bt, uint32_t &len)
+bool Model::simpleBasicType(uint32_t kind, uint32_t &bt, uint32_t &len)
 {
     // DIA's BasicType for each CodeView simple type kind.
     struct M { SimpleTypeKind k; uint32_t bt, len; };
@@ -2356,9 +2385,30 @@ bool Model::basicType(SymIndexId id, uint32_t &bt, uint32_t &len)
         {SimpleTypeKind::Boolean8, 10, 1},      {SimpleTypeKind::Boolean16, 10, 2},
         {SimpleTypeKind::Boolean32, 10, 4},     {SimpleTypeKind::Boolean64, 10, 8},
     };
+    for (auto &e : table)
+        if ((uint32_t)e.k == kind) {
+            bt = e.bt;
+            len = e.len;
+            return true;
+        }
+    return false;
+}
+
+bool Model::basicType(SymIndexId id, uint32_t &bt, uint32_t &len)
+{
+    static const SimpleTypeKind kinds[] = {
+        SimpleTypeKind::None, SimpleTypeKind::Void, SimpleTypeKind::HResult, SimpleTypeKind::SignedCharacter,
+        SimpleTypeKind::UnsignedCharacter, SimpleTypeKind::NarrowCharacter, SimpleTypeKind::WideCharacter,
+        SimpleTypeKind::Character16, SimpleTypeKind::Character32, SimpleTypeKind::Character8,
+        SimpleTypeKind::SByte, SimpleTypeKind::Byte, SimpleTypeKind::Int16Short, SimpleTypeKind::UInt16Short,
+        SimpleTypeKind::Int16, SimpleTypeKind::UInt16, SimpleTypeKind::Int32Long, SimpleTypeKind::UInt32Long,
+        SimpleTypeKind::Int32, SimpleTypeKind::UInt32, SimpleTypeKind::Int64Quad, SimpleTypeKind::UInt64Quad,
+        SimpleTypeKind::Int64, SimpleTypeKind::UInt64, SimpleTypeKind::Float32, SimpleTypeKind::Float64,
+        SimpleTypeKind::Float80, SimpleTypeKind::Boolean8,
+    };
     if (simpleKinds.empty()) {
-        for (auto &e : table)
-            if (SymIndexId s = typeSym(TypeIndex(e.k))) simpleKinds.emplace(s, (uint32_t)e.k);
+        for (auto k : kinds)
+            if (SymIndexId s = ns.getSymbolCache().findSymbolByTypeIndex(TypeIndex(k))) simpleKinds.emplace(s, (uint32_t)k);
         simpleKinds.emplace(0, 0);
     }
     uint32_t kind;
@@ -2373,13 +2423,7 @@ bool Model::basicType(SymIndexId id, uint32_t &bt, uint32_t &len)
         if (!deserType(types->getType(ti), mr) || !mr.getModifiedType().isSimple()) return false;
         kind = (uint32_t)mr.getModifiedType().getSimpleKind();
     }
-    for (auto &e : table)
-        if ((uint32_t)e.k == kind) {
-            bt = e.bt;
-            len = e.len;
-            return true;
-        }
-    return false;
+    return simpleBasicType(kind, bt, len);
 }
 
 std::vector<DebugStream> Model::debugStreams()
@@ -2508,10 +2552,11 @@ SymIndexId Model::findByRVA(uint32_t r, PDB_SymType want, int32_t *disp)
             if (r >= e.rva && r < e.rva + e.len && (!best || e.rva >= best->rva)) best = &e;
         return best;
     };
+    // Nearest symbol at or before the address, in any section (as observed).
     auto preceding = [&](const std::vector<AddrEntry> &m) -> const AddrEntry * {
         const AddrEntry *best = nullptr;
         for (auto &e : m)
-            if (e.sect == sect && e.rva <= r && (!best || e.rva > best->rva)) best = &e;
+            if (e.rva <= r && (!best || e.rva > best->rva)) best = &e;
         return best;
     };
     auto innermostBlock = [&](SymIndexId func) -> const AddrEntry * {
@@ -2535,7 +2580,9 @@ SymIndexId Model::findByRVA(uint32_t r, PDB_SymType want, int32_t *disp)
         } else if (auto *d = containing(dataMap)) {
             hit = d;
         } else {
-            hit = preceding(publicMap);
+            // The nearest preceding function or public; a function wins a tie.
+            const AddrEntry *f = preceding(funcMap), *p = preceding(publicMap);
+            hit = f && (!p || f->rva >= p->rva) ? f : p;
         }
         break;
     default:

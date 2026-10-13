@@ -167,6 +167,8 @@ public:
     // differs for some CodeView kinds).
     bool basicType(SymIndexId id, uint32_t &bt, uint32_t &len);
     std::unordered_map<SymIndexId, uint32_t> simpleKinds;
+    std::unordered_map<uint32_t, SymIndexId> extraBuiltins;
+    static bool simpleBasicType(uint32_t kind, uint32_t &bt, uint32_t &len);
     std::unordered_map<SymIndexId, std::vector<uint8_t>> childFlags;
     // For a function bound to a class method: the method's own name.
     std::string methodShortName(SymIndexId id);
