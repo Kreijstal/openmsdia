@@ -17,9 +17,20 @@
   - **stack walking:** `IDiaStackWalker`, `IDiaStackWalkHelper`,
     `IDiaStackFrame` and `IDiaEnumStackFrames`;
   - **enums:** `SymTagEnum`, `MemoryTypeEnum` and `CV_CPU_TYPE_e`.
-- **x86 and amd64 match:** their type libraries are identical apart from `syskind`.
+- **x86, amd64 and arm64 match:** their type libraries are identical apart from `syskind`.
+  The arm64 build is an ARM64X binary.
+- **14.51.36257.0 vs 14.30.30626.0:** the CI snapshots come from the Visual
+  Studio on the CI runners. The newer library only *appends*; no existing
+  method moved. It adds:
+  - `IDiaDataSourceEx`, which loads with validation, has raw stream access and
+    takes a mini-PDB error callback. One of its slots has only a MIDL placeholder
+    name, `__MIDL____MIDL_itf_dia2_0000_00050000`;
+  - `IDiaSymbol10` (`get_sourceLink`);
+  - `IDiaSymbol11` (`get_discriminatedUnionTag`, `get_tagRanges`) and the
+    `DiaTagValue` record;
+  - `SymTagTaggedUnionCase` and `CV_CFL_UNKNOWN` as new enum values.
 - **Not in the type library:** some interfaces that tools use exist only in the
-  SDK headers. Examples are `IDiaSession2`/`3`, `IDiaSymbol10`/`11`, `IDiaLoadCallback`/`2`,
+  SDK headers. Examples are `IDiaSession2`/`3`, `IDiaLoadCallback`/`2`,
   `IDiaReadExeAtOffsetCallback`, `IDiaReadExeAtRVACallback`, `IDiaAddressMap`,
   `IDiaPropertyStorage`, `IDiaImageData`, `IDiaEnumFrameData` and `IDiaStackWalkHelper2`.
   This list is from memory and has not been checked. Their IIDs and method

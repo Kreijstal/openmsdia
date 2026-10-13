@@ -36,6 +36,10 @@ ships with the Visual Studio Installer. It contains:
 - 3 coclasses: `DiaSource`, `DiaSourceAlt` and `DiaStackWalker`;
 - 6 exports, all of them standard COM DLL entry points.
 
+CI adds snapshots of the current Visual Studio's 14.51.36257.0 for amd64, x86
+and arm64. They have 40 interfaces, adding `IDiaDataSourceEx`, `IDiaSymbol10`
+and `IDiaSymbol11`; the existing vtables are unchanged.
+
 See `docs/plan.md` for the phases and the design.
 
 ## Harvest locally (Windows, MSYS2 CLANG64)

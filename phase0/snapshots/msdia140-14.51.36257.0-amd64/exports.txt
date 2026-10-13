@@ -1,0 +1,7 @@
+CompareRE
+DllCanUnloadNow
+DllGetClassObject
+DllRegisterServer
+DllUnregisterServer
+VSDllRegisterServer
+VSDllUnregisterServer

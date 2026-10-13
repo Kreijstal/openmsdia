@@ -1,0 +1,2 @@
+file_version: 14.51.36257.0
+machine: IMAGE_FILE_MACHINE_I386 (0x14C)
