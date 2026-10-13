@@ -768,6 +768,12 @@ public:
     HRESULT getLONG(Prop p, LONG *out)
     {
         if (!out) return E_POINTER;
+        if (memberView && (p == P_constType || p == P_volatileType || p == P_unalignedType || p == P_constantExport) &&
+            s->m->methodOverloaded(id)) {
+            // 14.51: overloaded methods seen through their class.
+            *out = 0;
+            return S_OK;
+        }
         Val v;
         if (!s->m->get(id, p, v)) return S_FALSE;
         *out = v.kind == Val::I ? (LONG)v.i : (LONG)v.u;
@@ -915,7 +921,19 @@ public:
     {
         return findChildren(tag, name, flags, out);
     }
-    HRESULT STDMETHODCALLTYPE get_undecoratedNameEx(ULONG, BSTR *out) override { return getBSTR(P_undecoratedName, out); }
+    HRESULT STDMETHODCALLTYPE get_undecoratedNameEx(ULONG options, BSTR *out) override
+    {
+        if (!out) return E_POINTER;
+        *out = nullptr;
+        if (options == 0) {
+            Val v;
+            if (s->m->get(id, P_undecoratedNameEx0, v) && v.kind == Val::Str) {
+                *out = toBSTR(v.s);
+                return S_OK;
+            }
+        }
+        return getBSTR(P_undecoratedName, out);
+    }
     HRESULT STDMETHODCALLTYPE get_types(ULONG, ULONG *pc, IDiaSymbol **) override
     {
         if (pc) *pc = 0;

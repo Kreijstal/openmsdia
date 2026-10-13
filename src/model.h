@@ -41,7 +41,8 @@ enum Prop {
 #define X(n, k) P_##n,
     OPENMSDIA_SYMBOL_GETTERS(X)
 #undef X
-    P_COUNT
+    P_COUNT,
+    P_undecoratedNameEx0 = P_COUNT + 1,  // get_undecoratedNameEx(0), not a getter
 };
 const char *propName(Prop p);
 
@@ -161,7 +162,7 @@ public:
     std::map<std::string, llvm::codeview::TypeIndex> fullByName;
     SymIndexId noType();
     std::string typeName(SymIndexId id);  // C-like spelling, for undecorated names
-    std::string functionSignature(SymIndexId fn, bool isStatic);
+    std::string functionSignature(SymIndexId fn, bool isStatic, bool complete = false);
 
     llvm::codeview::TypeIndex typeIndexOf(SymIndexId id);
     const std::vector<SymIndexId> &publics();
@@ -175,8 +176,15 @@ public:
     std::unordered_map<uint32_t, SymIndexId> extraBuiltins;
     static bool simpleBasicType(uint32_t kind, uint32_t &bt, uint32_t &len);
     std::unordered_map<SymIndexId, std::vector<uint8_t>> childFlags;
+    uint32_t paramCount(SymIndexId func);
+    bool constThis(llvm::codeview::TypeIndex memberFunctionType);
+    std::map<SymIndexId, uint32_t> paramsSeen;
+    SymIndexId coffGroupAt(uint32_t sect, uint32_t off);
+    std::vector<SymIndexId> coffGroups;
+    bool coffGroupsLoaded = false;
     // For a function bound to a class method: the method's own name.
     std::string methodShortName(SymIndexId id);
+    bool methodOverloaded(SymIndexId id);
     void bindStaticMember(class OmData *d);
     SymIndexId findMethodImpl(SymIndexId udt, llvm::StringRef name, llvm::codeview::TypeIndex type);
     SymIndexId dataSym(uint16_t seg, uint32_t off, llvm::StringRef nm, std::function<SymIndexId()> mk);

@@ -40,6 +40,7 @@
 #include "llvm/DebugInfo/PDB/IPDBEnumChildren.h"
 #include "llvm/Support/ConvertUTF.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Demangle/Demangle.h"
 
 using namespace llvm;
 using namespace llvm::codeview;
@@ -59,6 +60,9 @@ const char *propName(Prop p)
 
 static LazyRandomTypeCollection *tpiTypes(NativeSession &ns);
 static bool resolveTag(Model &m, NativeSession &ns, TypeIndex ti, CVType &out, TypeIndex &full);
+
+std::string undecorate(const std::string &n);
+std::string undecorateComplete(const std::string &n);
 
 template <class E> static bool has(E v, E f) { return ((uint64_t)v & (uint64_t)f) != 0; }
 
@@ -248,6 +252,7 @@ public:
     MethodOptions mopts = MethodOptions::None;
     int32_t vftableOffset = 0;
     std::string shortName;
+    bool overloaded = false;  // bound to a member of an overload set
 
     uint32_t start() const { return M->rva(ps.Segment, ps.CodeOffset); }
 
@@ -257,6 +262,7 @@ public:
         switch (p) {
         case P_name: v = Val::str(ps.Name.str()); return true;
         case P_undecoratedName: v = Val::str(M->functionSignature(getSymIndexId(), isStatic)); return true;
+        case P_undecoratedNameEx0: v = Val::str(M->functionSignature(getSymIndexId(), isStatic, true)); return true;
         case P_lexicalParent: case P_lexicalParentId: v = Val::sym(lexParent); return true;
         case P_classParent: case P_classParentId:
             if (!classParent) return false;
@@ -304,6 +310,8 @@ public:
             return true;
         case P_sealed: if (!isMethod) return false; v = Val::b_(has(mopts, MethodOptions::Sealed)); return true;
         case P_virtualBaseOffset: if (!isMethod) return false; v = Val::u_(vftableOffset); return true;
+        // constType & co. of overloaded methods: only through the class
+        // (DiaSymbol::memberView), see Model::methodOverloaded.
         default: return false;
         }
     }
@@ -416,7 +424,7 @@ public:
 // Data: globals, statics, members, static members, constants, enumerators.
 class OmData : public OmSym {
 public:
-    enum Kind { Global, Member, StaticMember, Constant, Enumerator };
+    enum Kind { Global, Member, StaticMember, Constant, Enumerator, RegRel, Register };
     OmData(NativeSession &s, SymIndexId id, Kind k) : OmSym(s, PDB_SymType::Data, id), k(k) {}
     Kind k;
     PDB_DataKind dataKind = PDB_DataKind::Unknown;
@@ -436,6 +444,8 @@ public:
     bool fromGlobals = false;
     bool localConst = false;  // S_CONSTANT inside a function
     bool tls = false;         // S_GTHREAD32 / S_LTHREAD32
+    uint32_t reg = 0;         // RegRel / Register
+    int32_t regOffset = 0;
     bool noChildren() const override { return (k == Constant && !localConst) || fromGlobals; }
 
     bool prop(Prop p, Val &v) const override
@@ -461,24 +471,36 @@ public:
         case P_locationType:
             if (k == Constant || k == Enumerator || staticConst) v = Val::u_((uint32_t)PDB_LocType::Constant);
             else if (k == Member) v = Val::u_((uint32_t)(bitfield ? PDB_LocType::BitField : PDB_LocType::ThisRel));
+            else if (k == RegRel) v = Val::u_((uint32_t)PDB_LocType::RegRel);
+            else if (k == Register) v = Val::u_((uint32_t)PDB_LocType::Enregistered);
             else v = Val::u_((uint32_t)(tls ? PDB_LocType::TLS : PDB_LocType::Static));
             return true;
         case P_offset:
+            if (k == RegRel) { v = Val::i_(regOffset); return true; }
             if (k != Member) return false;
             v = Val::i_(memberOffset);
+            return true;
+        case P_registerId:
+            if (k != RegRel && k != Register) return false;
+            v = Val::u_(reg);
             return true;
         case P_bitPosition:
             if (!bitfield) return false;
             v = Val::u_(bitPos);
             return true;
-        case P_length:
-            if (!bitfield) return false;
-            v = Val::u_(bitLen);
-            return true;
         case P_addressSection: if (!hasAddr) return false; v = Val::u_(seg); return true;
         case P_addressOffset: if (!hasAddr) return false; v = Val::u_(off); return true;
         case P_relativeVirtualAddress: if (!hasAddr || tls) return false; v = Val::u_(M->rva(seg, off)); return true;
         case P_virtualAddress: if (!hasAddr || tls) return false; v = Val::u_(M->rva(seg, off) + M->loadAddress); return true;
+        case P_baseType: case P_length:
+            if (p == P_length && bitfield) { v = Val::u_(bitLen); return true; }
+            if (k == Constant || k == Enumerator) {
+                // Constants of enum type report the enum's base type and size (14.51).
+                SymIndexId t = typeId ? typeId : M->typeSym(type);
+                if (M->tag(t) != PDB_SymType::Enum) return false;
+                return M->get(t, p, v);
+            }
+            return false;
         case P_value:
             if (k != Constant && k != Enumerator && !staticConst) return false;
             v.kind = Val::Var;
@@ -505,7 +527,13 @@ public:
         case P_undecoratedName: {
             std::string n = ps.Name.str();
             if (!n.empty() && n[0] == '.') n = n.substr(1);
-            v = Val::str(n);
+            v = Val::str(undecorate(n));
+            return true;
+        }
+        case P_undecoratedNameEx0: {
+            std::string n = ps.Name.str();
+            if (!n.empty() && n[0] == '.') n = n.substr(1);
+            v = Val::str(undecorateComplete(n));
             return true;
         }
         case P_addressSection: v = Val::u_(ps.Segment); return true;
@@ -681,6 +709,64 @@ public:
     bool prop(Prop, Val &) const override { return false; }
 };
 
+// S_COFFGROUP of the linker module.
+class OmCoffGroup : public OmSym {
+public:
+    OmCoffGroup(NativeSession &s, SymIndexId id, CoffGroupSym cg) : OmSym(s, PDB_SymType::CoffGroup, id), cg(std::move(cg)) {}
+    CoffGroupSym cg;
+    bool prop(Prop p, Val &v) const override
+    {
+        uint32_t rva = M->rva(cg.Segment, cg.Offset);
+        switch (p) {
+        case P_name: v = Val::str(cg.Name.str()); return true;
+        case P_lexicalParent: case P_lexicalParentId: v = Val::sym(lexParent); return true;
+        case P_addressSection: v = Val::u_(cg.Segment); return true;
+        case P_addressOffset: v = Val::u_(cg.Offset); return true;
+        case P_relativeVirtualAddress: v = Val::u_(rva); return true;
+        case P_virtualAddress: v = Val::u_(rva + M->loadAddress); return true;
+        case P_length: v = Val::u_(cg.Size); return true;
+        case P_characteristics: v = Val::u_(cg.Characteristics); return true;
+        case P_locationType: v = Val::u_((uint32_t)PDB_LocType::Static); return true;
+        default: return false;
+        }
+    }
+};
+
+// S_UNAMESPACE.
+class OmUsingNamespace : public OmSym {
+public:
+    OmUsingNamespace(NativeSession &s, SymIndexId id, std::string nm)
+        : OmSym(s, PDB_SymType::UsingNamespace, id), nm(std::move(nm)) {}
+    std::string nm;
+    bool prop(Prop p, Val &v) const override
+    {
+        switch (p) {
+        case P_name: v = Val::str(nm); return true;
+        case P_lexicalParent: case P_lexicalParentId: v = Val::sym(lexParent); return true;
+        default: return false;
+        }
+    }
+};
+
+// S_CALLSITEINFO.
+class OmCallSite : public OmSym {
+public:
+    OmCallSite(NativeSession &s, SymIndexId id, CallSiteInfoSym cs)
+        : OmSym(s, PDB_SymType::CallSite, id), cs(std::move(cs)) {}
+    CallSiteInfoSym cs;
+    bool prop(Prop p, Val &v) const override
+    {
+        switch (p) {
+        case P_lexicalParent: case P_lexicalParentId: v = Val::sym(lexParent); return true;
+        case P_addressSection: v = Val::u_(cs.Segment); return true;
+        case P_addressOffset: v = Val::u_(cs.CodeOffset); return true;
+        case P_relativeVirtualAddress: v = Val::u_(M->rva(cs.Segment, cs.CodeOffset)); return true;
+        case P_type: case P_typeId: v = Val::sym(M->typeSym(cs.Type)); return true;
+        default: return false;
+        }
+    }
+};
+
 // A nested type entry (LF_NESTTYPE) of a class: the type under its nested
 // name, with the class as class parent.
 class OmNested : public OmSym {
@@ -707,6 +793,7 @@ public:
     OmMethod(NativeSession &s, SymIndexId id, OneMethodRecord m)
         : OmSym(s, PDB_SymType::Function, id), m(std::move(m)) {}
     OneMethodRecord m;
+    bool overloaded = false;
     bool prop(Prop p, Val &v) const override
     {
         MethodKind mk = m.getMethodKind();
@@ -727,6 +814,13 @@ public:
         case P_compilerGenerated: v = Val::b_(has(m.getOptions(), MethodOptions::CompilerGenerated)); return true;
         case P_sealed: v = Val::b_(has(m.getOptions(), MethodOptions::Sealed)); return true;
         case P_virtualBaseOffset: v = Val::u_(m.isIntroducingVirtual() ? m.getVFTableOffset() : 0); return true;
+        case P_constType: case P_volatileType: case P_unalignedType: case P_constantExport:
+            // 14.51 reports these (as 0) for the members of an overload set
+            // (LF_METHOD), not for single methods (LF_ONEMETHOD); 14.30
+            // reported none.
+            if (!overloaded) return false;
+            v = Val::b_(false);
+            return true;
         default: return false;
         }
     }
@@ -940,6 +1034,10 @@ std::string Model::name(SymIndexId id)
 bool Model::get(SymIndexId id, Prop p, Val &v)
 {
     if (!valid(id)) return false;
+    if (p >= P_COUNT) {
+        OmSym *o = ours(id);
+        return o && o->prop(p, v);
+    }
     if (p == P_symIndexId) { v = Val::u_(id); return true; }
     if (p == P_symTag) { v = Val::u_((uint32_t)tag(id)); return true; }
     if (propKinds[p] == K_SYM) {
@@ -949,6 +1047,22 @@ bool Model::get(SymIndexId id, Prop p, Val &v)
             if (v.kind == Val::U) v = Val::sym((SymIndexId)v.u);
             return v.kind == Val::Sym && valid((SymIndexId)v.u);
         }
+    }
+    if (p == P_coffGroup) {
+        // The COFF group holding the symbol's address (DIA 14.51).
+        PDB_SymType t = tag(id);
+        if (t == PDB_SymType::Function || t == PDB_SymType::FuncDebugStart || t == PDB_SymType::FuncDebugEnd ||
+            t == PDB_SymType::Data || t == PDB_SymType::PublicSymbol || t == PDB_SymType::Block ||
+            t == PDB_SymType::CallSite || t == PDB_SymType::InlineSite || t == PDB_SymType::CoffGroup ||
+            t == PDB_SymType::Label || t == PDB_SymType::Thunk) {
+            Val sec, off;
+            if (!get(id, P_addressSection, sec) || !get(id, P_addressOffset, off)) return false;
+            SymIndexId g = coffGroupAt((uint32_t)sec.u, (uint32_t)off.u);
+            if (!g) return false;
+            v = Val::sym(g);
+            return true;
+        }
+        return false;
     }
     if (OmSym *o = ours(id)) {
         if (!o->prop(p, v)) return false;
@@ -996,7 +1110,16 @@ bool Model::get(SymIndexId id, Prop p, Val &v)
     case P_constantExport:
         if (tagProps(t)[p]) { v = Val::b_(r.isConstType()); return true; }
         return false;
-    case P_exportIsForwarder: case P_hfaDouble: case P_hfaFloat: case P_isWinRTPointer:
+    case P_hfaDouble: case P_hfaFloat:
+        if (t == PDB_SymType::UDT && tagProps(t)[p]) {
+            // CV_prop_t.hfa (bits 11-12): 1 float, 2 double.
+            uint32_t hfa = (udtOptions(id) >> 11) & 3;
+            v = Val::b_(hfa == (p == P_hfaFloat ? 1u : 2u));
+            return true;
+        }
+        if (tagProps(t)[p]) { v = Val::b_(false); return true; }
+        return false;
+    case P_exportIsForwarder: case P_isWinRTPointer:
         if (tagProps(t)[p]) { v = Val::b_(false); return true; }
         return false;
     case P_classParentId:
@@ -1040,8 +1163,22 @@ bool Model::get(SymIndexId id, Prop p, Val &v)
         break;
     case P_noexcept:
         if (t == PDB_SymType::FunctionSig) {
-            if (r.getClassParentId()) return false;
-            v = Val::b_(false);
+            // 14.30 reported it only for non-member function types. The flag
+            // is bit 3 of the CodeView function options (MSVC sets it).
+            uint8_t opts = 0;
+            auto *types = tpiTypes(ns);
+            TypeIndex ti = typeIndexOf(id);
+            if (types && !ti.isNoneType()) {
+                CVType ft = types->getType(ti);
+                if (ft.kind() == LF_PROCEDURE) {
+                    ProcedureRecord pr(TypeRecordKind::Procedure);
+                    if (deserType(ft, pr)) opts = (uint8_t)pr.getOptions();
+                } else if (ft.kind() == LF_MFUNCTION) {
+                    MemberFunctionRecord mr(TypeRecordKind::MemberFunction);
+                    if (deserType(ft, mr)) opts = (uint8_t)mr.getOptions();
+                }
+            }
+            v = Val::b_((opts & 0x08) != 0);
             return true;
         }
         break;
@@ -1253,7 +1390,10 @@ SymIndexId Model::procSym(uint16_t modi, uint32_t off)
                                 MethodOverloadListRecord list(TypeRecordKind::MethodOverloadList);
                                 if (deserType(ml, list))
                                     for (auto &o : list.getMethods())
-                                        if (o.getType() == type) set(o);
+                                        if (o.getType() == type) {
+                                            set(o);
+                                            f->overloaded = true;
+                                        }
                                 return Error::success();
                             }
                             void set(const OneMethodRecord &m)
@@ -1452,7 +1592,75 @@ void Model::moduleChildren(uint16_t modi, SymIndexId parent, uint32_t begin, uin
             out.push_back(id);
             continue;
         }
+        if (func && (k == S_REGREL32 || k == S_REGISTER)) {
+            auto it = recordSyms.find(key);
+            SymIndexId id;
+            if (it != recordSyms.end()) {
+                id = it->second;
+            } else {
+                id = make<OmData>(k == S_REGREL32 ? OmData::RegRel : OmData::Register);
+                auto *d = static_cast<OmData *>(ours(id));
+                if (k == S_REGREL32) {
+                    RegRelativeSym rr(SymbolRecordKind::RegRelativeSym);
+                    if (!deser(*I, rr)) continue;
+                    d->nm = rr.Name.str();
+                    d->type = rr.Type;
+                    d->reg = (uint32_t)rr.Register;
+                    d->regOffset = (int32_t)rr.Offset;
+                } else {
+                    RegisterSym rs(SymbolRecordKind::RegisterSym);
+                    if (!deser(*I, rs)) continue;
+                    d->nm = rs.Name.str();
+                    d->type = rs.Index;
+                    d->reg = (uint32_t)rs.Register;
+                }
+                // Parameters come first in the function's own scope, as many
+                // as the function type has (plus `this`).
+                d->dataKind = PDB_DataKind::Local;
+                if (parent == func) {
+                    auto &n = paramsSeen[func];
+                    if (n < paramCount(func)) {
+                        d->dataKind = d->nm == "this" ? PDB_DataKind::ObjectPtr : PDB_DataKind::Param;
+                        n++;
+                    }
+                }
+                d->lexParent = parent;
+                recordSyms[key] = id;
+            }
+            out.push_back(id);
+            continue;
+        }
+        if (func && k == S_CALLSITEINFO) {
+            CallSiteInfoSym cs(SymbolRecordKind::CallSiteInfoSym);
+            if (!deser(*I, cs)) continue;
+            auto it = recordSyms.find(key);
+            SymIndexId id = it != recordSyms.end() ? it->second : make<OmCallSite>(cs);
+            ours(id)->lexParent = parent;
+            recordSyms[key] = id;
+            out.push_back(id);
+            continue;
+        }
         if (func) continue;
+        if (k == S_UNAMESPACE) {
+            UsingNamespaceSym un(SymbolRecordKind::UsingNamespaceSym);
+            if (!deser(*I, un)) continue;
+            auto it = recordSyms.find(key);
+            SymIndexId id = it != recordSyms.end() ? it->second : make<OmUsingNamespace>(un.Name.str());
+            ours(id)->lexParent = parent;
+            recordSyms[key] = id;
+            out.push_back(id);
+            continue;
+        }
+        if (k == S_COFFGROUP) {
+            CoffGroupSym cg(SymbolRecordKind::CoffGroupSym);
+            if (!deser(*I, cg)) continue;
+            auto it = recordSyms.find(key);
+            SymIndexId id = it != recordSyms.end() ? it->second : make<OmCoffGroup>(cg);
+            ours(id)->lexParent = parent;
+            recordSyms[key] = id;
+            out.push_back(id);
+            continue;
+        }
         if (k == S_COMPILE3) {
             Compile3Sym cs(SymbolRecordKind::Compile3Sym);
             if (!deser(*I, cs)) continue;
@@ -1710,7 +1918,7 @@ void Model::typeMembers(SymIndexId udt, TypeIndex fieldList, std::vector<SymInde
                 d->dataKind = PDB_DataKind::Constant;
                 d->classParent = udt;
                 d->lexParent = m->exe;
-                d->type = TypeIndex(SimpleTypeKind::Int32);  // as observed, whatever the underlying type
+                d->typeId = udt;  // the enum itself (DIA 14.51; 14.30 reported int)
                 d->value = variantOf(r.getValue());
                 return id;
             }));
@@ -1758,13 +1966,14 @@ void Model::typeMembers(SymIndexId udt, TypeIndex fieldList, std::vector<SymInde
             }));
             return Error::success();
         }
-        void method(const OneMethodRecord &r, StringRef name)
+        void method(const OneMethodRecord &r, StringRef name, bool overloaded = false)
         {
             out->push_back(get([&] {
                 SymIndexId impl = m->findMethodImpl(udt, name, r.getType());
                 if (impl) return impl;
                 OneMethodRecord copy = r;
                 SymIndexId id = m->make<OmMethod>(copy);
+                static_cast<OmMethod *>(m->ours(id))->overloaded = overloaded;
                 m->ours(id)->classParent = udt;
                 m->ours(id)->lexParent = m->exe;
                 return id;
@@ -1782,7 +1991,7 @@ void Model::typeMembers(SymIndexId udt, TypeIndex fieldList, std::vector<SymInde
             if (deserType(ml, list))
                 for (auto &o : list.getMethods()) {
                     OneMethodRecord named(o.getType(), o.Attrs, o.getVFTableOffset(), r.getName());
-                    method(named, r.getName());
+                    method(named, r.getName(), true);
                 }
             return Error::success();
         }
@@ -1980,7 +2189,18 @@ void Model::compilandChildren(uint16_t modi, SymIndexId c, std::vector<SymIndexI
                     std::string val;
                     if (!args[i].isNoneType()) {
                         StringIdRecord sr(TypeRecordKind::StringId);
-                        if (deserType(ids.getType(args[i]), sr)) val = sr.getString().str();
+                        if (deserType(ids.getType(args[i]), sr)) {
+                            // Long strings start with an LF_SUBSTR_LIST of LF_STRING_IDs.
+                            if (!sr.getId().isNoneType()) {
+                                StringListRecord sl(TypeRecordKind::StringList);
+                                if (deserType(ids.getType(sr.getId()), sl))
+                                    for (TypeIndex part : sl.getIndices()) {
+                                        StringIdRecord ps(TypeRecordKind::StringId);
+                                        if (deserType(ids.getType(part), ps)) val += ps.getString().str();
+                                    }
+                            }
+                            val += sr.getString().str();
+                        }
                     }
                     kv.push_back({keys[i], val});
                 }
@@ -2013,7 +2233,11 @@ void Model::buildGlobalChildren(std::vector<SymIndexId> &out)
     addAll(cache.createTypeEnumerator(LF_ENUM), &enums);
     addAll(cache.createTypeEnumerator(LF_POINTER), nullptr);
     addAll(cache.createTypeEnumerator(LF_ARRAY), nullptr);
-    addAll(cache.createTypeEnumerator({LF_PROCEDURE, LF_MFUNCTION}), &sigs);
+    // Procedures before member functions: a shared argument list belongs
+    // to the first function type listing it in this order (closest to what
+    // the real DLL reports; its exact rule is not known yet).
+    addAll(cache.createTypeEnumerator(LF_PROCEDURE), &sigs);
+    addAll(cache.createTypeEnumerator(LF_MFUNCTION), &sigs);
     addAll(cache.createGlobalsEnumerator(S_UDT), nullptr);
     // const/volatile base types.
     if (auto *types = tpiTypes(ns)) {
@@ -2184,8 +2408,10 @@ const std::vector<SymIndexId> &Model::children(SymIndexId id, bool *noChildren)
             }
             ArgListRecord al(TypeRecordKind::ArgList);
             if (!argList.isNoneType() && deserType(types->getType(argList), al)) {
+                // Argument symbols belong to the argument list, which function
+                // types share; the class parent is the first type using it.
                 for (size_t i = 0; i < al.getIndices().size(); i++) {
-                    auto key = std::make_pair(id, (uint32_t)i);
+                    auto key = std::make_pair((SymIndexId)(0x80000000u | argList.getIndex()), (uint32_t)i);
                     auto m = memberSyms.find(key);
                     SymIndexId a;
                     if (m != memberSyms.end()) {
@@ -2206,6 +2432,61 @@ const std::vector<SymIndexId> &Model::children(SymIndexId id, bool *noChildren)
     noChildCache[id] = none;
     if (noChildren) *noChildren = none;
     return childCache[id] = std::move(out);
+}
+
+bool Model::constThis(TypeIndex mfType)
+{
+    auto *types = tpiTypes(ns);
+    if (!types || mfType.isSimple() || mfType.isNoneType()) return false;
+    MemberFunctionRecord mr(TypeRecordKind::MemberFunction);
+    if (!deserType(types->getType(mfType), mr) || mr.getThisType().isNoneType() || mr.getThisType().isSimple())
+        return false;
+    PointerRecord pr(TypeRecordKind::Pointer);
+    if (!deserType(types->getType(mr.getThisType()), pr) || pr.getReferentType().isSimple()) return false;
+    return types->getType(pr.getReferentType()).kind() == LF_MODIFIER;
+}
+
+uint32_t Model::paramCount(SymIndexId func)
+{
+    auto *f = dynamic_cast<OmFunction *>(ours(func));
+    if (!f) return 0;
+    auto *types = tpiTypes(ns);
+    if (!types || f->ps.FunctionType.isSimple()) return 0;
+    CVType ft = types->getType(f->ps.FunctionType);
+    if (ft.kind() == LF_PROCEDURE) {
+        ProcedureRecord pr(TypeRecordKind::Procedure);
+        return deserType(ft, pr) ? pr.getParameterCount() : 0;
+    }
+    if (ft.kind() == LF_MFUNCTION) {
+        MemberFunctionRecord mr(TypeRecordKind::MemberFunction);
+        if (!deserType(ft, mr)) return 0;
+        return mr.getParameterCount() + (mr.getThisType().isNoneType() ? 0 : 1);
+    }
+    return 0;
+}
+
+SymIndexId Model::coffGroupAt(uint32_t sect, uint32_t off)
+{
+    if (!coffGroupsLoaded) {
+        coffGroupsLoaded = true;
+        for (uint32_t i = 0, n = moduleCount(); i < n; i++) {
+            SymIndexId c = compiland((uint16_t)i);
+            if (name(c) != "* Linker *") continue;
+            for (SymIndexId k : children(c))
+                if (tag(k) == PDB_SymType::CoffGroup) coffGroups.push_back(k);
+        }
+    }
+    for (SymIndexId g : coffGroups) {
+        auto *cg = static_cast<OmCoffGroup *>(ours(g));
+        if (cg->cg.Segment == sect && off >= cg->cg.Offset && off < cg->cg.Offset + cg->cg.Size) return g;
+    }
+    return 0;
+}
+
+bool Model::methodOverloaded(SymIndexId id)
+{
+    auto *f = dynamic_cast<OmFunction *>(ours(id));
+    return f && f->isMethod && f->overloaded;
 }
 
 std::string Model::methodShortName(SymIndexId id)
@@ -2609,16 +2890,20 @@ SymIndexId Model::findByRVA(uint32_t r, PDB_SymType want, int32_t *disp)
         } else if (auto *d = containing(dataMap)) {
             hit = d;
         } else {
-            // The nearest preceding function or public; a function wins a tie.
-            const AddrEntry *f = preceding(funcMap), *p = preceding(publicMap);
-            hit = f && (!p || f->rva >= p->rva) ? f : p;
+            // The nearest preceding function, data or public symbol, in that
+            // order of preference at equal addresses.
+            for (auto *m : {&funcMap, &dataMap, &publicMap}) {
+                const AddrEntry *e = preceding(*m);
+                if (e && (!hit || e->rva > hit->rva)) hit = e;
+            }
         }
         break;
     default:
         break;
     }
     if (!hit) return 0;
-    if (disp) *disp = (int32_t)(r - hit->rva);
+    // Displacement into the symbol; -1 when it lies in another section.
+    if (disp) *disp = hit->sect == sect ? (int32_t)(r - hit->rva) : -1;
     return hit->id;
 }
 
@@ -2676,7 +2961,7 @@ std::string Model::typeName(SymIndexId id)
         bool isRef = get(id, P_reference, ref) && ref.u;
         bool isRRef = get(id, P_RValueReference, rref) && rref.u;
         // As observed: references print as "& const", pointer cv is dropped.
-        return typeName((SymIndexId)ty.u) + (isRRef ? " && const" : isRef ? " & const" : " *");
+        return typeName((SymIndexId)ty.u) + (isRRef ? " *" : isRef ? " & const" : " *");
     }
     case PDB_SymType::UDT: {
         Val k;
@@ -2712,16 +2997,102 @@ std::string Model::typeName(SymIndexId id)
     }
 }
 
-std::string Model::functionSignature(SymIndexId fn, bool isStatic)
+// Microsoft-style undecoration of a decorated name, in the spelling of
+// the real DLL: no space after commas, cv-qualifiers of member functions
+// as ")const ".
+std::string undecorate(const std::string &n)
+{
+    if (n.empty() || n[0] != '?') return n;
+    if (n.rfind("??_C@", 0) == 0) return "`string'";
+    size_t used = 0;
+    int status = 0;
+    char *d = microsoftDemangle(n, &used, &status);
+    if (!d || status != 0) {
+        free(d);
+        return n;
+    }
+    std::string s = d;
+    free(d);
+    std::string out;
+    for (size_t i = 0; i < s.size(); i++) {
+        if (s[i] == ',' && i + 1 < s.size() && s[i + 1] == ' ') {
+            out += ',';
+            i++;
+        } else {
+            out += s[i];
+        }
+    }
+    // LLVM abbreviates the special member names and glues cv-qualifiers
+    // to pointers.
+    auto replaceAll = [&](const std::string &from, const std::string &to) {
+        for (size_t at = out.find(from); at != std::string::npos; at = out.find(from, at + to.size()))
+            out.replace(at, from.size(), to);
+    };
+    replaceAll(" dtor'", " destructor'");
+    replaceAll(" ctor'", " constructor'");
+    replaceAll(" ctor iterator'", " constructor iterator'");
+    replaceAll(" dtor iterator'", " destructor iterator'");
+    replaceAll("*const", "* const");
+    replaceAll("*volatile", "* volatile");
+    replaceAll("&const", "& const");
+    for (const char *cc : {"__cdecl", "__stdcall", "__fastcall", "__thiscall", "__vectorcall", "__clrcall"}) {
+        replaceAll(std::string("(") + cc + " *)", std::string("(") + cc + "*)");
+        replaceAll(std::string("(") + cc + " &)", std::string("(") + cc + "&)");
+    }
+    size_t close = out.rfind(')');
+    if (close != std::string::npos && close + 1 < out.size() && out[close + 1] == ' ') {
+        std::string quals = out.substr(close + 2);
+        if (quals == "const" || quals == "volatile" || quals == "const volatile")
+            out = out.substr(0, close + 1) + quals + " ";
+    }
+    return out;
+}
+
+// undecoratedNameEx(0) (UNDNAME_COMPLETE): as above, plus the x64
+// "__ptr64" qualifiers on data pointers, references and `this`.
+std::string undecorateComplete(const std::string &n)
+{
+    std::string s = undecorate(n);
+    if (n.empty() || n[0] != '?' || s == n) return s;
+    std::string out;
+    for (size_t i = 0; i < s.size(); i++) {
+        out += s[i];
+        if ((s[i] == '*' || s[i] == '&') && i > 0 && s[i - 1] == ' ') {
+            // Not a "(* name)" declarator; "(__cdecl*)" has no space before.
+            bool decl = i >= 2 && s[i - 2] == '(';
+            if (!decl) {
+                out += " __ptr64";
+                if (i + 1 < s.size() && s[i + 1] != ' ' && s[i + 1] != ',' && s[i + 1] != ')') out += ' ';
+            }
+        }
+    }
+    bool member = (out.rfind("public: ", 0) == 0 || out.rfind("protected: ", 0) == 0 ||
+                   out.rfind("private: ", 0) == 0) && out.find(": static ") == std::string::npos;
+    if (member && !out.empty() && (out.back() == ')' || out.back() == ' ')) {
+        if (out.back() == ' ') out.pop_back();
+        out += " __ptr64";
+    }
+    return out;
+}
+
+std::string Model::functionSignature(SymIndexId fn, bool isStatic, bool complete)
 {
     std::string nm = name(fn);
-    // A function with a public symbol of the same name keeps its name.
+    // A function with a public symbol at its address: an undecorated
+    // Microsoft name (the one naming this function when several publics
+    // share the address), or its own name for an undecorated (C) public.
     if (auto *f = dynamic_cast<OmFunction *>(ours(fn))) {
+        std::string first;
         for (SymIndexId p : publics()) {
             auto *pub = static_cast<OmPublic *>(ours(p));
-            if (pub->ps.Segment == f->ps.Segment && pub->ps.Offset == f->ps.CodeOffset && pub->ps.Name == f->ps.Name)
-                return nm;
+            if (pub->ps.Segment != f->ps.Segment || pub->ps.Offset != f->ps.CodeOffset) continue;
+            if (pub->ps.Name == f->ps.Name) return nm;
+            if (!pub->ps.Name.starts_with("?")) continue;
+            std::string u = complete ? undecorateComplete(pub->ps.Name.str()) : undecorate(pub->ps.Name.str());
+            if (u.find(nm) != std::string::npos) return u;
+            if (first.empty()) first = u;
         }
+        if (!first.empty()) return first;
     }
     Val ty;
     if (!get(fn, P_type, ty)) return nm;

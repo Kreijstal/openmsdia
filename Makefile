@@ -15,7 +15,7 @@ WALK_CXXFLAGS := -std=c++17 -O1 -g -municode -static -Wall -Iinclude/openmsdia
 
 LLVM_LIBS := $(shell llvm-config --link-static --libs debuginfopdb 2>/dev/null)
 DLL_CXXFLAGS := -std=c++17 -O2 -g -Wall -Wno-unused-function -Iinclude/openmsdia -Isrc \
-	-D_FILE_OFFSET_BITS=64 -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS \
+	-DLLVM_BUILD_STATIC -D_FILE_OFFSET_BITS=64 -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS \
 	-fno-exceptions -ffunction-sections -fdata-sections
 DLL_LDFLAGS := -shared -static -Wl,--gc-sections -Wl,--no-insert-timestamp
 DLL_SRCS := src/dllmain.cpp src/com.cpp src/model.cpp

@@ -2,6 +2,8 @@
 
 // Freestanding runtime support for the corpus.
 #ifdef _MSC_VER
+extern "C" void *memset(void *, int, unsigned long long);
+extern "C" void *memcpy(void *, const void *, unsigned long long);
 #pragma function(memset, memcpy)
 extern "C" int _fltused = 0;
 extern "C" int __cdecl _purecall() { for (;;) {} }
