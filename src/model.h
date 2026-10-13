@@ -181,6 +181,7 @@ public:
     int moduleOf(SymIndexId compilandId) const;
     const std::vector<SectionContrib> &sectionContribs();
     std::vector<DebugStream> debugStreams();
+    uint32_t frameDataCount();  // records of the x86 frame data (NEWFPO) stream
     uint32_t segmentCount();
 
     // Types: the symbol of a type index (forward references resolved to
@@ -293,7 +294,7 @@ private:
         SymTag tag = SymTag::None;
         std::string name;
     };
-    std::vector<AddrEntry> addrMap, funcMap, blockMap, dataMap, publicMap;
+    std::vector<AddrEntry> addrMap, funcMap, blockMap, dataMap, publicMap, thunkMap;
     bool addrBuilt = false;
     SymIndexId noTypeId = 0;
 };

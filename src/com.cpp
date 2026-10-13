@@ -1238,7 +1238,7 @@ HRESULT DiaEnumTables::make(size_t i, IDiaTable **out)
     case 5:
         *out = new DiaTable(s, "InjectedSource", 0, new DiaEnumInjectedSources(), IID_IDiaEnumInjectedSources);
         return S_OK;
-    case 6: *out = new DiaTable(s, "FrameData", 0, nullptr, IID_IUnknown); return S_OK;
+    case 6: *out = new DiaTable(s, "FrameData", (LONG)m.frameDataCount(), nullptr, IID_IUnknown); return S_OK;
     case 7:
         *out = new DiaTable(s, "InputAssemblyFiles", 0, new DiaEnumInputAssemblyFiles(), IID_IDiaEnumInputAssemblyFiles);
         return S_OK;

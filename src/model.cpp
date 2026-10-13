@@ -215,8 +215,10 @@ public:
             v = Val::b_(mkind == MethodKind::Virtual || mkind == MethodKind::IntroducingVirtual ||
                         mkind == MethodKind::PureVirtual || mkind == MethodKind::PureIntroducingVirtual);
             return true;
+        // The real DLL also calls static methods pure (observed with 14.30).
         case P_pure: if (!isMethod) return false;
-            v = Val::b_(mkind == MethodKind::PureVirtual || mkind == MethodKind::PureIntroducingVirtual);
+            v = Val::b_(mkind == MethodKind::PureVirtual || mkind == MethodKind::PureIntroducingVirtual ||
+                        mkind == MethodKind::Static);
             return true;
         case P_intro: if (!isMethod) return false;
             v = Val::b_(mkind == MethodKind::IntroducingVirtual || mkind == MethodKind::PureIntroducingVirtual);
@@ -687,6 +689,45 @@ public:
     }
 };
 
+// S_THUNK32.
+class OmThunk : public Sym {
+public:
+    explicit OmThunk(Thunk32Sym t) : Sym(SymTag::Thunk), t(std::move(t)) {}
+    Thunk32Sym t;
+    bool prop(Prop p, Val &v) const override
+    {
+        uint32_t rva = M->rva(t.Segment, t.Offset);
+        switch (p) {
+        case P_name: v = Val::str(t.Name.str()); return true;
+        case P_lexicalParent: case P_lexicalParentId: v = Val::sym(lexParent); return true;
+        case P_addressSection: v = Val::u_(t.Segment); return true;
+        case P_addressOffset: v = Val::u_(t.Offset); return true;
+        case P_relativeVirtualAddress: v = Val::u_(rva); return true;
+        case P_virtualAddress: v = Val::u_(rva + M->loadAddress); return true;
+        case P_length: v = Val::u_(t.Length); return true;
+        case P_locationType: v = Val::u_((uint32_t)LocType::Static); return true;
+        case P_thunkOrdinal: v = Val::u_((uint32_t)t.Thunk); return true;
+        default: return false;
+        }
+    }
+};
+
+// S_UDT inside a function: a local typedef (lambda closure types).
+class OmLocalTypedef : public Sym {
+public:
+    explicit OmLocalTypedef(UDTSym u) : Sym(SymTag::Typedef), u(std::move(u)) {}
+    UDTSym u;
+    bool prop(Prop p, Val &v) const override
+    {
+        switch (p) {
+        case P_name: v = Val::str(u.Name.str()); return true;
+        case P_lexicalParent: case P_lexicalParentId: v = Val::sym(lexParent); return true;
+        case P_type: case P_typeId: v = Val::sym(M->typeSym(u.Type)); return true;
+        default: return false;
+        }
+    }
+};
+
 // S_UNAMESPACE.
 class OmUsingNamespace : public Sym {
 public:
@@ -763,7 +804,9 @@ public:
             v = Val::b_(mk == MethodKind::Virtual || mk == MethodKind::IntroducingVirtual ||
                         mk == MethodKind::PureVirtual || mk == MethodKind::PureIntroducingVirtual);
             return true;
-        case P_pure: v = Val::b_(mk == MethodKind::PureVirtual || mk == MethodKind::PureIntroducingVirtual); return true;
+        case P_pure:
+            v = Val::b_(mk == MethodKind::PureVirtual || mk == MethodKind::PureIntroducingVirtual || mk == MethodKind::Static);
+            return true;
         case P_intro: v = Val::b_(mk == MethodKind::IntroducingVirtual || mk == MethodKind::PureIntroducingVirtual); return true;
         case P_isStaticMemberFunc: v = Val::b_(mk == MethodKind::Static); return true;
         case P_compilerGenerated: v = Val::b_(has(m.getOptions(), MethodOptions::CompilerGenerated)); return true;
@@ -1211,16 +1254,33 @@ void Model::moduleChildren(uint16_t modi, SymIndexId parent, uint32_t begin, uin
             out.push_back(id);
             continue;
         }
-        if (opensScope(k)) {
-            // Skip other scopes (thunks, separated code) for now.
-            uint32_t e = 0;
-            if (k == S_THUNK32) {
-                Thunk32Sym t(SymbolRecordKind::Thunk32Sym);
-                if (deser(*I, t)) e = t.End;
-            } else if (k == S_INLINESITE) {
-                InlineSiteSym t(SymbolRecordKind::InlineSiteSym);
-                if (deser(*I, t)) e = t.End;
+        if (k == S_THUNK32) {
+            Thunk32Sym t(SymbolRecordKind::Thunk32Sym);
+            if (!deser(*I, t)) continue;
+            auto it = recordSyms.find(key);
+            SymIndexId id = it != recordSyms.end() ? it->second : make<OmThunk>(t);
+            ours(id)->lexParent = parent;
+            recordSyms[key] = id;
+            out.push_back(id);
+            if (t.End > off) {
+                I = syms.at(t.End);
+                if (I == syms.end()) break;
             }
+            continue;
+        }
+        if (func && k == S_UDT) {
+            UDTSym u(SymbolRecordKind::UDTSym);
+            if (!deser(*I, u)) continue;
+            auto it = recordSyms.find(key);
+            SymIndexId id = it != recordSyms.end() ? it->second : make<OmLocalTypedef>(u);
+            ours(id)->lexParent = parent;
+            recordSyms[key] = id;
+            out.push_back(id);
+            continue;
+        }
+        if (opensScope(k)) {
+            // Skip other scopes (separated code) for now.
+            uint32_t e = scopeEnd(*I);
             if (e > off) {
                 I = syms.at(e);
                 if (I == syms.end()) break;
@@ -1834,11 +1894,7 @@ void Model::buildGlobalChildren(std::vector<SymIndexId> &out)
     addAll(typesOfKind({LF_ENUM}), &enums);
     addAll(typesOfKind({LF_POINTER}), nullptr);
     addAll(typesOfKind({LF_ARRAY}), nullptr);
-    // Procedures before member functions: a shared argument list belongs
-    // to the first function type listing it in this order (closest to what
-    // the real DLL reports; its exact rule is not known yet).
-    addAll(typesOfKind({LF_PROCEDURE}), &sigs);
-    addAll(typesOfKind({LF_MFUNCTION}), &sigs);
+    addAll(typesOfKind({LF_PROCEDURE, LF_MFUNCTION}), &sigs);
     // Typedefs: S_UDT records of the globals stream.
     auto *gs = pdb->globals();
     auto *ss = pdb->symbols();
@@ -2299,6 +2355,13 @@ bool Model::basicType(SymIndexId id, uint32_t &bt, uint32_t &len)
     return true;
 }
 
+uint32_t Model::frameDataCount()
+{
+    for (auto &d : debugStreams())
+        if (d.name == "NEWFPO") return (uint32_t)(d.data.size() / d.recordSize);
+    return 0;
+}
+
 std::vector<DebugStream> Model::debugStreams()
 {
     std::vector<DebugStream> out;
@@ -2311,7 +2374,7 @@ std::vector<DebugStream> Model::debugStreams()
         {DbgHeaderType::Fixup, "FIXUP", 10},      {DbgHeaderType::OmapToSrc, "OMAPTO", 8},
         {DbgHeaderType::OmapFromSrc, "OMAPFROM", 8}, {DbgHeaderType::SectionHdr, "SECTIONHEADERS", 40},
         {DbgHeaderType::TokenRidMap, "TOKENRIDMAP", 4}, {DbgHeaderType::Xdata, "XDATA", 1},
-        {DbgHeaderType::Pdata, "PDATA", 12},     {DbgHeaderType::NewFPO, "FRAMEDATA", 32},
+        {DbgHeaderType::Pdata, "PDATA", 12},     {DbgHeaderType::NewFPO, "NEWFPO", 32},
         {DbgHeaderType::SectionHdrOrig, "SECTIONHEADERS_ORIG", 40},
     };
     for (auto &k : kinds) {
@@ -2375,6 +2438,8 @@ void Model::buildAddressMap()
                 scope(k, func);
             } else if (kt == SymTag::Data) {
                 if (entry(k, e)) dataMap.push_back(e);
+            } else if (kt == SymTag::Thunk && !func) {
+                if (entry(k, e)) thunkMap.push_back(e);
             }
         }
     };
@@ -2394,10 +2459,12 @@ void Model::buildAddressMap()
         if (a.rva != b.rva) return a.rva < b.rva;
         return a.name < b.name;
     };
-    for (auto *m : {&funcMap, &blockMap, &dataMap, &publicMap}) std::stable_sort(m->begin(), m->end(), byAddr);
-    // Symbols by address: functions and data, and publics where neither is.
+    for (auto *m : {&funcMap, &blockMap, &dataMap, &publicMap, &thunkMap})
+        std::stable_sort(m->begin(), m->end(), byAddr);
+    // Symbols by address: functions, thunks and data, and publics where
+    // none of them is.
     std::set<uint32_t> covered;
-    for (auto *m : {&funcMap, &dataMap})
+    for (auto *m : {&funcMap, &thunkMap, &dataMap})
         for (auto &e : *m) {
             addrMap.push_back(e);
             covered.insert(e.rva);
@@ -2448,12 +2515,14 @@ SymIndexId Model::findByRVA(uint32_t r, SymTag want, int32_t *disp)
         if (auto *f = containing(funcMap)) {
             hit = innermostBlock(f->id);
             if (!hit) hit = f;
+        } else if (auto *t = containing(thunkMap)) {
+            hit = t;
         } else if (auto *d = containing(dataMap)) {
             hit = d;
         } else {
             // The nearest preceding function, data or public symbol, in that
             // order of preference at equal addresses.
-            for (auto *m : {&funcMap, &dataMap, &publicMap}) {
+            for (auto *m : {&funcMap, &thunkMap, &dataMap, &publicMap}) {
                 const AddrEntry *e = preceding(*m);
                 if (e && (!hit || e->rva > hit->rva)) hit = e;
             }
@@ -2511,6 +2580,7 @@ std::string Model::typeName(SymIndexId id)
         case btUInt: case btULong:
             n = len.u == 1 ? "unsigned char" : len.u == 2 ? "unsigned short" : len.u == 4 ? (bt.u == btULong ? "unsigned long" : "unsigned int") : "unsigned __int64";
             break;
+        case btNoType: n = "<NoType>"; break;  // the "..." of a variadic function
         default: n = "?"; break;
         }
         return cv(n);
@@ -2655,6 +2725,13 @@ bool Model::publicSignature(SymIndexId fn, bool complete, std::string &out)
         if (pub->ps.Segment != f->ps.Segment || pub->ps.Offset != f->ps.CodeOffset) continue;
         if (pub->ps.Name == f->ps.Name) {
             out = nm;
+            return true;
+        }
+        // x86 C decorations (_name, _name@n, @name@n): the public's name.
+        StringRef pn = pub->ps.Name, fnm = f->ps.Name;
+        if ((pn.size() > fnm.size() && (pn[0] == '_' || pn[0] == '@') && pn.substr(1).starts_with(fnm) &&
+             (pn.size() == fnm.size() + 1 || pn[fnm.size() + 1] == '@'))) {
+            out = pn.str();
             return true;
         }
         if (!pub->ps.Name.starts_with("?")) continue;

@@ -352,7 +352,11 @@ public:
         switch (p) {
         case P_type: case P_typeId: v = Val::sym(M->typeSym(member ? mf.getReturnType() : pr.getReturnType())); return true;
         case P_callingConvention: v = Val::u_((uint32_t)(member ? mf.getCallConv() : pr.getCallConv())); return true;
-        case P_count: v = Val::u_(member ? 1u + mf.getParameterCount() : pr.getParameterCount()); return true;
+        // Member functions count `this` (static ones have none).
+        case P_count:
+            v = Val::u_(member ? mf.getParameterCount() + (mf.getThisType().isNoneType() ? 0u : 1u)
+                               : pr.getParameterCount());
+            return true;
         case P_constructor: v = Val::b_(member && has(mf.getOptions(), FunctionOptions::Constructor)); return true;
         case P_isConstructorVirtualBase:
             v = Val::b_(member && has(mf.getOptions(), FunctionOptions::ConstructorWithVirtualBases));
