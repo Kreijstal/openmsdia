@@ -1,5 +1,9 @@
 #include "shapes.h"
 
+#ifdef _MSC_VER
+int _fltused; /* normally from the CRT */
+#endif
+
 int global_counter = 42;
 static int file_static = 7;
 const struct rect unit_rect = {{0, 0}, {1, 1}, GREEN};

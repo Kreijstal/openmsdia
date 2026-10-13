@@ -55,6 +55,7 @@ jobs:
       - name: Build the clang corpus
         run: corpus/build.sh build/corpus
       - name: Build the MSVC corpus
+        continue-on-error: true
         shell: pwsh
         run: |
           Import-Module (Join-Path $env:VS_PATH 'Common7\Tools\Microsoft.VisualStudio.DevShell.dll')

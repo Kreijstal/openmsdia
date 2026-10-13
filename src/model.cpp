@@ -39,6 +39,7 @@
 #include "llvm/DebugInfo/PDB/PDBSymbolCompiland.h"
 #include "llvm/DebugInfo/PDB/IPDBEnumChildren.h"
 #include "llvm/Support/ConvertUTF.h"
+#include "llvm/Support/MemoryBuffer.h"
 
 using namespace llvm;
 using namespace llvm::codeview;
@@ -746,6 +747,34 @@ Model::Model(std::unique_ptr<IPDBSession> s)
     : ns(static_cast<NativeSession &>(*s)), owner(std::move(s)) {}
 
 Model::~Model() = default;
+
+std::unique_ptr<Model> Model::openBuffer(std::vector<uint8_t> data, std::string &err)
+{
+    std::unique_ptr<IPDBSession> s;
+    auto mb = MemoryBuffer::getMemBufferCopy(
+        StringRef(reinterpret_cast<const char *>(data.data()), data.size()), "stream");
+    if (auto e = NativeSession::createFromPdb(std::move(mb), s)) {
+        err = toString(std::move(e));
+        return nullptr;
+    }
+    std::unique_ptr<Model> m(new Model(std::move(s)));
+    m->exe = m->ns.getNativeGlobalScope().getSymIndexId();
+    return m;
+}
+
+bool Model::identity(GUID70 &guid, uint32_t &sig, uint32_t &age)
+{
+    auto info = ns.getPDBFile().getPDBInfoStream();
+    if (!info) {
+        consumeError(info.takeError());
+        return false;
+    }
+    auto g = info->getGuid();
+    memcpy(guid.b, &g, 16);
+    sig = info->getSignature();
+    age = info->getAge();
+    return true;
+}
 
 std::unique_ptr<Model> Model::open(const std::string &path, std::string &err)
 {

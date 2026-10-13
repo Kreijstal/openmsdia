@@ -1,6 +1,6 @@
 {
  "conventions": "getters missing from an object returned S_FALSE; !HRESULT keys list getters that failed otherwise",
- "load": {"lastError": "", "loadDataFromPdb": "S_OK", "loadDataFromPdb(missing)": "0x806D0005", "openSession": "S_OK", "openSession(unloaded)": "E_UNEXPECTED", "session.globalScope": "S_OK", "session.loadAddress": 0},
+ "load": {"lastError": "", "loadAndValidateDataFromPdb(age+1)": "0x806D0007", "loadAndValidateDataFromPdb(no guid, sig)": "S_OK", "loadAndValidateDataFromPdb(other guid)": "0x806D0006", "loadAndValidateDataFromPdb(own)": "S_OK", "loadDataFromIStream": "S_OK", "loadDataFromIStream.globalScope.children": 84, "loadDataFromPdb": "S_OK", "loadDataFromPdb(missing)": "0x806D0005", "loadDataFromPdb(not a pdb)": "0x806D000C", "loadDataFromPdb(twice)": "E_UNEXPECTED", "openSession": "S_OK", "openSession(unloaded)": "E_UNEXPECTED", "session.globalScope": "S_OK", "session.loadAddress": 0},
  "symbols": {
   "Exe": {
    "!E_NOINTERFACE": ["<IDiaSymbol10>", "<IDiaSymbol11>"],

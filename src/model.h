@@ -109,6 +109,11 @@ struct DebugStream {
 
 class Model {
 public:
+    // A whole PDB in memory (loadDataFromIStream).
+    static std::unique_ptr<Model> openBuffer(std::vector<uint8_t> data, std::string &err);
+    struct GUID70 { uint8_t b[16]; };
+    // GUID, signature and age from the PDB info stream.
+    bool identity(GUID70 &guid, uint32_t &sig, uint32_t &age);
     // `path` is an absolute UTF-8 path of an existing file.
     static std::unique_ptr<Model> open(const std::string &path, std::string &err);
     ~Model();

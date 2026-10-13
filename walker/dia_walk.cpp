@@ -12,6 +12,7 @@
 // (tools/gen_dia.py, from the type library) and are called by vtable slot.
 #include <windows.h>
 #include <oleauto.h>
+#include <shlwapi.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <algorithm>
@@ -391,9 +392,10 @@ struct Walker {
         if (s->get_length(&len) != S_OK) len = 0;
         snprintf(b, sizeof b, "%08lx|%08lx|%016llx|", (unsigned long)rva, (unsigned long)off,
                  (unsigned long long)len);
-        Ptr<IDiaSymbol> t;
+        Ptr<IDiaSymbol> t, cp;
         std::string ty = (s->get_type(&t) == S_OK && t) ? describe(t) : "";
-        return b + ty;
+        std::string cls = (s->get_classParent(&cp) == S_OK && cp) ? describe(cp) : "";
+        return b + ty + "|" + cls;
     }
 
     void walk(IDiaSymbol *s, const std::string &path, int depth)
@@ -560,6 +562,56 @@ int wmain(int argc, wchar_t **argv)
     if (hs != S_OK) {
         printf("{\n \"load\": %s\n}\n", jobj_inline(load).c_str());
         return 0;
+    }
+    {
+        // Validation against the PDB's own GUID, signature and age, and
+        // against wrong ones; loading from an IStream; a file that is not
+        // a PDB.
+        Ptr<IDiaSymbol> g;
+        GUID guid = {};
+        ULONG sig = 0, age = 0;
+        if (session->get_globalScope(&g) == S_OK && g) {
+            g->get_guid(&guid);
+            g->get_signature(&sig);
+            g->get_age(&age);
+        }
+        auto validate = [&](GUID *gp, ULONG s, ULONG a) {
+            Ptr<IDiaDataSource> v;
+            cf->CreateInstance(nullptr, IID_IDiaDataSource, (void **)&v);
+            return jstr(hrstr(v->loadAndValidateDataFromPdb(argv[2], gp, s, a)));
+        };
+        load["loadAndValidateDataFromPdb(own)"] = validate(&guid, sig, age);
+        load["loadAndValidateDataFromPdb(age+1)"] = validate(&guid, sig, age + 1);
+        GUID other = guid;
+        other.Data1 ^= 1;
+        load["loadAndValidateDataFromPdb(other guid)"] = validate(&other, sig, age);
+        load["loadAndValidateDataFromPdb(no guid, sig)"] = validate(nullptr, sig, age);
+        {
+            Ptr<IDiaDataSource> v;
+            cf->CreateInstance(nullptr, IID_IDiaDataSource, (void **)&v);
+            Ptr<IStream> st;
+            HRESULT h = SHCreateStreamOnFileEx(argv[2], STGM_READ | STGM_SHARE_DENY_WRITE, 0, FALSE, nullptr, &st);
+            if (h == S_OK) {
+                h = v->loadDataFromIStream(st);
+                load["loadDataFromIStream"] = jstr(hrstr(h));
+                Ptr<IDiaSession> s2;
+                Ptr<IDiaSymbol> g2;
+                if (h == S_OK && v->openSession(&s2) == S_OK && s2->get_globalScope(&g2) == S_OK && g2) {
+                    LONG cnt = -1;
+                    Ptr<IDiaEnumSymbols> e2;
+                    if (g2->findChildren((enum SymTagEnum)0, nullptr, 0, &e2) == S_OK) e2->get_count(&cnt);
+                    load["loadDataFromIStream.globalScope.children"] = snum(cnt);
+                }
+            }
+        }
+        {
+            Ptr<IDiaDataSource> v;
+            cf->CreateInstance(nullptr, IID_IDiaDataSource, (void **)&v);
+            wchar_t self[MAX_PATH];
+            GetModuleFileNameW(nullptr, self, MAX_PATH);
+            load["loadDataFromPdb(not a pdb)"] = jstr(hrstr(v->loadDataFromPdb(self)));
+            load["loadDataFromPdb(twice)"] = jstr(hrstr(src->loadDataFromPdb(argv[2])));
+        }
     }
     ULONGLONG la = 0;
     HRESULT hl = session->get_loadAddress(&la);

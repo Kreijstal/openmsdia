@@ -55,7 +55,7 @@ $(GEN): tools/gen_dia.py $(SNAPSHOT)
 
 $(B)/dia_walk.exe: walker/dia_walk.cpp $(GEN)
 	@mkdir -p $(B)
-	$(CXX) $(WALK_CXXFLAGS) $< -loleaut32 -lole32 -luuid -o $@
+	$(CXX) $(WALK_CXXFLAGS) $< -loleaut32 -lole32 -luuid -lshlwapi -o $@
 
 corpus:
 	corpus/build.sh $(B)/corpus

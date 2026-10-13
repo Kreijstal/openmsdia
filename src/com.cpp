@@ -1237,17 +1237,88 @@ public:
             err = "PDB file not found";
             return (HRESULT)0x806D0005;  // E_PDB_NOT_FOUND, as observed
         }
+        {
+            uint8_t head[32] = {};
+            DWORD got = 0;
+            HANDLE f = CreateFileW(fp.c_str(), GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr,
+                                   OPEN_EXISTING, 0, nullptr);
+            if (f != INVALID_HANDLE_VALUE) {
+                ReadFile(f, head, sizeof head, &got, nullptr);
+                CloseHandle(f);
+            }
+            if (!isPdb(head, got)) {
+                err = "not a PDB file";
+                return (HRESULT)0x806D000C;  // E_PDB_FORMAT, as observed
+            }
+        }
         std::string e;
         auto model = Model::open(fromW(fp.c_str()), e);
         if (!model) {
             err = e;
-            return E_FAIL;
+            return (HRESULT)0x806D000C;
         }
         m = std::move(model);
         err.clear();
         return S_OK;
     }
     HRESULT STDMETHODCALLTYPE loadDataFromPdbEx(LPWSTR path, LONG) override { return loadDataFromPdb(path); }
+
+    // Error codes as observed: E_PDB_INVALID_SIG for a GUID or signature
+    // mismatch, E_PDB_INVALID_AGE for an age mismatch.
+    HRESULT STDMETHODCALLTYPE loadAndValidateDataFromPdb(LPWSTR path, GUID *guid, ULONG sig, ULONG age) override
+    {
+        HRESULT hr = loadDataFromPdb(path);
+        if (hr != S_OK) return hr;
+        Model::GUID70 g;
+        uint32_t s = 0, a = 0;
+        if (m->identity(g, s, a)) {
+            bool sigOk = guid ? memcmp(guid, g.b, 16) == 0 : s == sig;
+            if (!sigOk || a != age) {
+                m.reset();
+                err = !sigOk ? "PDB signature mismatch" : "PDB age mismatch";
+                return !sigOk ? (HRESULT)0x806D0006 : (HRESULT)0x806D0007;
+            }
+        }
+        return S_OK;
+    }
+    HRESULT STDMETHODCALLTYPE loadAndValidateDataFromPdbEx(LPWSTR path, GUID *guid, ULONG sig, ULONG age, LONG) override
+    {
+        return loadAndValidateDataFromPdb(path, guid, sig, age);
+    }
+
+    HRESULT STDMETHODCALLTYPE loadDataFromIStream(IStream *st) override
+    {
+        if (!st) return E_INVALIDARG;
+        if (m) return E_UNEXPECTED;
+        std::vector<uint8_t> data;
+        LARGE_INTEGER zero = {};
+        st->Seek(zero, STREAM_SEEK_SET, nullptr);
+        BYTE buf[65536];
+        for (;;) {
+            ULONG got = 0;
+            HRESULT h = st->Read(buf, sizeof buf, &got);
+            if (FAILED(h)) return h;
+            data.insert(data.end(), buf, buf + got);
+            if (got < sizeof buf) break;
+        }
+        if (!isPdb(data.data(), data.size())) return (HRESULT)0x806D000C;  // E_PDB_FORMAT, as observed
+        std::string e;
+        auto model = Model::openBuffer(std::move(data), e);
+        if (!model) {
+            err = e;
+            return (HRESULT)0x806D000C;
+        }
+        m = std::move(model);
+        err.clear();
+        return S_OK;
+    }
+    HRESULT STDMETHODCALLTYPE loadDataFromIStreamEx(IStream *st, LONG) override { return loadDataFromIStream(st); }
+
+    static bool isPdb(const uint8_t *p, size_t n)
+    {
+        static const char magic[] = "Microsoft C/C++ MSF 7.00\r\n\x1a" "DS\0\0\0";
+        return n >= 32 && memcmp(p, magic, 32) == 0;
+    }
     HRESULT STDMETHODCALLTYPE openSession(IDiaSession **p) override
     {
         if (!p) return E_POINTER;
