@@ -1,0 +1,83 @@
+name: ci
+
+# Builds OpenMSDIA's msdia140.dll, the walker and the test corpus (clang
+# and MSVC), checks exports and vtable layouts, then walks every corpus PDB
+# with the runner's real msdia140.dll (Visual Studio DIA SDK) and with ours
+# and reports the match score. PDBs, walker outputs and the score are
+# uploaded as artifacts; Microsoft binaries are never uploaded.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  amd64:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: CLANG64
+          update: true
+          install: >-
+            make
+            git
+            mingw-w64-clang-x86_64-clang
+            mingw-w64-clang-x86_64-lld
+            mingw-w64-clang-x86_64-llvm
+            mingw-w64-clang-x86_64-llvm-tools
+            mingw-w64-clang-x86_64-libc++
+            mingw-w64-clang-x86_64-zlib
+            mingw-w64-clang-x86_64-zstd
+            mingw-w64-clang-x86_64-python
+      - name: Locate the DIA SDK
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath
+          $dll = Join-Path $vs "DIA SDK\bin\amd64\msdia140.dll"
+          if (-not (Test-Path $dll)) { throw "not found: $dll" }
+          "MSDIA_DLL=$dll" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "VS_PATH=$vs" | Out-File -FilePath $env:GITHUB_ENV -Append
+          (Get-Item -LiteralPath $dll).VersionInfo.FileVersion
+      - name: Generated headers are up to date
+        run: |
+          python3 tools/gen_dia.py phase0/snapshots/msdia140-14.51.36257.0-amd64/typelib.json --out include/openmsdia
+          git diff --exit-code include/
+      - name: Build
+        run: make -j4 all
+      - name: Check exports, vtable layouts and imports
+        run: |
+          make check
+          echo "imports:"; llvm-readobj --coff-imports build/msdia140.dll | sed -n 's/^ *Name: //p' | sort -u
+      - name: Build the clang corpus
+        run: corpus/build.sh build/corpus
+      - name: Build the MSVC corpus
+        shell: pwsh
+        run: |
+          Import-Module (Join-Path $env:VS_PATH 'Common7\Tools\Microsoft.VisualStudio.DevShell.dll')
+          Enter-VsDevShell -VsInstallPath $env:VS_PATH -SkipAutomaticLocation -DevCmdArguments '-arch=x64 -host_arch=x64'
+          & corpus\build_msvc.ps1 build\corpus
+      - name: Walk the corpus with the real DLL and with ours
+        run: |
+          real=$(cygpath -u "$MSDIA_DLL")
+          walker/run_corpus.sh "$real" build/corpus build/real
+          walker/run_corpus.sh "$(cygpath -m build/msdia140.dll)" build/corpus build/ours
+      - name: Score
+        run: |
+          python3 tools/diff_walk.py --dirs build/real build/ours --top 40 \
+            --json build/score.json --markdown build/score.md | tee build/score.txt
+          cat build/score.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: openmsdia-amd64
+          path: |
+            build/msdia140.dll
+            build/dia_walk.exe
+            build/corpus/*.pdb
+            build/real/
+            build/ours/
+            build/score.*

@@ -1,6 +1,10 @@
 #include "shapes.hpp"
 
 // Freestanding runtime support for the corpus.
+#ifdef _MSC_VER
+#pragma function(memset, memcpy)
+extern "C" int __cdecl _purecall() { for (;;) {} }
+#endif
 extern "C" void __cxa_pure_virtual() { for (;;) {} }
 extern "C" void *memset(void *d, int c, unsigned long long n)
 {
