@@ -327,7 +327,9 @@ public:
         if (IsEqualIID(riid, IID_IUnknown) || IsEqualIID(riid, IID_IDiaTable) || IsEqualIID(riid, IID_IEnumUnknown)) {
             *ppv = static_cast<IDiaTable *>(this);
         } else if (inner && IsEqualIID(riid, innerIid)) {
-            *ppv = inner;
+            // The rows' enumerator; a separate object (DIA tables are
+            // queried for it and used through it).
+            return inner->QueryInterface(riid, ppv);
         } else {
             return E_NOINTERFACE;
         }
@@ -992,11 +994,15 @@ HRESULT DiaSourceFile::get_fileName(BSTR *p)
     *p = toBSTR(s->m->files()[idx].name);
     return S_OK;
 }
+// The real 14.30 DLL reports no checksum for the MD5 checksums clang
+// writes; we do the same for every kind until a PDB shows otherwise.
+static bool reportChecksums = false;
+
 HRESULT DiaSourceFile::get_checksumType(ULONG *p)
 {
     if (!p) return E_POINTER;
     const auto &f = s->m->files()[idx];
-    if (!f.checksumKind) return S_FALSE;
+    if (!f.checksumKind || !reportChecksums) return S_FALSE;
     *p = f.checksumKind;
     return S_OK;
 }
@@ -1004,7 +1010,7 @@ HRESULT DiaSourceFile::get_checksum(ULONG cb, ULONG *pcb, BYTE *data)
 {
     if (!pcb) return E_POINTER;
     const auto &f = s->m->files()[idx];
-    if (!f.checksumKind) {
+    if (!f.checksumKind || !reportChecksums) {
         *pcb = 0;
         return S_FALSE;
     }
@@ -1040,15 +1046,13 @@ HRESULT DiaSectionContrib::get_virtualAddress(ULONGLONG *p)
 }
 
 // Section contributions as an enumerator, aggregated into a DiaTable.
-class DiaEnumSectionContribs : public Stub_IDiaEnumSectionContribs<IDiaEnumSectionContribs> {
+class DiaEnumSectionContribs : public Stub_IDiaEnumSectionContribs<IDiaEnumSectionContribs>, Counted {
 public:
-    DiaTable *outer = nullptr;
+    OM_IUNKNOWN(&IID_IDiaEnumSectionContribs)
     DiaSession *s;
     size_t pos = 0;
-    explicit DiaEnumSectionContribs(DiaSession *s) : s(s) {}
-    ULONG STDMETHODCALLTYPE AddRef() override { return outer->AddRef(); }
-    ULONG STDMETHODCALLTYPE Release() override { return outer->Release(); }
-    HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void **ppv) override { return outer->QueryInterface(riid, ppv); }
+    explicit DiaEnumSectionContribs(DiaSession *s) : s(s) { s->AddRef(); }
+    ~DiaEnumSectionContribs() { s->Release(); }
     const std::vector<SectionContrib> &all() { return s->m->sectionContribs(); }
     HRESULT STDMETHODCALLTYPE get_count(LONG *p) override
     {
@@ -1081,6 +1085,49 @@ public:
         pos = 0;
         return S_OK;
     }
+    HRESULT STDMETHODCALLTYPE Clone(IDiaEnumSectionContribs **out) override
+    {
+        if (!out) return E_POINTER;
+        auto *c = new DiaEnumSectionContribs(s);
+        c->pos = pos;
+        *out = c;
+        return S_OK;
+    }
+};
+
+// Empty enumerators for tables this implementation has no rows for.
+class DiaEnumInjectedSources : public Stub_IDiaEnumInjectedSources<IDiaEnumInjectedSources>, Counted {
+public:
+    OM_IUNKNOWN(&IID_IDiaEnumInjectedSources)
+    HRESULT STDMETHODCALLTYPE get_count(LONG *p) override
+    {
+        if (!p) return E_POINTER;
+        *p = 0;
+        return S_OK;
+    }
+    HRESULT STDMETHODCALLTYPE Next(ULONG, IDiaInjectedSource **, ULONG *fetched) override
+    {
+        if (fetched) *fetched = 0;
+        return S_FALSE;
+    }
+    HRESULT STDMETHODCALLTYPE Reset() override { return S_OK; }
+};
+
+class DiaEnumInputAssemblyFiles : public Stub_IDiaEnumInputAssemblyFiles<IDiaEnumInputAssemblyFiles>, Counted {
+public:
+    OM_IUNKNOWN(&IID_IDiaEnumInputAssemblyFiles)
+    HRESULT STDMETHODCALLTYPE get_count(LONG *p) override
+    {
+        if (!p) return E_POINTER;
+        *p = 0;
+        return S_OK;
+    }
+    HRESULT STDMETHODCALLTYPE Next(ULONG, IDiaInputAssemblyFile **, ULONG *fetched) override
+    {
+        if (fetched) *fetched = 0;
+        return S_FALSE;
+    }
+    HRESULT STDMETHODCALLTYPE Reset() override { return S_OK; }
 };
 
 DiaTable::DiaTable(DiaSession *s, std::string name, LONG count, IUnknown *inner, IID innerIid)
@@ -1090,7 +1137,7 @@ DiaTable::DiaTable(DiaSession *s, std::string name, LONG count, IUnknown *inner,
 }
 DiaTable::~DiaTable()
 {
-    if (inner) delete static_cast<DiaEnumSectionContribs *>(inner);
+    if (inner) inner->Release();
     s->Release();
 }
 
@@ -1100,23 +1147,37 @@ DiaEnumTables::~DiaEnumTables() { s->Release(); }
 HRESULT DiaEnumTables::make(size_t i, IDiaTable **out)
 {
     Model &m = *s->m;
-    size_t lines = 0;
-    for (uint32_t k = 0, n = m.moduleCount(); k < n; k++) lines += m.lines((uint16_t)k).size();
+    std::vector<LineEntry> lines;
     switch (i) {
-    case 0: *out = new DiaTable(s, "Symbols", (LONG)m.children(m.exe).size(), nullptr, IID_IUnknown); return S_OK;
-    case 1: *out = new DiaTable(s, "SourceFiles", (LONG)m.files().size(), nullptr, IID_IUnknown); return S_OK;
-    case 2: *out = new DiaTable(s, "LineNumbers", (LONG)lines, nullptr, IID_IUnknown); return S_OK;
-    case 3: {
-        auto *e = new DiaEnumSectionContribs(s);
-        auto *t = new DiaTable(s, "Sections", (LONG)m.sectionContribs().size(), e, IID_IDiaEnumSectionContribs);
-        e->outer = t;
-        *out = t;
+    case 0: {
+        auto *e = new DiaEnumSymbols(s, m.children(m.exe));
+        *out = new DiaTable(s, "Symbols", (LONG)m.children(m.exe).size(), e, IID_IDiaEnumSymbols);
         return S_OK;
     }
-    case 4: *out = new DiaTable(s, "SegmentMap", 0, nullptr, IID_IUnknown); return S_OK;
-    case 5: *out = new DiaTable(s, "InjectedSource", 0, nullptr, IID_IUnknown); return S_OK;
+    case 1: {
+        std::vector<uint32_t> f;
+        for (uint32_t k = 0; k < m.files().size(); k++) f.push_back(k);
+        *out = new DiaTable(s, "SourceFiles", (LONG)f.size(), new DiaEnumSourceFiles(s, f), IID_IDiaEnumSourceFiles);
+        return S_OK;
+    }
+    case 2:
+        for (uint32_t k = 0, n = m.moduleCount(); k < n; k++)
+            for (auto &e : m.lines((uint16_t)k)) lines.push_back(e);
+        *out = new DiaTable(s, "LineNumbers", (LONG)lines.size(), new DiaEnumLineNumbers(s, lines),
+                            IID_IDiaEnumLineNumbers);
+        return S_OK;
+    case 3:
+        *out = new DiaTable(s, "Sections", (LONG)m.sectionContribs().size(), new DiaEnumSectionContribs(s),
+                            IID_IDiaEnumSectionContribs);
+        return S_OK;
+    case 4: *out = new DiaTable(s, "SegmentMap", (LONG)m.segmentCount(), nullptr, IID_IUnknown); return S_OK;
+    case 5:
+        *out = new DiaTable(s, "InjectedSource", 0, new DiaEnumInjectedSources(), IID_IDiaEnumInjectedSources);
+        return S_OK;
     case 6: *out = new DiaTable(s, "FrameData", 0, nullptr, IID_IUnknown); return S_OK;
-    case 7: *out = new DiaTable(s, "InputAssemblyFiles", 0, nullptr, IID_IUnknown); return S_OK;
+    case 7:
+        *out = new DiaTable(s, "InputAssemblyFiles", 0, new DiaEnumInputAssemblyFiles(), IID_IDiaEnumInputAssemblyFiles);
+        return S_OK;
     }
     return E_INVALIDARG;
 }

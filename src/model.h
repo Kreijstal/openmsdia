@@ -146,9 +146,14 @@ public:
     int moduleOf(SymIndexId compilandId) const;
     const std::vector<SectionContrib> &sectionContribs();
     std::vector<DebugStream> debugStreams();
+    uint32_t segmentCount();
 
     // Helpers used by the symbol classes.
     SymIndexId typeSym(llvm::codeview::TypeIndex ti);
+    llvm::codeview::TypeIndex fullDecl(llvm::codeview::TypeIndex ti);
+    std::map<uint32_t, llvm::codeview::TypeIndex> fwdCacheRaw;
+    std::map<llvm::codeview::TypeIndex, llvm::codeview::TypeIndex> fwdCache;
+    std::map<std::string, llvm::codeview::TypeIndex> fullByName;
     SymIndexId noType();
     std::string typeName(SymIndexId id);  // C-like spelling, for undecorated names
     std::string functionSignature(SymIndexId fn, bool isStatic);
@@ -158,6 +163,10 @@ public:
     // Per child: 1 when it was reached through a class's member list.
     std::vector<uint8_t> flagsOf(SymIndexId id);
     uint16_t udtOptions(SymIndexId id);
+    // DIA BasicType and length of a base type symbol (LLVM's own mapping
+    // differs for some CodeView kinds).
+    bool basicType(SymIndexId id, uint32_t &bt, uint32_t &len);
+    std::unordered_map<SymIndexId, uint32_t> simpleKinds;
     std::unordered_map<SymIndexId, std::vector<uint8_t>> childFlags;
     // For a function bound to a class method: the method's own name.
     std::string methodShortName(SymIndexId id);
@@ -200,8 +209,13 @@ private:
     std::map<std::string, uint32_t> fileIndex;
     std::vector<SectionContrib> contribs;
     bool contribsLoaded = false;
-    struct AddrEntry { uint32_t rva, len; SymIndexId id; PDB_SymType tag; };
-    std::vector<AddrEntry> addrMap;
+    struct AddrEntry {
+        uint32_t rva = 0, len = 0, sect = 0;
+        SymIndexId id = 0, parent = 0;
+        PDB_SymType tag = PDB_SymType::None;
+        std::string name;
+    };
+    std::vector<AddrEntry> addrMap, funcMap, blockMap, dataMap, publicMap;
     bool addrBuilt = false;
     SymIndexId noTypeId = 0;
     std::unordered_map<SymIndexId, OmSym *> omIndex;

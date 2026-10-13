@@ -430,9 +430,11 @@ public:
     bool bitfield = false;
     uint32_t bitPos = 0, bitLen = 0;
     Variant value;
-    bool fromGlobalsConstant = false;
+    bool staticConst = false;  // a static member defined by an S_CONSTANT
 
-    bool noChildren() const override { return k == Constant; }
+    bool fromGlobals = false;
+    bool localConst = false;  // S_CONSTANT inside a function
+    bool noChildren() const override { return (k == Constant && !localConst) || fromGlobals; }
 
     bool prop(Prop p, Val &v) const override
     {
@@ -455,7 +457,7 @@ public:
             v = Val::u_((uint32_t)access);
             return true;
         case P_locationType:
-            if (k == Constant || k == Enumerator) v = Val::u_((uint32_t)PDB_LocType::Constant);
+            if (k == Constant || k == Enumerator || staticConst) v = Val::u_((uint32_t)PDB_LocType::Constant);
             else if (k == Member) v = Val::u_((uint32_t)(bitfield ? PDB_LocType::BitField : PDB_LocType::ThisRel));
             else v = Val::u_((uint32_t)PDB_LocType::Static);
             return true;
@@ -476,7 +478,7 @@ public:
         case P_relativeVirtualAddress: if (!hasAddr) return false; v = Val::u_(M->rva(seg, off)); return true;
         case P_virtualAddress: if (!hasAddr) return false; v = Val::u_(M->rva(seg, off) + M->loadAddress); return true;
         case P_value:
-            if (k != Constant && k != Enumerator) return false;
+            if (k != Constant && k != Enumerator && !staticConst) return false;
             v.kind = Val::Var;
             v.var = value;
             return true;
@@ -637,6 +639,46 @@ public:
     }
 };
 
+// An inlined call site (S_INLINESITE).
+class OmInlineSite : public OmSym {
+public:
+    OmInlineSite(NativeSession &s, SymIndexId id, uint16_t modi, uint32_t off, uint32_t end)
+        : OmSym(s, PDB_SymType::InlineSite, id), modi(modi), off(off), end(end) {}
+    uint16_t modi;
+    uint32_t off, end;
+    uint16_t seg = 0;
+    uint32_t start = 0;  // section offset of the first code range
+    std::string nm;
+    TypeIndex type;
+    SymIndexId inlinee = 0, func = 0;
+    bool prop(Prop p, Val &v) const override
+    {
+        uint32_t rva = M->rva(seg, start);
+        switch (p) {
+        case P_name: v = Val::str(nm); return true;
+        case P_undecoratedName: v = Val::str(""); return true;
+        case P_lexicalParent: case P_lexicalParentId: v = Val::sym(lexParent); return true;
+        case P_type: case P_typeId: v = Val::sym(M->typeSym(type)); return true;
+        case P_inlinee: case P_inlineeId: v = Val::sym(inlinee); return true;
+        case P_addressSection: v = Val::u_(seg); return true;
+        case P_addressOffset: v = Val::u_(start); return true;
+        case P_relativeVirtualAddress: v = Val::u_(rva); return true;
+        case P_virtualAddress: v = Val::u_(rva + M->loadAddress); return true;
+        case P_locationType: v = Val::u_((uint32_t)PDB_LocType::Static); return true;
+        default: return false;
+        }
+    }
+    void children(std::vector<SymIndexId> &out) const override;
+};
+
+// The inlinee of an inline site: the real 14.30 DLL returns a symbol with
+// SymTagNull here.
+class OmInlinee : public OmSym {
+public:
+    OmInlinee(NativeSession &s, SymIndexId id) : OmSym(s, PDB_SymType::None, id) {}
+    bool prop(Prop, Val &) const override { return false; }
+};
+
 // A nested type entry (LF_NESTTYPE) of a class: the type under its nested
 // name, with the class as class parent.
 class OmNested : public OmSym {
@@ -739,7 +781,90 @@ bool Model::sectOff(uint32_t r, uint32_t &sect, uint32_t &off) const
     return ns.addressForRVA(r, sect, off);
 }
 
-SymIndexId Model::typeSym(TypeIndex ti) { return ns.getSymbolCache().findSymbolByTypeIndex(ti); }
+SymIndexId Model::typeSym(TypeIndex ti)
+{
+    return ns.getSymbolCache().findSymbolByTypeIndex(fullDecl(ti));
+}
+
+// Forward references resolved to their definition. LLVM's
+// TpiStream::findFullDeclForForwardRef relies on the TPI hash buckets and
+// misses some definitions in lld-linked optimized PDBs; this falls back to
+// matching the unique name (or name) over the whole stream.
+TypeIndex Model::fullDecl(TypeIndex ti)
+{
+    if (ti.isSimple() || ti.isNoneType()) return ti;
+    auto *types = tpiTypes(ns);
+    if (!types) return ti;
+    CVType t = types->getType(ti);
+    if (!isUdtForwardRef(t)) return ti;
+    auto it = fwdCache.find(ti);
+    if (it != fwdCache.end()) return it->second;
+    if (fullByName.empty()) {
+        fullByName.emplace("", TypeIndex::None());
+        for (auto i = types->getFirst(); i; i = types->getNext(*i)) {
+            CVType c = types->getType(*i);
+            if (isUdtForwardRef(c)) continue;
+            std::string key;
+            switch (c.kind()) {
+            case LF_CLASS: case LF_STRUCTURE: case LF_INTERFACE: {
+                ClassRecord cr(TypeRecordKind::Class);
+                if (!deserType(c, cr)) continue;
+                key = std::to_string((int)c.kind()) + ":" + (cr.hasUniqueName() ? cr.getUniqueName() : cr.getName()).str();
+                fullByName.emplace(std::to_string((int)c.kind()) + "=" + cr.getName().str(), *i);
+                break;
+            }
+            case LF_UNION: {
+                UnionRecord ur(TypeRecordKind::Union);
+                if (!deserType(c, ur)) continue;
+                key = std::to_string((int)c.kind()) + ":" + (ur.hasUniqueName() ? ur.getUniqueName() : ur.getName()).str();
+                fullByName.emplace(std::to_string((int)c.kind()) + "=" + ur.getName().str(), *i);
+                break;
+            }
+            case LF_ENUM: {
+                EnumRecord er(TypeRecordKind::Enum);
+                if (!deserType(c, er)) continue;
+                key = std::to_string((int)c.kind()) + ":" + (er.hasUniqueName() ? er.getUniqueName() : er.getName()).str();
+                fullByName.emplace(std::to_string((int)c.kind()) + "=" + er.getName().str(), *i);
+                break;
+            }
+            default:
+                continue;
+            }
+            fullByName.emplace(key, *i);
+        }
+    }
+    std::string key, plain;
+    switch (t.kind()) {
+    case LF_CLASS: case LF_STRUCTURE: case LF_INTERFACE: {
+        ClassRecord cr(TypeRecordKind::Class);
+        if (deserType(t, cr))
+            key = std::to_string((int)t.kind()) + ":" + (cr.hasUniqueName() ? cr.getUniqueName() : cr.getName()).str(),
+            plain = std::to_string((int)t.kind()) + "=" + cr.getName().str();
+        break;
+    }
+    case LF_UNION: {
+        UnionRecord ur(TypeRecordKind::Union);
+        if (deserType(t, ur))
+            key = std::to_string((int)t.kind()) + ":" + (ur.hasUniqueName() ? ur.getUniqueName() : ur.getName()).str(),
+            plain = std::to_string((int)t.kind()) + "=" + ur.getName().str();
+        break;
+    }
+    case LF_ENUM: {
+        EnumRecord er(TypeRecordKind::Enum);
+        if (deserType(t, er))
+            key = std::to_string((int)t.kind()) + ":" + (er.hasUniqueName() ? er.getUniqueName() : er.getName()).str(),
+            plain = std::to_string((int)t.kind()) + "=" + er.getName().str();
+        break;
+    }
+    default:
+        break;
+    }
+    auto f = fullByName.find(key);
+    if (f == fullByName.end() || f->second.isNoneType()) f = fullByName.find(plain);
+    TypeIndex r = (f != fullByName.end() && !f->second.isNoneType()) ? f->second : ti;
+    fwdCache[ti] = r;
+    return r;
+}
 
 SymIndexId Model::noType()
 {
@@ -872,7 +997,51 @@ bool Model::get(SymIndexId id, Prop p, Val &v)
     case P_objectPointerType:
         if (t == PDB_SymType::FunctionSig) {
             if (!r.getClassParentId()) return false;
-            break;
+            auto *types = tpiTypes(ns);
+            TypeIndex ti = typeIndexOf(id);
+            if (!types || ti.isNoneType()) return false;
+            MemberFunctionRecord mf(TypeRecordKind::MemberFunction);
+            if (!deserType(types->getType(ti), mf) || mf.getThisType().isNoneType()) return false;
+            v = Val::sym(typeSym(mf.getThisType()));
+            return true;
+        }
+        break;
+    case P_baseType:
+        if (t == PDB_SymType::BuiltinType) {
+            uint32_t bt, len;
+            if (basicType(id, bt, len)) {
+                v = Val::u_(bt);
+                return true;
+            }
+        } else if (t == PDB_SymType::Enum) {
+            Val ty;
+            uint32_t bt, len;
+            if (get(id, P_typeId, ty) && basicType((SymIndexId)ty.u, bt, len)) {
+                v = Val::u_(bt);
+                return true;
+            }
+        }
+        break;
+    case P_machineType:
+        if (t == PDB_SymType::Exe) {
+            auto dbi = ns.getPDBFile().getPDBDbiStream();
+            if (!dbi) {
+                consumeError(dbi.takeError());
+                return false;
+            }
+            v = Val::u_((uint32_t)dbi->getMachineType());
+            return true;
+        }
+        break;
+    case P_signature:
+        if (t == PDB_SymType::Exe) {
+            auto info = ns.getPDBFile().getPDBInfoStream();
+            if (!info) {
+                consumeError(info.takeError());
+                return false;
+            }
+            v = Val::u_(info->getSignature());
+            return true;
         }
         break;
     case P_sealed:
@@ -1100,8 +1269,90 @@ void Model::moduleChildren(uint16_t modi, SymIndexId parent, uint32_t begin, uin
             }
             continue;
         }
+        if (k == S_INLINESITE && func) {
+            InlineSiteSym is(SymbolRecordKind::InlineSiteSym);
+            if (!deser(*I, is)) continue;
+            auto it = recordSyms.find(key);
+            SymIndexId id;
+            if (it != recordSyms.end()) {
+                id = it->second;
+            } else {
+                id = make<OmInlineSite>(modi, off, is.End);
+                auto *site = static_cast<OmInlineSite *>(ours(id));
+                site->lexParent = parent;
+                site->func = func;
+                auto *fn = static_cast<OmFunction *>(ours(func));
+                site->seg = fn->ps.Segment;
+                site->start = fn->ps.CodeOffset;
+                for (auto &a : is.annotations()) {
+                    if (a.OpCode == BinaryAnnotationsOpCode::CodeOffset ||
+                        a.OpCode == BinaryAnnotationsOpCode::ChangeCodeOffset ||
+                        a.OpCode == BinaryAnnotationsOpCode::ChangeCodeOffsetAndLineOffset) {
+                        site->start += a.U1;
+                        break;
+                    }
+                    if (a.OpCode == BinaryAnnotationsOpCode::ChangeCodeLengthAndCodeOffset) {
+                        site->start += a.U2;
+                        break;
+                    }
+                }
+                auto ipi = ns.getPDBFile().getPDBIpiStream();
+                if (ipi) {
+                    CVType ft = ipi->typeCollection().getType(is.Inlinee);
+                    if (ft.kind() == LF_FUNC_ID) {
+                        FuncIdRecord fr(TypeRecordKind::FuncId);
+                        if (deserType(ft, fr)) {
+                            site->nm = fr.getName().str();
+                            site->type = fr.getFunctionType();
+                            if (!fr.getParentScope().isNoneType()) {
+                                StringIdRecord sr(TypeRecordKind::StringId);
+                                if (deserType(ipi->typeCollection().getType(fr.getParentScope()), sr))
+                                    site->nm = sr.getString().str() + "::" + site->nm;
+                            }
+                        }
+                    } else if (ft.kind() == LF_MFUNC_ID) {
+                        MemberFuncIdRecord fr(TypeRecordKind::MemberFuncId);
+                        if (deserType(ft, fr)) {
+                            site->nm = name(typeSym(fr.getClassType())) + "::" + fr.getName().str();
+                            site->type = fr.getFunctionType();
+                        }
+                    }
+                } else {
+                    consumeError(ipi.takeError());
+                }
+                site->inlinee = make<OmInlinee>();
+                recordSyms[key] = id;
+            }
+            out.push_back(id);
+            if (is.End > off) {
+                I = syms.at(is.End);
+                if (I == syms.end()) break;
+            }
+            continue;
+        }
+        if (k == S_CONSTANT && func) {
+            ConstantSym cs(SymbolRecordKind::ConstantSym);
+            if (!deser(*I, cs)) continue;
+            auto it = recordSyms.find(key);
+            SymIndexId id;
+            if (it != recordSyms.end()) {
+                id = it->second;
+            } else {
+                id = make<OmData>(OmData::Constant);
+                auto *d = static_cast<OmData *>(ours(id));
+                d->nm = cs.Name.str();
+                d->dataKind = PDB_DataKind::Constant;
+                d->type = cs.Type;
+                d->value = variantOf(cs.Value);
+                d->lexParent = parent;
+                d->localConst = true;
+                recordSyms[key] = id;
+            }
+            out.push_back(id);
+            continue;
+        }
         if (opensScope(k)) {
-            // Skip other scopes (thunks, inline sites) for now.
+            // Skip other scopes (thunks, separated code) for now.
             uint32_t e = 0;
             if (k == S_THUNK32) {
                 Thunk32Sym t(SymbolRecordKind::Thunk32Sym);
@@ -1178,6 +1429,18 @@ void OmFunction::children(std::vector<SymIndexId> &out) const
     auto I = syms.at(off);
     uint32_t begin = std::next(I).offset();
     m.moduleChildren(modi, getSymIndexId(), begin, ps.End, out, getSymIndexId());
+}
+
+void OmInlineSite::children(std::vector<SymIndexId> &out) const
+{
+    auto ms = M->ns.getModuleDebugStream(modi);
+    if (!ms) {
+        consumeError(ms.takeError());
+        return;
+    }
+    CVSymbolArray syms = ms->getSymbolArray();
+    auto I = syms.at(off);
+    M->moduleChildren(modi, getSymIndexId(), std::next(I).offset(), end, out, func);
 }
 
 void OmBlock::children(std::vector<SymIndexId> &out) const
@@ -1553,6 +1816,13 @@ void Model::bindStaticMember(OmData *d)
         return;
     }
     for (auto &r : gs->findRecordsByName(q, *ss)) {
+        if (r.second.kind() == S_CONSTANT) {
+            ConstantSym cs(SymbolRecordKind::ConstantSym);
+            if (!deser(r.second, cs)) continue;
+            d->staticConst = true;
+            d->value = variantOf(cs.Value);
+            return;
+        }
         if (r.second.kind() != S_GDATA32 && r.second.kind() != S_LDATA32) continue;
         DataSym ds(SymbolRecordKind::DataSym);
         if (!deser(r.second, ds)) continue;
@@ -1604,14 +1874,11 @@ SymIndexId Model::globalData(const DataSym &ds, SymbolKind k)
         d->seg = ds.Segment;
         d->off = ds.DataOffset;
         d->hasAddr = true;
-        if (k == S_GDATA32 || k == S_GTHREAD32) {
-            d->dataKind = PDB_DataKind::Global;
-            d->lexParent = exe;
-        } else {
-            d->dataKind = PDB_DataKind::FileStatic;
-            uint16_t modi;
-            d->lexParent = ns.moduleIndexForSectOffset(ds.Segment, ds.DataOffset, modi) ? compiland(modi) : exe;
-        }
+        // The globals stream's copy is a symbol of its own, under the exe,
+        // whose findChildren fails with S_FALSE (as observed).
+        d->dataKind = (k == S_GDATA32 || k == S_GTHREAD32) ? PDB_DataKind::Global : PDB_DataKind::FileStatic;
+        d->lexParent = exe;
+        d->fromGlobals = true;
         return id;
     });
 }
@@ -2054,6 +2321,67 @@ const std::vector<SectionContrib> &Model::sectionContribs()
     return contribs;
 }
 
+uint32_t Model::segmentCount()
+{
+    auto dbi = ns.getPDBFile().getPDBDbiStream();
+    if (!dbi) {
+        consumeError(dbi.takeError());
+        return 0;
+    }
+    return (uint32_t)dbi->getSectionMap().size();
+}
+
+bool Model::basicType(SymIndexId id, uint32_t &bt, uint32_t &len)
+{
+    // DIA's BasicType for each CodeView simple type kind.
+    struct M { SimpleTypeKind k; uint32_t bt, len; };
+    static const M table[] = {
+        {SimpleTypeKind::None, 0, 0},           {SimpleTypeKind::Void, 1, 0},
+        {SimpleTypeKind::NotTranslated, 0, 0},  {SimpleTypeKind::HResult, 31, 4},
+        {SimpleTypeKind::SignedCharacter, 6, 1}, {SimpleTypeKind::UnsignedCharacter, 7, 1},
+        {SimpleTypeKind::NarrowCharacter, 2, 1}, {SimpleTypeKind::WideCharacter, 3, 2},
+        {SimpleTypeKind::Character16, 32, 2},   {SimpleTypeKind::Character32, 33, 4},
+        {SimpleTypeKind::Character8, 34, 1},    {SimpleTypeKind::SByte, 6, 1},
+        {SimpleTypeKind::Byte, 7, 1},           {SimpleTypeKind::Int16Short, 6, 2},
+        {SimpleTypeKind::UInt16Short, 7, 2},    {SimpleTypeKind::Int16, 6, 2},
+        {SimpleTypeKind::UInt16, 7, 2},         {SimpleTypeKind::Int32Long, 13, 4},
+        {SimpleTypeKind::UInt32Long, 14, 4},    {SimpleTypeKind::Int32, 6, 4},
+        {SimpleTypeKind::UInt32, 7, 4},         {SimpleTypeKind::Int64Quad, 6, 8},
+        {SimpleTypeKind::UInt64Quad, 7, 8},     {SimpleTypeKind::Int64, 6, 8},
+        {SimpleTypeKind::UInt64, 7, 8},         {SimpleTypeKind::Int128Oct, 6, 16},
+        {SimpleTypeKind::UInt128Oct, 7, 16},    {SimpleTypeKind::Int128, 6, 16},
+        {SimpleTypeKind::UInt128, 7, 16},       {SimpleTypeKind::Float16, 8, 2},
+        {SimpleTypeKind::Float32, 8, 4},        {SimpleTypeKind::Float64, 8, 8},
+        {SimpleTypeKind::Float80, 8, 10},       {SimpleTypeKind::Float128, 8, 16},
+        {SimpleTypeKind::Boolean8, 10, 1},      {SimpleTypeKind::Boolean16, 10, 2},
+        {SimpleTypeKind::Boolean32, 10, 4},     {SimpleTypeKind::Boolean64, 10, 8},
+    };
+    if (simpleKinds.empty()) {
+        for (auto &e : table)
+            if (SymIndexId s = typeSym(TypeIndex(e.k))) simpleKinds.emplace(s, (uint32_t)e.k);
+        simpleKinds.emplace(0, 0);
+    }
+    uint32_t kind;
+    auto it = simpleKinds.find(id);
+    if (it != simpleKinds.end()) {
+        kind = it->second;
+    } else {
+        TypeIndex ti = typeIndexOf(id);
+        auto *types = tpiTypes(ns);
+        if (!types || ti.isNoneType() || ti.isSimple() || types->getType(ti).kind() != LF_MODIFIER) return false;
+        ModifierRecord mr(TypeRecordKind::Modifier);
+        if (!deserType(types->getType(ti), mr) || !mr.getModifiedType().isSimple()) return false;
+        kind = (uint32_t)mr.getModifiedType().getSimpleKind();
+    }
+    for (auto &e : table)
+        if ((uint32_t)e.k == kind) {
+            bt = e.bt;
+            len = e.len;
+            return true;
+        }
+    return false;
+}
+
 std::vector<DebugStream> Model::debugStreams()
 {
     std::vector<DebugStream> out;
@@ -2099,67 +2427,123 @@ void Model::buildAddressMap()
 {
     if (addrBuilt) return;
     addrBuilt = true;
+    auto entry = [&](SymIndexId k, AddrEntry &e) {
+        Val a, l, sec;
+        if (!get(k, P_relativeVirtualAddress, a) || !get(k, P_addressSection, sec)) return false;
+        e.rva = (uint32_t)a.u;
+        e.sect = (uint32_t)sec.u;
+        e.len = 0;
+        if (get(k, P_length, l)) {
+            e.len = (uint32_t)l.u;
+        } else {
+            Val ty;
+            if (get(k, P_type, ty) && get((SymIndexId)ty.u, P_length, l)) e.len = (uint32_t)l.u;
+        }
+        e.id = k;
+        e.tag = tag(k);
+        e.name = name(k);
+        return true;
+    };
+    // Functions, their blocks and static locals; module-level data.
+    std::function<void(SymIndexId, SymIndexId)> scope = [&](SymIndexId parent, SymIndexId func) {
+        for (SymIndexId k : children(parent)) {
+            PDB_SymType kt = tag(k);
+            AddrEntry e;
+            if (kt == PDB_SymType::Function && ours(k) && !func) {
+                if (!entry(k, e)) continue;
+                funcMap.push_back(e);
+                scope(k, k);
+            } else if (kt == PDB_SymType::Block) {
+                if (!entry(k, e)) continue;
+                e.parent = func;
+                blockMap.push_back(e);
+                scope(k, func);
+            } else if (kt == PDB_SymType::Data) {
+                if (entry(k, e)) dataMap.push_back(e);
+            }
+        }
+    };
     for (SymIndexId c : children(exe)) {
         PDB_SymType t = tag(c);
+        AddrEntry e;
         if (t == PDB_SymType::Compiland) {
-            for (SymIndexId k : children(c)) {
-                PDB_SymType kt = tag(k);
-                if (kt != PDB_SymType::Function && kt != PDB_SymType::Data) continue;
-                Val a, l;
-                if (!get(k, P_relativeVirtualAddress, a)) continue;
-                uint32_t len = 0;
-                if (get(k, P_length, l)) len = (uint32_t)l.u;
-                else if (kt == PDB_SymType::Data) {
-                    Val ty;
-                    if (get(k, P_type, ty) && get((SymIndexId)ty.u, P_length, l)) len = (uint32_t)l.u;
-                }
-                addrMap.push_back({(uint32_t)a.u, len, k, kt});
-            }
-        } else if (t == PDB_SymType::Data || t == PDB_SymType::PublicSymbol) {
-            OmData *d = t == PDB_SymType::Data ? static_cast<OmData *>(ours(c)) : nullptr;
-            if (d && (d->k != OmData::Global)) continue;
-            Val a, l;
-            if (!get(c, P_relativeVirtualAddress, a)) continue;
-            uint32_t len = 0;
-            if (get(c, P_length, l)) len = (uint32_t)l.u;
-            else {
-                Val ty;
-                if (get(c, P_type, ty) && get((SymIndexId)ty.u, P_length, l)) len = (uint32_t)l.u;
-            }
-            addrMap.push_back({(uint32_t)a.u, len, c, t});
+            scope(c, 0);
+        } else if (t == PDB_SymType::PublicSymbol) {
+            if (entry(c, e)) publicMap.push_back(e);
+        } else if (t == PDB_SymType::Data) {
+            auto *d = static_cast<OmData *>(ours(c));
+            if (d && d->fromGlobals && d->dataKind == PDB_DataKind::Global && entry(c, e)) dataMap.push_back(e);
         }
     }
-    std::sort(addrMap.begin(), addrMap.end(), [](const AddrEntry &a, const AddrEntry &b) {
-        return a.rva < b.rva || (a.rva == b.rva && a.id < b.id);
+    auto byAddr = [](const AddrEntry &a, const AddrEntry &b) {
+        if (a.rva != b.rva) return a.rva < b.rva;
+        return a.name < b.name;
+    };
+    for (auto *m : {&funcMap, &blockMap, &dataMap, &publicMap}) std::stable_sort(m->begin(), m->end(), byAddr);
+    // Symbols by address: functions and data, and publics where neither is.
+    std::set<uint32_t> covered;
+    for (auto *m : {&funcMap, &dataMap})
+        for (auto &e : *m) {
+            addrMap.push_back(e);
+            covered.insert(e.rva);
+        }
+    for (auto &e : publicMap)
+        if (!covered.count(e.rva)) {
+            addrMap.push_back(e);
+            covered.insert(e.rva);
+        }
+    std::stable_sort(addrMap.begin(), addrMap.end(), [](const AddrEntry &a, const AddrEntry &b) {
+        return a.rva < b.rva;
     });
-    addrMap.erase(std::unique(addrMap.begin(), addrMap.end(),
-                              [](const AddrEntry &a, const AddrEntry &b) { return a.id == b.id; }),
-                  addrMap.end());
 }
 
 SymIndexId Model::findByRVA(uint32_t r, PDB_SymType want, int32_t *disp)
 {
     buildAddressMap();
-    // Innermost block of a function when asked for blocks.
-    const AddrEntry *best = nullptr;
-    auto rank = [](PDB_SymType t) {
-        switch (t) {
-        case PDB_SymType::Function: return 0;
-        case PDB_SymType::Data: return 1;
-        case PDB_SymType::PublicSymbol: return 2;
-        default: return 3;
-        }
+    uint32_t sect = 0, off = 0;
+    if (!sectOff(r, sect, off)) return 0;
+    auto containing = [&](const std::vector<AddrEntry> &m) -> const AddrEntry * {
+        const AddrEntry *best = nullptr;
+        for (auto &e : m)
+            if (r >= e.rva && r < e.rva + e.len && (!best || e.rva >= best->rva)) best = &e;
+        return best;
     };
-    for (auto &e : addrMap) {
-        if (want != PDB_SymType::None && want != e.tag) continue;
-        bool inside = r >= e.rva && r < e.rva + std::max<uint32_t>(e.len, 1);
-        if (!inside) continue;
-        if (!best || rank(e.tag) < rank(best->tag) || (rank(e.tag) == rank(best->tag) && e.rva > best->rva))
-            best = &e;
+    auto preceding = [&](const std::vector<AddrEntry> &m) -> const AddrEntry * {
+        const AddrEntry *best = nullptr;
+        for (auto &e : m)
+            if (e.sect == sect && e.rva <= r && (!best || e.rva > best->rva)) best = &e;
+        return best;
+    };
+    auto innermostBlock = [&](SymIndexId func) -> const AddrEntry * {
+        const AddrEntry *best = nullptr;
+        for (auto &e : blockMap)
+            if (e.parent == func && r >= e.rva && r < e.rva + e.len && (!best || e.len <= best->len)) best = &e;
+        return best;
+    };
+    const AddrEntry *hit = nullptr;
+    switch (want) {
+    case PDB_SymType::Function: hit = containing(funcMap); break;
+    case PDB_SymType::Block:
+        if (auto *f = containing(funcMap)) hit = innermostBlock(f->id);
+        break;
+    case PDB_SymType::Data: hit = preceding(dataMap); break;
+    case PDB_SymType::PublicSymbol: hit = preceding(publicMap); break;
+    case PDB_SymType::None:
+        if (auto *f = containing(funcMap)) {
+            hit = innermostBlock(f->id);
+            if (!hit) hit = f;
+        } else if (auto *d = containing(dataMap)) {
+            hit = d;
+        } else {
+            hit = preceding(publicMap);
+        }
+        break;
+    default:
+        break;
     }
-    if (!best) return 0;
-    if (disp) *disp = (int32_t)(r - best->rva);
-    return best->id;
+    if (!hit) return 0;
+    if (disp) *disp = (int32_t)(r - hit->rva);
+    return hit->id;
 }
 
 std::vector<SymIndexId> Model::symbolsByAddr()
