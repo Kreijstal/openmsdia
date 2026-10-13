@@ -54,7 +54,26 @@ def getter_universe(*symbol_maps):
     return u
 
 
+def lookup(S, path):
+    """Find `path` in S, following @seen redirects of its ancestors: the two
+    implementations may expand a shared symbol under different parents."""
+    if path in S:
+        return path
+    parts = path.split("/")
+    for i in range(len(parts) - 1, 0, -1):
+        q = "/".join(parts[:i])
+        obj = S.get(q)
+        if obj is not None and "@seen" in obj:
+            alt = obj["@seen"] + "/" + "/".join(parts[i:])
+            if alt != path:
+                return lookup(S, alt) if alt.count("/") < 64 else None
+    return None
+
+
 def resolve(S, path):
+    path = lookup(S, path)
+    if path is None:
+        return None
     obj = S.get(path)
     for _ in range(4):
         if obj is None or "@seen" not in obj:
@@ -70,6 +89,8 @@ class Score:
         self.examples = collections.defaultdict(list)
         self.missing = collections.Counter()   # section -> records missing in ours
         self.extra = collections.Counter()
+        self.missing_paths = []
+        self.extra_paths = []
 
     def cmp(self, section, field, a, b, where):
         st = self.prop[(section, field)]
@@ -109,14 +130,16 @@ def compare(real, ours, sc, name):
         o = resolve(OS, path)
         if o is None:
             sc.missing["symbols"] += 1
+            sc.missing_paths.append(f"{name}:{path}")
             o = {}
         else:
             o = expand(o, U)
         for f, v in r.items():
             sc.cmp("symbols", f, v, o.get(f, "<missing symbol>" if not o else None), f"{name}:{path}")
     for path in OS:
-        if path not in RS:
+        if lookup(RS, path) is None:
             sc.extra["symbols"] += 1
+            sc.extra_paths.append(f"{name}:{path}")
     # Lines: per (compiland|file) key, entries in order.
     for sect in ("lines",):
         R, O = real.get(sect, {}), ours.get(sect, {})
@@ -204,6 +227,17 @@ def main():
             extra = f", {sc.missing[s]} records missing, {sc.extra[s]} extra" if (sc.missing[s] or sc.extra[s]) else ""
             lines.append(f"  {s:14s} {sm}/{st} = {pct(sm, st):.1f}%{extra}")
     print("\n".join(lines))
+    def tags(paths):
+        c = collections.Counter(p.rsplit("/", 1)[-1].split(":", 1)[0] for p in paths)
+        return ", ".join(f"{k} {v}" for k, v in c.most_common())
+    if sc.missing_paths:
+        print(f"\nmissing symbols by tag: {tags(sc.missing_paths)}")
+        for p in sc.missing_paths[: a.top // 2]:
+            print("  -", p)
+    if sc.extra_paths:
+        print(f"extra symbols by tag: {tags(sc.extra_paths)}")
+        for p in sc.extra_paths[: a.top // 2]:
+            print("  +", p)
     worst = sorted(sc.prop.items(), key=lambda kv: kv[1][0] - kv[1][1])
     print(f"\ntop mismatches (field: matched/total):")
     for (s, f), (mm, tt) in worst[: a.top]:
