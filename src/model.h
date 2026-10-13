@@ -75,7 +75,7 @@ struct Variant {
 
 // A property value.
 struct Val {
-    enum Kind { None, U, I, Str, Sym, Guid, Var } kind = None;
+    enum Kind { None, U, I, Str, Sym, Guid, Var, Err } kind = None;  // Err: the getter fails with HRESULT u
     uint64_t u = 0;
     int64_t i = 0;
     std::string s;
@@ -168,6 +168,7 @@ public:
     uint32_t rva(uint32_t sect, uint32_t off) const { return pdb->rva(sect, off); }
     bool sectOff(uint32_t rva, uint32_t &sect, uint32_t &off) const { return pdb->sectOff(rva, sect, off); }
     SymIndexId findByRVA(uint32_t rva, SymTag tag, int32_t *disp = nullptr);
+    bool inLastSection(uint32_t rva) const { return pdb->inLastSection(rva); }
     std::vector<SymIndexId> symbolsByAddr();
 
     // Lines and files.
@@ -192,6 +193,16 @@ public:
     SymIndexId noType();
     std::string typeName(SymIndexId id);  // C-like spelling, for undecorated names
     std::string functionSignature(SymIndexId fn, bool isStatic, bool complete = false);
+    // The undecorated name of the public symbol at a function's address
+    // (its own name for a C public); false when there is none.
+    bool publicSignature(SymIndexId fn, bool complete, std::string &out);
+    // Callees: the position in their S_CALLEES record (-1 for others).
+    int calleeIndex(SymIndexId id);
+    // The function of an IPI function id (LF_FUNC_ID / LF_MFUNC_ID): its
+    // qualified name, function type and the function symbol, if any.
+    bool funcIdName(llvm::codeview::TypeIndex funcId, std::string &name, llvm::codeview::TypeIndex &type);
+    SymIndexId funcIdTarget(llvm::codeview::TypeIndex funcId, std::string &name, llvm::codeview::TypeIndex &type);
+
 
     llvm::codeview::TypeIndex typeIndexOf(SymIndexId id);
     // The record of a (possibly modified) UDT or enum, resolved to its full
@@ -200,6 +211,10 @@ public:
     const std::vector<SymIndexId> &publics();
     // Per child: 1 when it was reached through a class's member list.
     std::vector<uint8_t> flagsOf(SymIndexId id);
+    // Per child: the class parent this enumeration reports for it (0: its
+    // own). FunctionArgType symbols are shared by the function types using
+    // their argument list, and each enumeration names its function type.
+    std::vector<SymIndexId> viewsOf(SymIndexId id);
     uint16_t udtOptions(SymIndexId id);
     // DIA BasicType and length of a base type symbol.
     bool basicType(SymIndexId id, uint32_t &bt, uint32_t &len);
@@ -254,11 +269,13 @@ private:
     std::vector<std::unique_ptr<Sym>> syms;
     std::map<llvm::codeview::TypeIndex, SymIndexId> typeSyms;
     std::map<uint32_t, SymIndexId> typedefSyms;
+    std::unordered_map<SymIndexId, std::vector<SymIndexId>> childViews;
     std::vector<SymIndexId> compilands;
     std::unordered_map<SymIndexId, std::vector<SymIndexId>> childCache;
     std::unordered_map<SymIndexId, bool> noChildCache;
     std::map<std::pair<uint16_t, uint32_t>, SymIndexId> procByRecord;
     std::map<std::pair<uint16_t, uint32_t>, SymIndexId> recordSyms;
+    std::map<std::tuple<uint16_t, uint32_t, uint32_t>, SymIndexId> calleeSyms;
     std::map<uint32_t, SymIndexId> globalSyms;
     std::map<std::tuple<uint16_t, uint32_t, std::string>, SymIndexId> dataByAddr;
     std::map<uint16_t, std::vector<SymIndexId>> envSyms;

@@ -286,6 +286,19 @@ public:
         case P_volatileType: v = Val::b_(has(o, PointerOptions::Volatile)); return true;
         case P_unalignedType: v = Val::b_(has(o, PointerOptions::Unaligned)); return true;
         case P_restrictedType: v = Val::b_(has(o, PointerOptions::Restrict)); return true;
+        case P_isSingleInheritance: case P_isMultipleInheritance: case P_isVirtualInheritance: {
+            // Pointers to members: the property naming the class's
+            // inheritance model is reported (as 1), the others are not.
+            if (!memberPtr()) return false;
+            using R = PointerToMemberRepresentation;
+            R r = pr.getMemberInfo().getRepresentation();
+            bool hit = p == P_isSingleInheritance ? (r == R::SingleInheritanceData || r == R::SingleInheritanceFunction)
+                     : p == P_isMultipleInheritance ? (r == R::MultipleInheritanceData || r == R::MultipleInheritanceFunction)
+                     : (r == R::VirtualInheritanceData || r == R::VirtualInheritanceFunction);
+            if (!hit) return false;
+            v = Val::b_(true);
+            return true;
+        }
         case P_classParent: case P_classParentId: {
             if (!memberPtr()) return false;
             SymIndexId c = M->typeSym(pr.getMemberInfo().getContainingType());

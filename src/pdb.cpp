@@ -158,4 +158,18 @@ bool PdbFile::sectOff(uint32_t r, uint32_t &sect, uint32_t &off)
     return true;
 }
 
+// lld ends the section map with an absolute entry whose frame is one past
+// the last section (MSVC's link uses frame 0); with such a map the real DLL
+// fails RVA lookups in the last section with E_UNEXPECTED.
+bool PdbFile::inLastSection(uint32_t r)
+{
+    DbiStream *d = dbi();
+    if (!d) return false;
+    auto hdrs = d->getSectionHeaders();
+    auto map = d->getSectionMap();
+    if (hdrs.empty() || map.size() <= hdrs.size()) return false;
+    if (map[hdrs.size()].Frame <= hdrs.size()) return false;
+    return r >= hdrs[hdrs.size() - 1].VirtualAddress;
+}
+
 }  // namespace om

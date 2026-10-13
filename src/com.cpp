@@ -67,6 +67,7 @@ struct Counted {
 class DiaSession;
 HRESULT newSymbol(DiaSession *s, SymIndexId id, IDiaSymbol **out);
 HRESULT newMemberSymbol(DiaSession *s, SymIndexId id, IDiaSymbol **out);
+HRESULT newViewSymbol(DiaSession *s, SymIndexId id, SymIndexId classParent, IDiaSymbol **out);
 
 // ------------------------------------------------------------ enumerators
 
@@ -76,8 +77,10 @@ public:
     OM_IUNKNOWN(&IID_IDiaEnumSymbols)
     DiaEnumSymbols(DiaSession *s, std::vector<SymIndexId> ids, LONG reportedCount = -1);
     std::vector<uint8_t> memberFlags;  // reached through a class: see DiaSymbol::firstName
+    std::vector<SymIndexId> views;     // class parent reported per entry, see Model::viewsOf
     HRESULT make(size_t i, IDiaSymbol **out)
     {
+        if (i < views.size() && views[i]) return newViewSymbol(s, ids[i], views[i], out);
         return i < memberFlags.size() && memberFlags[i] ? newMemberSymbol(s, ids[i], out) : newSymbol(s, ids[i], out);
     }
     ~DiaEnumSymbols();
@@ -612,21 +615,29 @@ public:
     {
         return find(m->rva(sect, off), tag, out, nullptr);
     }
+    // RVA lookups fail with E_UNEXPECTED in the image's last section of
+    // lld-linked PDBs (as observed with 14.51; see PdbFile::inLastSection).
+    HRESULT findRVA(uint32_t rva, enum SymTagEnum tag, IDiaSymbol **out, LONG *disp)
+    {
+        if (out) *out = nullptr;
+        if (m->inLastSection(rva)) return E_UNEXPECTED;
+        return find(rva, tag, out, disp);
+    }
     HRESULT STDMETHODCALLTYPE findSymbolByRVA(ULONG rva, enum SymTagEnum tag, IDiaSymbol **out) override
     {
-        return find(rva, tag, out, nullptr);
+        return findRVA(rva, tag, out, nullptr);
     }
     HRESULT STDMETHODCALLTYPE findSymbolByVA(ULONGLONG va, enum SymTagEnum tag, IDiaSymbol **out) override
     {
-        return find((uint32_t)(va - m->loadAddress), tag, out, nullptr);
+        return findRVA((uint32_t)(va - m->loadAddress), tag, out, nullptr);
     }
     HRESULT STDMETHODCALLTYPE findSymbolByRVAEx(ULONG rva, enum SymTagEnum tag, IDiaSymbol **out, LONG *disp) override
     {
-        return find(rva, tag, out, disp);
+        return findRVA(rva, tag, out, disp);
     }
     HRESULT STDMETHODCALLTYPE findSymbolByVAEx(ULONGLONG va, enum SymTagEnum tag, IDiaSymbol **out, LONG *disp) override
     {
-        return find((uint32_t)(va - m->loadAddress), tag, out, disp);
+        return findRVA((uint32_t)(va - m->loadAddress), tag, out, disp);
     }
     HRESULT STDMETHODCALLTYPE symbolById(ULONG id, IDiaSymbol **out) override
     {
@@ -646,6 +657,7 @@ public:
     HRESULT STDMETHODCALLTYPE addressForRVA(ULONG rva, ULONG *sect, ULONG *off) override
     {
         if (!sect || !off) return E_POINTER;
+        if (m->inLastSection(rva)) return E_UNEXPECTED;
         uint32_t s = 0, o = 0;
         if (!m->sectOff(rva, s, o)) return S_FALSE;
         *sect = s;
@@ -706,6 +718,8 @@ public:
     HRESULT STDMETHODCALLTYPE findLinesByRVA(ULONG rva, ULONG len, IDiaEnumLineNumbers **out) override
     {
         if (!out) return E_POINTER;
+        *out = nullptr;
+        if (m->inLastSection(rva)) return E_UNEXPECTED;
         *out = new DiaEnumLineNumbers(this, m->linesByRVA(rva, len));
         return S_OK;
     }
@@ -762,6 +776,7 @@ public:
     std::string firstName;
     bool firstNameUsed = true;
     bool memberView = false;  // a method reached through its class: lexical parent is the exe
+    SymIndexId viewClassParent = 0;  // class parent of this enumerated instance, see Model::viewsOf
 
     HRESULT getLONG(Prop p, LONG *out)
     {
@@ -774,6 +789,7 @@ public:
         }
         Val v;
         if (!s->m->get(id, p, v)) return S_FALSE;
+        if (v.kind == Val::Err) return (HRESULT)v.u;
         *out = v.kind == Val::I ? (LONG)v.i : (LONG)v.u;
         return S_OK;
     }
@@ -784,8 +800,13 @@ public:
             *out = s->m->exe;
             return S_OK;
         }
+        if (viewClassParent && p == P_classParentId) {
+            *out = viewClassParent;
+            return S_OK;
+        }
         Val v;
         if (!s->m->get(id, p, v)) return S_FALSE;
+        if (v.kind == Val::Err) return (HRESULT)v.u;
         *out = v.kind == Val::I ? (ULONG)v.i : (ULONG)v.u;
         return S_OK;
     }
@@ -853,8 +874,11 @@ public:
         if (!out) return E_POINTER;
         *out = nullptr;
         if (memberView && p == P_lexicalParent) return newSymbol(s, s->m->exe, out);
+        if (viewClassParent && p == P_classParent) return newSymbol(s, viewClassParent, out);
         Val v;
-        if (!s->m->get(id, p, v) || v.kind != Val::Sym || !v.u) return S_FALSE;
+        if (!s->m->get(id, p, v)) return S_FALSE;
+        if (v.kind == Val::Err) return (HRESULT)v.u;
+        if (v.kind != Val::Sym || !v.u) return S_FALSE;
         return newSymbol(s, (SymIndexId)v.u, out);
     }
 
@@ -880,7 +904,9 @@ public:
         if (none) return S_FALSE;
         std::vector<SymIndexId> pick;
         std::vector<uint8_t> pickFlags;
+        std::vector<SymIndexId> pickViews;
         std::vector<uint8_t> flags_ = s->m->flagsOf(id);
+        std::vector<SymIndexId> views_ = s->m->viewsOf(id);
         std::string want = name ? fromW(name) : "";
         for (size_t ci = 0; ci < all.size(); ci++) {
             SymIndexId c = all[ci];
@@ -892,9 +918,21 @@ public:
             }
             pick.push_back(c);
             pickFlags.push_back(flags_[ci]);
+            pickViews.push_back(views_[ci]);
         }
         LONG reported = -1;
         SymTag t = s->m->tag(id);
+        if (!name && tag == 0 && t == SymTag::Callee) {
+            // A callee reports its caller's compiland's child count, except
+            // the first one of its S_CALLEES record (0), and enumerates
+            // nothing (as observed).
+            SymIndexId c = id;
+            Val v;
+            for (int i = 0; i < 8 && s->m->tag(c) != SymTag::Compiland && s->m->get(c, P_lexicalParent, v); i++)
+                c = (SymIndexId)v.u;
+            if (s->m->tag(c) == SymTag::Compiland)
+                reported = s->m->calleeIndex(id) == 0 ? 0 : (LONG)s->m->children(c).size();
+        }
         if (!name && tag == 0 &&
             (t == SymTag::FuncDebugStart || t == SymTag::FuncDebugEnd || t == SymTag::CompilandEnv)) {
             // The real DLL reports the enclosing compiland's child count for
@@ -911,6 +949,7 @@ public:
         }
         auto *e = new DiaEnumSymbols(s, pick, reported);
         e->memberFlags = pickFlags;
+        e->views = pickViews;
         *out = e;
         return S_OK;
     }
@@ -962,6 +1001,13 @@ HRESULT newMemberSymbol(DiaSession *s, SymIndexId id, IDiaSymbol **out)
     return hr;
 }
 
+HRESULT newViewSymbol(DiaSession *s, SymIndexId id, SymIndexId classParent, IDiaSymbol **out)
+{
+    HRESULT hr = newSymbol(s, id, out);
+    if (hr == S_OK) static_cast<DiaSymbol *>(*out)->viewClassParent = classParent;
+    return hr;
+}
+
 // ------------------------------------------------------------ out-of-line bits
 
 DiaEnumSymbols::DiaEnumSymbols(DiaSession *s, std::vector<SymIndexId> ids, LONG reportedCount)
@@ -976,6 +1022,7 @@ HRESULT DiaEnumSymbols::Clone(IDiaEnumSymbols **out)
     auto *c = new DiaEnumSymbols(s, ids, reported);
     c->pos = pos;
     c->memberFlags = memberFlags;
+    c->views = views;
     *out = c;
     return S_OK;
 }
@@ -1166,6 +1213,8 @@ HRESULT DiaEnumTables::make(size_t i, IDiaTable **out)
     switch (i) {
     case 0: {
         auto *e = new DiaEnumSymbols(s, m.children(m.exe));
+        e->memberFlags = m.flagsOf(m.exe);
+        e->views = m.viewsOf(m.exe);
         *out = new DiaTable(s, "Symbols", (LONG)m.children(m.exe).size(), e, IID_IDiaEnumSymbols);
         return S_OK;
     }

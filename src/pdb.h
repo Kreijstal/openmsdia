@@ -71,6 +71,8 @@ public:
     // Addresses, from the section headers of the DBI stream.
     uint32_t rva(uint32_t sect, uint32_t off);
     bool sectOff(uint32_t rva, uint32_t &sect, uint32_t &off);
+    // RVA lookups at or after the start of the last section fail (see pdb.cpp).
+    bool inLastSection(uint32_t rva);
 
 private:
     PdbFile() = default;

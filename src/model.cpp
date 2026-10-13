@@ -90,6 +90,36 @@ bool isProc(SymbolKind k)
            k == S_LPROC32_DPC || k == S_LPROC32_DPC_ID;
 }
 
+// The end offset of a scope-opening record (0 for others).
+uint32_t scopeEnd(const CVSymbol &r)
+{
+    switch (r.kind()) {
+    case S_GPROC32: case S_LPROC32: case S_GPROC32_ID: case S_LPROC32_ID: case S_LPROC32_DPC: case S_LPROC32_DPC_ID: {
+        ProcSym ps(SymbolRecordKind::ProcSym);
+        return deser(r, ps) ? ps.End : 0;
+    }
+    case S_BLOCK32: {
+        BlockSym bs(SymbolRecordKind::BlockSym);
+        return deser(r, bs) ? bs.End : 0;
+    }
+    case S_THUNK32: {
+        Thunk32Sym t(SymbolRecordKind::Thunk32Sym);
+        return deser(r, t) ? t.End : 0;
+    }
+    case S_INLINESITE: case S_INLINESITE2: {
+        InlineSiteSym is(SymbolRecordKind::InlineSiteSym);
+        return deser(r, is) ? is.End : 0;
+    }
+    case S_SEPCODE: {
+        // No LLVM record class: pParent, pEnd, ... (CodeView layout).
+        auto c = r.content();
+        return c.size() >= 8 ? llvm::support::endian::read32le(c.data() + 4) : 0;
+    }
+    default:
+        return 0;
+    }
+}
+
 bool opensScope(SymbolKind k)
 {
     return isProc(k) || k == S_BLOCK32 || k == S_THUNK32 || k == S_INLINESITE || k == S_INLINESITE2 ||
@@ -576,7 +606,10 @@ public:
         case P_undecoratedName: v = Val::str(""); return true;
         case P_lexicalParent: case P_lexicalParentId: v = Val::sym(lexParent); return true;
         case P_type: case P_typeId: v = Val::sym(M->typeSym(type)); return true;
-        case P_inlinee: case P_inlineeId: v = Val::sym(inlinee); return true;
+        // 14.51 fails get_inlinee with this error (14.30 returned a
+        // SymTagNull symbol); inlineeId still names that symbol.
+        case P_inlinee: v.kind = Val::Err; v.u = 0x806D000E; return true;
+        case P_inlineeId: v = Val::sym(inlinee); return true;
         case P_addressSection: v = Val::u_(seg); return true;
         case P_addressOffset: v = Val::u_(start); return true;
         case P_relativeVirtualAddress: v = Val::u_(rva); return true;
@@ -594,6 +627,41 @@ class OmInlinee : public Sym {
 public:
     OmInlinee() : Sym(SymTag::None) {}
     bool prop(Prop, Val &) const override { return false; }
+};
+
+// One entry of an S_CALLEES record: a view of the called function, under
+// the calling function. Without a definition in the PDB, only its name and
+// type are known.
+class OmCallee : public Sym {
+public:
+    OmCallee(std::string nm, TypeIndex type, SymIndexId fn, int index)
+        : Sym(SymTag::Callee), nm(std::move(nm)), type(type), fn(fn), index(index) {}
+    std::string nm;
+    TypeIndex type;
+    SymIndexId fn;
+    int index;
+    bool prop(Prop p, Val &v) const override
+    {
+        switch (p) {
+        case P_name: v = Val::str(nm); return true;
+        case P_lexicalParent: case P_lexicalParentId: v = Val::sym(lexParent); return true;
+        case P_PGOEdgeCount: v = Val::u_(0); return true;
+        case P_undecoratedName: case P_undecoratedNameEx0: {
+            std::string u;
+            if (!fn || !M->publicSignature(fn, p == P_undecoratedNameEx0, u)) u.clear();
+            v = Val::str(u);
+            return true;
+        }
+        case P_type: case P_typeId:
+            if (fn) return M->get(fn, P_typeId, v);
+            v = Val::sym(M->typeSym(type));
+            return true;
+        case P_isStatic: case P_classParent: case P_classParentId: case P_coffGroup:
+            return false;
+        default:
+            return fn && M->get(fn, p, v);
+        }
+    }
 };
 
 // S_COFFGROUP of the linker module.
@@ -853,6 +921,11 @@ bool Model::get(SymIndexId id, Prop p, Val &v)
     if (p == P_symIndexId) { v = Val::u_(id); return true; }
     if (p == P_symTag) { v = Val::u_((uint32_t)o->tag); return true; }
     if (propKinds[p] == K_SYM) {
+        Val e;
+        if (o->prop(p, e) && e.kind == Val::Err) {
+            v = e;
+            return true;
+        }
         Prop ip = idPropOf(p);
         if (ip != P_COUNT) {
             if (!get(id, ip, v)) return false;
@@ -866,7 +939,7 @@ bool Model::get(SymIndexId id, Prop p, Val &v)
         if (t == SymTag::Function || t == SymTag::FuncDebugStart || t == SymTag::FuncDebugEnd ||
             t == SymTag::Data || t == SymTag::PublicSymbol || t == SymTag::Block ||
             t == SymTag::CallSite || t == SymTag::InlineSite || t == SymTag::CoffGroup ||
-            t == SymTag::Label || t == SymTag::Thunk) {
+            t == SymTag::Label || t == SymTag::Thunk || t == SymTag::Callee || t == SymTag::Caller) {
             Val sec, off;
             if (!get(id, P_addressSection, sec) || !get(id, P_addressOffset, off)) return false;
             SymIndexId g = coffGroupAt((uint32_t)sec.u, (uint32_t)off.u);
@@ -882,6 +955,57 @@ bool Model::get(SymIndexId id, Prop p, Val &v)
 }
 
 // ------------------------------------------------------------------ records
+
+// Qualified name and function type of an LF_FUNC_ID / LF_MFUNC_ID record.
+bool Model::funcIdName(TypeIndex id, std::string &nm, TypeIndex &type)
+{
+    CVType ft = pdb->id(id);
+    if (ft.kind() == LF_FUNC_ID) {
+        FuncIdRecord fr(TypeRecordKind::FuncId);
+        if (!deserType(ft, fr)) return false;
+        nm = fr.getName().str();
+        type = fr.getFunctionType();
+        if (!fr.getParentScope().isNoneType()) {
+            StringIdRecord sr(TypeRecordKind::StringId);
+            if (deserType(pdb->id(fr.getParentScope()), sr)) nm = sr.getString().str() + "::" + nm;
+        }
+        return true;
+    }
+    if (ft.kind() == LF_MFUNC_ID) {
+        MemberFuncIdRecord fr(TypeRecordKind::MemberFuncId);
+        if (!deserType(ft, fr)) return false;
+        nm = name(typeSym(fr.getClassType())) + "::" + fr.getName().str();
+        type = fr.getFunctionType();
+        return true;
+    }
+    return false;
+}
+
+SymIndexId Model::funcIdTarget(TypeIndex id, std::string &nm, TypeIndex &type)
+{
+    if (!funcIdName(id, nm, type)) return 0;
+    auto *gs = pdb->globals();
+    auto *ss = pdb->symbols();
+    if (!gs || !ss) return 0;
+    SymIndexId any = 0;
+    for (auto &r : gs->findRecordsByName(nm, *ss)) {
+        if (r.second.kind() != S_PROCREF && r.second.kind() != S_LPROCREF) continue;
+        ProcRefSym pr(SymbolRecordKind::ProcRefSym);
+        if (!deser(r.second, pr) || !pr.Module) continue;
+        SymIndexId f = procSym(pr.modi(), pr.SymOffset);
+        auto *fn = dynamic_cast<OmFunction *>(ours(f));
+        if (!fn) continue;
+        if (fn->ps.FunctionType == type) return f;
+        if (!any) any = f;
+    }
+    return any;
+}
+
+int Model::calleeIndex(SymIndexId id)
+{
+    auto *c = dynamic_cast<OmCallee *>(ours(id));
+    return c ? c->index : -1;
+}
 
 SymIndexId Model::procSym(uint16_t modi, uint32_t off)
 {
@@ -900,13 +1024,18 @@ SymIndexId Model::procSym(uint16_t modi, uint32_t off)
     auto *f = static_cast<OmFunction *>(ours(id));
     f->kind = kind;
     f->lexParent = compiland(modi);
-    // Frame data: the first S_FRAMEPROC directly inside the procedure.
+    // Frame data: the S_FRAMEPROC directly inside the procedure (after
+    // nested scopes in optimized MSVC code).
     for (auto J = std::next(I); J != syms.end() && J.offset() < ps.End; ++J) {
         if (J->kind() == S_FRAMEPROC) {
             f->hasFrame = deser(*J, f->fp);
             break;
         }
-        if (opensScope(J->kind())) break;
+        uint32_t e = scopeEnd(*J);
+        if (e > J.offset()) {
+            J = syms.at(e);
+            if (J == syms.end()) break;
+        }
     }
     // CPU type from the module's compile record.
     for (auto J = syms.begin(); J != syms.end(); ++J) {
@@ -1050,25 +1179,7 @@ void Model::moduleChildren(uint16_t modi, SymIndexId parent, uint32_t begin, uin
                         break;
                     }
                 }
-                CVType ft = pdb->id(is.Inlinee);
-                if (ft.kind() == LF_FUNC_ID) {
-                    FuncIdRecord fr(TypeRecordKind::FuncId);
-                    if (deserType(ft, fr)) {
-                        site->nm = fr.getName().str();
-                        site->type = fr.getFunctionType();
-                        if (!fr.getParentScope().isNoneType()) {
-                            StringIdRecord sr(TypeRecordKind::StringId);
-                            if (deserType(pdb->id(fr.getParentScope()), sr))
-                                site->nm = sr.getString().str() + "::" + site->nm;
-                        }
-                    }
-                } else if (ft.kind() == LF_MFUNC_ID) {
-                    MemberFuncIdRecord fr(TypeRecordKind::MemberFuncId);
-                    if (deserType(ft, fr)) {
-                        site->nm = name(typeSym(fr.getClassType())) + "::" + fr.getName().str();
-                        site->type = fr.getFunctionType();
-                    }
-                }
+                funcIdName(is.Inlinee, site->nm, site->type);
                 site->inlinee = make<OmInlinee>();
                 recordSyms[key] = id;
             }
@@ -1179,6 +1290,27 @@ void Model::moduleChildren(uint16_t modi, SymIndexId parent, uint32_t begin, uin
                 recordSyms[key] = id;
             }
             out.push_back(id);
+            continue;
+        }
+        if (func && k == S_CALLEES) {
+            CallerSym cs(SymbolRecordKind::CalleeSym);
+            if (!deser(*I, cs)) continue;
+            for (size_t i = 0; i < cs.Indices.size(); i++) {
+                auto ckey = std::make_tuple(modi, off, (uint32_t)i);
+                auto it = calleeSyms.find(ckey);
+                SymIndexId id;
+                if (it != calleeSyms.end()) {
+                    id = it->second;
+                } else {
+                    std::string nm;
+                    TypeIndex type;
+                    SymIndexId fn = funcIdTarget(cs.Indices[i], nm, type);
+                    id = make<OmCallee>(nm, type, fn, (int)i);
+                    ours(id)->lexParent = parent;
+                    calleeSyms[ckey] = id;
+                }
+                out.push_back(id);
+            }
             continue;
         }
         if (func && k == S_CALLSITEINFO) {
@@ -1765,8 +1897,12 @@ void Model::buildGlobalChildren(std::vector<SymIndexId> &out)
             }
         }
     }
+    std::vector<std::pair<size_t, SymIndexId>> argViews;
     for (SymIndexId s : sigs)
-        for (SymIndexId a : children(s)) out.push_back(a);
+        for (SymIndexId a : children(s)) {
+            argViews.push_back({out.size(), s});
+            out.push_back(a);
+        }
     {
         size_t before = out.size();
         for (SymIndexId u : udts)
@@ -1779,6 +1915,9 @@ void Model::buildGlobalChildren(std::vector<SymIndexId> &out)
         for (SymIndexId m : children(e)) out.push_back(m);
     for (SymIndexId p : publics()) out.push_back(p);
     childFlags[exe].resize(out.size(), 0);
+    auto &vw = childViews[exe];
+    vw.assign(out.size(), 0);
+    for (auto &av : argViews) vw[av.first] = av.second;
 }
 
 std::vector<uint8_t> Model::flagsOf(SymIndexId id)
@@ -1789,6 +1928,15 @@ std::vector<uint8_t> Model::flagsOf(SymIndexId id)
     auto it = childFlags.find(id);
     if (it != childFlags.end() && it->second.size() == c.size()) return it->second;
     return std::vector<uint8_t>(c.size(), 0);
+}
+
+std::vector<SymIndexId> Model::viewsOf(SymIndexId id)
+{
+    const auto &c = children(id);
+    if (tag(id) == SymTag::FunctionSig) return std::vector<SymIndexId>(c.size(), id);
+    auto it = childViews.find(id);
+    if (it != childViews.end() && it->second.size() == c.size()) return it->second;
+    return std::vector<SymIndexId>(c.size(), 0);
 }
 
 const std::vector<SymIndexId> &Model::publics()
@@ -1874,7 +2022,8 @@ void Model::sigArgs(SymIndexId sig, std::vector<SymIndexId> &out)
     ArgListRecord al(TypeRecordKind::ArgList);
     if (argList.isNoneType() || !deserType(pdb->type(argList), al)) return;
     // Argument symbols belong to the argument list, which function types
-    // share; the class parent is the first type using it.
+    // share; each enumeration reports the function type it went through as
+    // class parent (see viewsOf), this one is for lookups by id.
     for (size_t i = 0; i < al.getIndices().size(); i++) {
         auto key = std::make_pair((SymIndexId)(0x80000000u | argList.getIndex()), (uint32_t)i);
         auto m = memberSyms.find(key);
@@ -2443,6 +2592,12 @@ std::string undecorate(const std::string &n)
     replaceAll(" ctor'", " constructor'");
     replaceAll(" ctor iterator'", " constructor iterator'");
     replaceAll(" dtor iterator'", " destructor iterator'");
+    // undname puts a space between a declarator's '*' and the name:
+    // "int (* p)[2]", "int C::* p".
+    for (size_t at = 0; (at = out.find('*', at)) != std::string::npos; at++)
+        if (at > 0 && (out[at - 1] == '(' || out[at - 1] == ':') && at + 1 < out.size() &&
+            (isalpha((unsigned char)out[at + 1]) || out[at + 1] == '_'))
+            out.insert(at + 1, " ");
     replaceAll("*const", "* const");
     replaceAll("*volatile", "* volatile");
     replaceAll("&const", "& const");
@@ -2486,25 +2641,39 @@ std::string undecorateComplete(const std::string &n)
     return out;
 }
 
+// A function with a public symbol at its address: an undecorated
+// Microsoft name (the one naming this function when several publics share
+// the address), or its own name for an undecorated (C) public.
+bool Model::publicSignature(SymIndexId fn, bool complete, std::string &out)
+{
+    auto *f = dynamic_cast<OmFunction *>(ours(fn));
+    if (!f) return false;
+    std::string nm = name(fn);
+    std::string first;
+    for (SymIndexId p : publics()) {
+        auto *pub = static_cast<OmPublic *>(ours(p));
+        if (pub->ps.Segment != f->ps.Segment || pub->ps.Offset != f->ps.CodeOffset) continue;
+        if (pub->ps.Name == f->ps.Name) {
+            out = nm;
+            return true;
+        }
+        if (!pub->ps.Name.starts_with("?")) continue;
+        std::string u = complete ? undecorateComplete(pub->ps.Name.str()) : undecorate(pub->ps.Name.str());
+        if (u.find(nm) != std::string::npos) {
+            out = u;
+            return true;
+        }
+        if (first.empty()) first = u;
+    }
+    out = first;
+    return !first.empty();
+}
+
 std::string Model::functionSignature(SymIndexId fn, bool isStatic, bool complete)
 {
     std::string nm = name(fn);
-    // A function with a public symbol at its address: an undecorated
-    // Microsoft name (the one naming this function when several publics
-    // share the address), or its own name for an undecorated (C) public.
-    if (auto *f = dynamic_cast<OmFunction *>(ours(fn))) {
-        std::string first;
-        for (SymIndexId p : publics()) {
-            auto *pub = static_cast<OmPublic *>(ours(p));
-            if (pub->ps.Segment != f->ps.Segment || pub->ps.Offset != f->ps.CodeOffset) continue;
-            if (pub->ps.Name == f->ps.Name) return nm;
-            if (!pub->ps.Name.starts_with("?")) continue;
-            std::string u = complete ? undecorateComplete(pub->ps.Name.str()) : undecorate(pub->ps.Name.str());
-            if (u.find(nm) != std::string::npos) return u;
-            if (first.empty()) first = u;
-        }
-        if (!first.empty()) return first;
-    }
+    std::string pub;
+    if (publicSignature(fn, complete, pub)) return pub;
     Val ty;
     if (!get(fn, P_type, ty)) return nm;
     SymIndexId sig = (SymIndexId)ty.u;
