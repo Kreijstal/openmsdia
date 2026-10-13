@@ -387,6 +387,10 @@ template <class Base = IDiaEnumTables> struct Stub_IDiaEnumTables : Base {
 };
 
 template <class Base = IDiaTable> struct Stub_IDiaTable : Base {
+    HRESULT STDMETHODCALLTYPE Next(ULONG, IUnknown **, ULONG *) override { return OPENMSDIA_STUB_RESULT(3); }
+    HRESULT STDMETHODCALLTYPE Skip(ULONG) override { return OPENMSDIA_STUB_RESULT(4); }
+    HRESULT STDMETHODCALLTYPE Reset(void) override { return OPENMSDIA_STUB_RESULT(5); }
+    HRESULT STDMETHODCALLTYPE Clone(IEnumUnknown **) override { return OPENMSDIA_STUB_RESULT(6); }
     HRESULT STDMETHODCALLTYPE get__NewEnum(IUnknown * *) override { return OPENMSDIA_STUB_RESULT(7); }
     HRESULT STDMETHODCALLTYPE get_name(BSTR *) override { return OPENMSDIA_STUB_RESULT(8); }
     HRESULT STDMETHODCALLTYPE get_count(LONG *) override { return OPENMSDIA_STUB_RESULT(9); }

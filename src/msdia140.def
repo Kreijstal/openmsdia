@@ -1,0 +1,8 @@
+LIBRARY msdia140.dll
+EXPORTS
+    DllCanUnloadNow PRIVATE
+    DllGetClassObject PRIVATE
+    DllRegisterServer PRIVATE
+    DllUnregisterServer PRIVATE
+    VSDllRegisterServer PRIVATE
+    VSDllUnregisterServer PRIVATE

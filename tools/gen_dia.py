@@ -195,6 +195,12 @@ def main():
         b = base_of(t)
         parent = "Base" if b in SYSTEM_IFACES else "Stub_%s<Base>" % b
         S.append("template <class Base = %s> struct Stub_%s : %s {" % (n, n, parent))
+        if b == "IEnumUnknown":
+            # IEnumUnknown's own methods (slots 3-6), from the system headers.
+            S.append("    HRESULT STDMETHODCALLTYPE Next(ULONG, IUnknown **, ULONG *) override { return OPENMSDIA_STUB_RESULT(3); }")
+            S.append("    HRESULT STDMETHODCALLTYPE Skip(ULONG) override { return OPENMSDIA_STUB_RESULT(4); }")
+            S.append("    HRESULT STDMETHODCALLTYPE Reset(void) override { return OPENMSDIA_STUB_RESULT(5); }")
+            S.append("    HRESULT STDMETHODCALLTYPE Clone(IEnumUnknown **) override { return OPENMSDIA_STUB_RESULT(6); }")
         for f in t["funcs"]:
             ret = ctype(f["ret"], types)
             body = "return OPENMSDIA_STUB_RESULT(%d);" % f["slot"] if ret == "HRESULT" else \
@@ -234,6 +240,26 @@ def main():
     M.append("")
     M.append("#endif")
     open(os.path.join(a.out, "dia2_meta_gen.h"), "w").write("\n".join(M) + "\n")
+
+    # ---- dia2_symprops_gen.h: X-macro of IDiaSymbol* property getters
+    P = [banner, "#ifndef OPENMSDIA_DIA2_SYMPROPS_GEN_H", "#define OPENMSDIA_DIA2_SYMPROPS_GEN_H", "",
+         "/* X(name, kind): get_<name>(<kind> *) of IDiaSymbol..IDiaSymbolN.",
+         " * Kinds: LONG ULONG ULONGLONG BSTR GUID VARIANT SYM (IDiaSymbol *). */",
+         "#define OPENMSDIA_SYMBOL_GETTERS(X) \\"]
+    for t in ifaces:
+        if not (t["name"] == "IDiaSymbol" or t["name"].startswith("IDiaSymbol")) or t["name"].startswith("IDiaSymbolsBy"):
+            continue
+        for f in t["funcs"]:
+            if f["kind"] != "propget" or len(f["params"]) != 1:
+                continue
+            k = value_kind(f["params"][0]["type"])
+            if k == "IFACE:IDiaSymbol":
+                k = "SYM"
+            if k in ("LONG", "ULONG", "ULONGLONG", "BSTR", "GUID", "VARIANT", "SYM"):
+                P.append("    X(%s, %s) \\" % (f["name"], k))
+    P.append("")
+    P.append("#endif")
+    open(os.path.join(a.out, "dia2_symprops_gen.h"), "w").write("\n".join(P) + "\n")
 
 
 if __name__ == "__main__":
