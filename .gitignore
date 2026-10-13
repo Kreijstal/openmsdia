@@ -1,0 +1,10 @@
+# Never commit Microsoft binaries, PDBs or build output.
+*.dll
+*.exe
+*.pdb
+*.lib
+*.obj
+*.o
+*.a
+build/
+artifacts/

@@ -1,0 +1,47 @@
+name: phase0 harvest
+
+# Records the public interface of the msdia140.dll that ships with the
+# runner's Visual Studio (DIA SDK) as text. The DLL is never uploaded.
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'phase0/scripts/**'
+      - '.github/workflows/phase0_harvest.yml'
+
+jobs:
+  harvest:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        arch: [amd64, x86, arm64]
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: CLANG64
+          update: true
+          install: >-
+            mingw-w64-clang-x86_64-clang
+            mingw-w64-clang-x86_64-llvm
+            mingw-w64-clang-x86_64-python
+      - name: Locate the DIA SDK
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath
+          $dir = if ('${{ matrix.arch }}' -eq 'x86') { 'bin' } else { 'bin\${{ matrix.arch }}' }
+          $dll = Join-Path $vs "DIA SDK\$dir\msdia140.dll"
+          if (-not (Test-Path $dll)) { throw "not found: $dll" }
+          "MSDIA_DLL=$dll" | Out-File -FilePath $env:GITHUB_ENV -Append
+      - name: Harvest
+        run: |
+          dll=$(cygpath -u "$MSDIA_DLL")
+          ver=$(powershell -NoProfile -Command "(Get-Item -LiteralPath '$MSDIA_DLL').VersionInfo.FileVersion" | tr -d '\r' | cut -d' ' -f1)
+          phase0/scripts/harvest.sh "$dll" "snapshot/msdia140-$ver-${{ matrix.arch }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: phase0-msdia140-${{ matrix.arch }}
+          path: snapshot/
