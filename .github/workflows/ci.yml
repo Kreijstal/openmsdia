@@ -42,6 +42,8 @@ jobs:
           "MSDIA_DLL=$dll" | Out-File -FilePath $env:GITHUB_ENV -Append
           "VS_PATH=$vs" | Out-File -FilePath $env:GITHUB_ENV -Append
           (Get-Item -LiteralPath $dll).VersionInfo.FileVersion
+      - name: No high-level LLVM PDB layer in the sources
+        run: tools/check_layers.sh
       - name: Generated headers are up to date
         run: |
           python3 tools/gen_dia.py phase0/snapshots/msdia140-14.51.36257.0-amd64/typelib.json --out include/openmsdia

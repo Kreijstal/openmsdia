@@ -17,13 +17,13 @@ LLVM_LIBS := $(shell llvm-config --link-static --libs debuginfopdb 2>/dev/null)
 DLL_CXXFLAGS := -std=c++17 -O2 -g -Wall -Wno-unused-function -Iinclude/openmsdia -Isrc \
 	-DLLVM_BUILD_STATIC -D_FILE_OFFSET_BITS=64 -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS \
 	-fno-exceptions -ffunction-sections -fdata-sections
-DLL_LDFLAGS := -shared -static -Wl,--gc-sections -Wl,--no-insert-timestamp
-DLL_SRCS := src/dllmain.cpp src/com.cpp src/model.cpp
+DLL_LDFLAGS := -shared -static -Wl,--gc-sections -Wl,--no-insert-timestamp -Wl,-Map=$(B)/msdia140.map
+DLL_SRCS := src/dllmain.cpp src/com.cpp src/model.cpp src/types.cpp src/pdb.cpp
 DLL_OBJS := $(DLL_SRCS:src/%.cpp=$(B)/obj/%.o)
 
 all: $(B)/msdia140.dll $(B)/dia_walk.exe $(B)/test_vtables.exe
 
-$(B)/obj/%.o: src/%.cpp src/model.h src/rawsym_map.inc $(GEN)
+$(B)/obj/%.o: src/%.cpp src/model.h src/pdb.h src/cvutil.h $(GEN)
 	@mkdir -p $(B)/obj
 	$(CXX) $(DLL_CXXFLAGS) -c $< -o $@
 
@@ -45,6 +45,7 @@ $(B)/test_vtables.exe: tests/test_vtables.cpp $(GEN)
 check: $(B)/msdia140.dll $(B)/test_vtables.exe
 	$(B)/test_vtables.exe
 	$(PYTHON) tests/check_exports.py $(B)/msdia140.dll phase0/snapshots/msdia140-14.30.30626.0-amd64/exports.txt
+	tools/check_layers.sh $(B)/msdia140.map
 
 score: $(B)/msdia140.dll $(B)/dia_walk.exe
 	walker/run_corpus.sh "$$(cygpath -m $(B)/msdia140.dll)" $(B)/corpus $(B)/ours

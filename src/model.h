@@ -1,23 +1,23 @@
 // OpenMSDIA: the symbol model behind the COM objects.
 //
-// One PDB is opened with LLVM's NativeSession. Symbols live in LLVM's
-// SymbolCache, so they share one SymIndexId space: LLVM's own native
-// symbols (types, compilands, the exe) and ours (OmSym subclasses, for
-// what LLVM's native reader does not model yet: functions with their
-// frame data, blocks, data, publics, compiland details and environment,
-// base classes, vtables, member functions).
+// One PDB is opened through PdbFile (pdb.h), which uses LLVM's low-level
+// PDB stream and CodeView record readers. Everything DIA-shaped is ours:
+// every symbol is a Sym subclass held in the Model's symbol table, and its
+// symIndexId is its index there. Symbols are created on first use: types
+// per type index, module symbols per record offset, class members per
+// field-list position, globals and publics per symbol-stream record.
 //
-// Property semantics follow observations of the real msdia140.dll: for
-// each SymTag a fixed set of properties is available, all others return
-// S_FALSE. See docs/plan.md.
+// Property semantics follow observations of the real msdia140.dll: each
+// symbol class answers the properties the real DLL reports for its tag
+// and returns false (S_FALSE) for all others. See docs/plan.md.
 #pragma once
 
 #include <cstdint>
 #include <functional>
-#include <tuple>
 #include <map>
 #include <memory>
 #include <string>
+#include <tuple>
 #include <unordered_map>
 #include <vector>
 
@@ -25,17 +25,36 @@
 #include "llvm/DebugInfo/CodeView/SymbolRecord.h"
 #include "llvm/DebugInfo/CodeView/TypeIndex.h"
 #include "llvm/DebugInfo/CodeView/TypeRecord.h"
-#include "llvm/DebugInfo/PDB/IPDBSession.h"
-#include "llvm/DebugInfo/PDB/Native/NativeRawSymbol.h"
-#include "llvm/DebugInfo/PDB/Native/NativeSession.h"
-#include "llvm/DebugInfo/PDB/PDBTypes.h"
 
 #include "dia2_symprops_gen.h"
+#include "pdb.h"
 
 namespace om {
 
-using llvm::pdb::PDB_SymType;
-using llvm::pdb::SymIndexId;
+using SymIndexId = uint32_t;
+
+// DIA's SymTagEnum (the values are in the type library).
+enum class SymTag : uint32_t {
+    None, Exe, Compiland, CompilandDetails, CompilandEnv, Function, Block, Data, Annotation, Label,
+    PublicSymbol, UDT, Enum, FunctionSig, PointerType, ArrayType, BuiltinType, Typedef, BaseClass,
+    Friend, FunctionArg, FuncDebugStart, FuncDebugEnd, UsingNamespace, VTableShape, VTable, Custom,
+    Thunk, CustomType, ManagedType, Dimension, CallSite, InlineSite, BaseInterface, VectorType,
+    MatrixType, HLSLType, Caller, Callee, Export, HeapAllocationSite, CoffGroup, Inlinee,
+};
+
+// DIA's DataKind, LocationType, UdtKind and BasicType values (public DIA
+// documentation).
+enum class DataKind : uint32_t {
+    Unknown, Local, StaticLocal, Param, ObjectPtr, FileStatic, Global, Member, StaticMember, Constant,
+};
+enum class LocType : uint32_t {
+    Null, Static, TLS, RegRel, ThisRel, Enregistered, BitField, Slot, IlRel, MetaData, Constant,
+};
+enum class UdtKind : uint32_t { Struct, Class, Union, Interface };
+enum BasicType : uint32_t {
+    btNoType = 0, btVoid = 1, btChar = 2, btWChar = 3, btInt = 6, btUInt = 7, btFloat = 8, btBool = 10,
+    btLong = 13, btULong = 14, btHresult = 31, btChar16 = 32, btChar32 = 33, btChar8 = 34,
+};
 
 enum Prop {
 #define X(n, k) P_##n,
@@ -46,6 +65,14 @@ enum Prop {
 };
 const char *propName(Prop p);
 
+// A VARIANT value.
+struct Variant {
+    enum Type { Empty, I1, I2, I4, I8, UI1, UI2, UI4, UI8, R4, R8, Bool, Str } type = Empty;
+    int64_t i = 0;
+    uint64_t u = 0;
+    double d = 0;
+};
+
 // A property value.
 struct Val {
     enum Kind { None, U, I, Str, Sym, Guid, Var } kind = None;
@@ -53,7 +80,7 @@ struct Val {
     int64_t i = 0;
     std::string s;
     uint8_t g[16] = {};
-    llvm::pdb::Variant var;
+    Variant var;
     bool strVar = false;  // a VT_BSTR variant holding `s`
 
     static Val u_(uint64_t v) { Val r; r.kind = U; r.u = v; return r; }
@@ -65,15 +92,18 @@ struct Val {
 
 class Model;
 
-// Our own symbols. They are created through SymbolCache::createSymbol and
-// therefore owned by LLVM's cache.
-class OmSym : public llvm::pdb::NativeRawSymbol {
+// A symbol. Owned by the Model; `id` is its index in the symbol table.
+class Sym {
 public:
-    OmSym(llvm::pdb::NativeSession &s, PDB_SymType tag, SymIndexId id)
-        : NativeRawSymbol(s, tag, id) {}
+    explicit Sym(SymTag tag) : tag(tag) {}
+    virtual ~Sym() = default;
+    SymTag tag;
+    SymIndexId id = 0;
     Model *M = nullptr;
     SymIndexId lexParent = 0;
     SymIndexId classParent = 0;
+    SymIndexId getSymIndexId() const { return id; }
+    SymTag getSymTag() const { return tag; }
     // Returns false when the property is not available (S_FALSE).
     virtual bool prop(Prop p, Val &v) const = 0;
     virtual void children(std::vector<SymIndexId> &out) const { (void)out; }
@@ -119,16 +149,14 @@ public:
     static std::unique_ptr<Model> open(const std::string &path, std::string &err);
     ~Model();
 
-    llvm::pdb::NativeSession &ns;
-    std::unique_ptr<llvm::pdb::IPDBSession> owner;
+    std::unique_ptr<PdbFile> pdb;
     std::string pdbPath;
     SymIndexId exe = 0;
     uint64_t loadAddress = 0;
 
-    bool valid(SymIndexId id) const;
-    PDB_SymType tag(SymIndexId id) const;
-    OmSym *ours(SymIndexId id) const;
-    llvm::pdb::NativeRawSymbol &raw(SymIndexId id) const;
+    bool valid(SymIndexId id) const { return id && id < syms.size() && syms[id]; }
+    SymTag tag(SymIndexId id) const { return valid(id) ? syms[id]->tag : SymTag::None; }
+    Sym *ours(SymIndexId id) const { return valid(id) ? syms[id].get() : nullptr; }
 
     // Property access: false means S_FALSE.
     bool get(SymIndexId id, Prop p, Val &v);
@@ -137,9 +165,9 @@ public:
     const std::vector<SymIndexId> &children(SymIndexId id, bool *noChildren = nullptr);
 
     // Addresses.
-    uint32_t rva(uint32_t sect, uint32_t off) const;
-    bool sectOff(uint32_t rva, uint32_t &sect, uint32_t &off) const;
-    SymIndexId findByRVA(uint32_t rva, PDB_SymType tag, int32_t *disp = nullptr);
+    uint32_t rva(uint32_t sect, uint32_t off) const { return pdb->rva(sect, off); }
+    bool sectOff(uint32_t rva, uint32_t &sect, uint32_t &off) const { return pdb->sectOff(rva, sect, off); }
+    SymIndexId findByRVA(uint32_t rva, SymTag tag, int32_t *disp = nullptr);
     std::vector<SymIndexId> symbolsByAddr();
 
     // Lines and files.
@@ -147,17 +175,18 @@ public:
     std::vector<LineEntry> linesByRVA(uint32_t rva, uint32_t len);
     const std::vector<SourceFile> &files();
     std::vector<uint32_t> filesOfModule(uint16_t modi);
-    uint32_t moduleCount() const;
+    uint32_t moduleCount() const { return pdb->moduleCount(); }
     SymIndexId compiland(uint16_t modi);
     int moduleOf(SymIndexId compilandId) const;
     const std::vector<SectionContrib> &sectionContribs();
     std::vector<DebugStream> debugStreams();
     uint32_t segmentCount();
 
-    // Helpers used by the symbol classes.
+    // Types: the symbol of a type index (forward references resolved to
+    // their definition), created on first use; 0 for records DIA has no
+    // symbol for.
     SymIndexId typeSym(llvm::codeview::TypeIndex ti);
     llvm::codeview::TypeIndex fullDecl(llvm::codeview::TypeIndex ti);
-    std::map<uint32_t, llvm::codeview::TypeIndex> fwdCacheRaw;
     std::map<llvm::codeview::TypeIndex, llvm::codeview::TypeIndex> fwdCache;
     std::map<std::string, llvm::codeview::TypeIndex> fullByName;
     SymIndexId noType();
@@ -165,15 +194,15 @@ public:
     std::string functionSignature(SymIndexId fn, bool isStatic, bool complete = false);
 
     llvm::codeview::TypeIndex typeIndexOf(SymIndexId id);
+    // The record of a (possibly modified) UDT or enum, resolved to its full
+    // definition.
+    bool resolveTag(llvm::codeview::TypeIndex ti, llvm::codeview::CVType &out, llvm::codeview::TypeIndex &full);
     const std::vector<SymIndexId> &publics();
     // Per child: 1 when it was reached through a class's member list.
     std::vector<uint8_t> flagsOf(SymIndexId id);
     uint16_t udtOptions(SymIndexId id);
-    // DIA BasicType and length of a base type symbol (LLVM's own mapping
-    // differs for some CodeView kinds).
+    // DIA BasicType and length of a base type symbol.
     bool basicType(SymIndexId id, uint32_t &bt, uint32_t &len);
-    std::unordered_map<SymIndexId, uint32_t> simpleKinds;
-    std::unordered_map<uint32_t, SymIndexId> extraBuiltins;
     static bool simpleBasicType(uint32_t kind, uint32_t &bt, uint32_t &len);
     std::unordered_map<SymIndexId, std::vector<uint8_t>> childFlags;
     uint32_t paramCount(SymIndexId func);
@@ -190,22 +219,42 @@ public:
     SymIndexId dataSym(uint16_t seg, uint32_t off, llvm::StringRef nm, std::function<SymIndexId()> mk);
     SymIndexId globalData(const llvm::codeview::DataSym &ds, llvm::codeview::SymbolKind k);
     void compilandChildren(uint16_t modi, SymIndexId c, std::vector<SymIndexId> &out);
+    void udtChildren(SymIndexId udt, std::vector<SymIndexId> &out);
+    void sigArgs(SymIndexId sig, std::vector<SymIndexId> &out);
     std::map<std::pair<SymIndexId, uint32_t>, SymIndexId> memberSyms;
 
     // Symbol factories, memoized by record position.
     SymIndexId procSym(uint16_t modi, uint32_t off);
-    llvm::codeview::CVSymbol moduleRecord(uint16_t modi, uint32_t off);
+    llvm::codeview::CVSymbol moduleRecord(uint16_t modi, uint32_t off) { return pdb->moduleRecord(modi, off); }
 
     void moduleChildren(uint16_t modi, SymIndexId parent, uint32_t begin, uint32_t end,
                         std::vector<SymIndexId> &out, SymIndexId func);
 
+    template <class T, class... A> SymIndexId make(A &&...args)
+    {
+        auto s = std::make_unique<T>(std::forward<A>(args)...);
+        s->id = (SymIndexId)syms.size();
+        s->M = this;
+        syms.push_back(std::move(s));
+        return (SymIndexId)syms.size() - 1;
+    }
+
 private:
-    explicit Model(std::unique_ptr<llvm::pdb::IPDBSession> s);
+    explicit Model(std::unique_ptr<PdbFile> f);
+    void init();
+    SymIndexId createTypeSym(llvm::codeview::TypeIndex ti);
     void buildGlobalChildren(std::vector<SymIndexId> &out);
-    void udtChildren(SymIndexId udt, std::vector<SymIndexId> &out);
     void typeMembers(SymIndexId udt, llvm::codeview::TypeIndex fieldList, std::vector<SymIndexId> &out);
     void buildAddressMap();
+    // Symbols of the given TPI leaf kinds, in stream order (forward
+    // references left out, modifiers of matching records included).
+    std::vector<SymIndexId> typesOfKind(std::initializer_list<llvm::codeview::TypeLeafKind> kinds);
+    SymIndexId typedefSym(uint32_t symOffset);
 
+    std::vector<std::unique_ptr<Sym>> syms;
+    std::map<llvm::codeview::TypeIndex, SymIndexId> typeSyms;
+    std::map<uint32_t, SymIndexId> typedefSyms;
+    std::vector<SymIndexId> compilands;
     std::unordered_map<SymIndexId, std::vector<SymIndexId>> childCache;
     std::unordered_map<SymIndexId, bool> noChildCache;
     std::map<std::pair<uint16_t, uint32_t>, SymIndexId> procByRecord;
@@ -213,11 +262,8 @@ private:
     std::map<uint32_t, SymIndexId> globalSyms;
     std::map<std::tuple<uint16_t, uint32_t, std::string>, SymIndexId> dataByAddr;
     std::map<uint16_t, std::vector<SymIndexId>> envSyms;
-    std::unordered_map<SymIndexId, llvm::codeview::TypeIndex> typeIndexMap;
-    bool typeIndexBuilt = false;
     std::vector<SymIndexId> publicList;
-    bool publicsLoaded = false;  // symbol stream offset
-    std::map<uint32_t, SymIndexId> publicSyms;
+    bool publicsLoaded = false;
     std::map<uint16_t, std::vector<LineEntry>> lineCache;
     std::vector<SourceFile> fileList;
     bool filesLoaded = false;
@@ -227,17 +273,12 @@ private:
     struct AddrEntry {
         uint32_t rva = 0, len = 0, sect = 0;
         SymIndexId id = 0, parent = 0;
-        PDB_SymType tag = PDB_SymType::None;
+        SymTag tag = SymTag::None;
         std::string name;
     };
     std::vector<AddrEntry> addrMap, funcMap, blockMap, dataMap, publicMap;
     bool addrBuilt = false;
     SymIndexId noTypeId = 0;
-    std::unordered_map<SymIndexId, OmSym *> omIndex;
-
-    friend class OmSymFactory;
-public:
-    template <class T, class... A> SymIndexId make(A &&...args);
 };
 
 }  // namespace om

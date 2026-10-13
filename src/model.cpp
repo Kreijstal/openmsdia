@@ -6,15 +6,16 @@
 #include <cstring>
 #include <set>
 
+#include "cvutil.h"
+
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/DebugInfo/CodeView/CVTypeVisitor.h"
 #include "llvm/DebugInfo/CodeView/DebugChecksumsSubsection.h"
 #include "llvm/DebugInfo/CodeView/DebugLinesSubsection.h"
 #include "llvm/DebugInfo/CodeView/LazyRandomTypeCollection.h"
-#include "llvm/DebugInfo/CodeView/SymbolDeserializer.h"
-#include "llvm/DebugInfo/CodeView/TypeDeserializer.h"
 #include "llvm/DebugInfo/CodeView/TypeRecordHelpers.h"
 #include "llvm/DebugInfo/CodeView/TypeVisitorCallbacks.h"
+#include "llvm/DebugInfo/MSF/MappedBlockStream.h"
 #include "llvm/DebugInfo/PDB/Native/DbiModuleDescriptor.h"
 #include "llvm/DebugInfo/PDB/Native/DbiModuleList.h"
 #include "llvm/DebugInfo/PDB/Native/DbiStream.h"
@@ -22,25 +23,16 @@
 #include "llvm/DebugInfo/PDB/Native/ISectionContribVisitor.h"
 #include "llvm/DebugInfo/PDB/Native/InfoStream.h"
 #include "llvm/DebugInfo/PDB/Native/ModuleDebugStream.h"
-#include "llvm/DebugInfo/PDB/Native/NativeExeSymbol.h"
-#include "llvm/DebugInfo/PDB/Native/NativeTypeFunctionSig.h"
-#include "llvm/DebugInfo/PDB/Native/NativeTypeUDT.h"
 #include "llvm/DebugInfo/PDB/Native/PDBFile.h"
 #include "llvm/DebugInfo/PDB/Native/PDBStringTable.h"
 #include "llvm/DebugInfo/PDB/Native/PublicsStream.h"
 #include "llvm/DebugInfo/PDB/Native/RawConstants.h"
 #include "llvm/DebugInfo/PDB/Native/RawTypes.h"
-#include "llvm/DebugInfo/MSF/MappedBlockStream.h"
-#include "llvm/Support/BinaryStreamReader.h"
-#include "llvm/DebugInfo/PDB/Native/SymbolCache.h"
 #include "llvm/DebugInfo/PDB/Native/SymbolStream.h"
 #include "llvm/DebugInfo/PDB/Native/TpiStream.h"
-#include "llvm/DebugInfo/PDB/PDBSymbol.h"
-#include "llvm/DebugInfo/PDB/PDBSymbolCompiland.h"
-#include "llvm/DebugInfo/PDB/IPDBEnumChildren.h"
-#include "llvm/Support/ConvertUTF.h"
-#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Demangle/Demangle.h"
+#include "llvm/Support/BinaryStreamReader.h"
+#include "llvm/Support/MemoryBuffer.h"
 
 using namespace llvm;
 using namespace llvm::codeview;
@@ -58,13 +50,8 @@ const char *propName(Prop p)
     return p < P_COUNT ? names[p] : "?";
 }
 
-static LazyRandomTypeCollection *tpiTypes(NativeSession &ns);
-static bool resolveTag(Model &m, NativeSession &ns, TypeIndex ti, CVType &out, TypeIndex &full);
-
 std::string undecorate(const std::string &n);
 std::string undecorateComplete(const std::string &n);
-
-template <class E> static bool has(E v, E f) { return ((uint64_t)v & (uint64_t)f) != 0; }
 
 namespace {
 
@@ -82,35 +69,6 @@ Prop propByName(const char *n)
     return P_COUNT;
 }
 
-// IDiaSymbol property -> IPDBRawSymbol method (LLVM's DIA backend, read
-// backwards).
-bool rawGet(const IPDBRawSymbol &r, Prop p, Val &v)
-{
-    switch (p) {
-#define R_BOOL(m) v = Val::b_(r.m())
-#define R_U32(m) v = Val::u_(r.m())
-#define R_I32(m) v = Val::i_(r.m())
-#define R_U64(m) v = Val::u_(r.m())
-#define R_ID(m) v = Val::sym(r.m())
-#define R_STR(m) v = Val::str(r.m())
-#define R_ENUM(m) v = Val::u_((uint32_t)r.m())
-#define R_GUID(m) { auto g = r.m(); memcpy(&v.g, &g, 16); v.kind = Val::Guid; }
-#define R_VER_MAJOR(m) { VersionInfo vi{}; r.m(vi); v = Val::u_(vi.Major); }
-#define R_VER_MINOR(m) { VersionInfo vi{}; r.m(vi); v = Val::u_(vi.Minor); }
-#define R_VER_BUILD(m) { VersionInfo vi{}; r.m(vi); v = Val::u_(vi.Build); }
-#define R_VER_QFE(m) { VersionInfo vi{}; r.m(vi); v = Val::u_(vi.QFE); }
-#define R(prop, meth, conv) case P_##prop: R_##conv(meth); return true;
-#include "rawsym_map.inc"
-#undef R
-    case P_value:
-        v.kind = Val::Var;
-        v.var = r.getValue();
-        return true;
-    default:
-        return false;
-    }
-}
-
 // The *Id property that backs a symbol-valued property.
 Prop idPropOf(Prop p)
 {
@@ -124,76 +82,6 @@ Prop idPropOf(Prop p)
         }
     }
     return map[p];
-}
-
-// Properties the real DLL reports for symbols of a tag that LLVM models.
-struct TagProps {
-    std::bitset<P_COUNT> always;
-};
-
-std::bitset<P_COUNT> bits(std::initializer_list<const char *> names)
-{
-    std::bitset<P_COUNT> b;
-    for (auto *n : names) {
-        Prop p = propByName(n);
-        if (p != P_COUNT) b.set(p);
-    }
-    return b;
-}
-
-const std::bitset<P_COUNT> &tagProps(PDB_SymType t)
-{
-    static std::map<PDB_SymType, std::bitset<P_COUNT>> m;
-    if (m.empty()) {
-        auto common = bits({"symIndexId", "symTag", "lexicalParent", "lexicalParentId"});
-        auto cv = bits({"constType", "volatileType", "unalignedType", "constantExport"});
-        auto udtish = bits({"constructor", "exportIsForwarder", "hasAssignmentOperator",
-                            "hasCastOperator", "hasNestedTypes", "hfaDouble", "hfaFloat",
-                            "intrinsic", "isInterfaceUdt", "isRefUdt", "isValueUdt", "length",
-                            "name", "nested", "overloadedOperator", "packed", "scoped", "sealed"});
-        m[PDB_SymType::Exe] = bits({"symIndexId", "symTag", "age", "guid", "isCTypes", "isStripped",
-                                    "machineType", "name", "signature", "symbolsFileName"});
-        m[PDB_SymType::Compiland] = common | bits({"editAndContinueEnabled", "libraryName", "name"});
-        m[PDB_SymType::ArrayType] = common | cv | bits({"arrayIndexType", "arrayIndexTypeId", "count",
-                                                        "length", "name", "type", "typeId"});
-        m[PDB_SymType::BuiltinType] = common | cv | bits({"baseType", "length", "unmodifiedType",
-                                                          "unmodifiedTypeId"});
-        m[PDB_SymType::Enum] = common | cv | udtish | bits({"baseType", "type", "typeId"});
-        m[PDB_SymType::FunctionSig] = common | cv | bits({"callingConvention", "constructor", "count",
-                                                          "isConstructorVirtualBase", "isCxxReturnUdt",
-                                                          "type", "typeId"});
-        m[PDB_SymType::FunctionArg] = common | bits({"classParent", "classParentId", "type", "typeId"});
-        m[PDB_SymType::PointerType] = common | cv | bits({"RValueReference", "isPointerToDataMember",
-                                                          "isPointerToMemberFunction", "isWinRTPointer",
-                                                          "length", "reference", "restrictedType",
-                                                          "type", "typeId"});
-        m[PDB_SymType::Typedef] = common | bits({"name", "type", "typeId"});
-        m[PDB_SymType::UDT] = common | cv | udtish | bits({"udtKind"});
-        m[PDB_SymType::VTableShape] = common | cv | bits({"count"});
-    }
-    static std::bitset<P_COUNT> none;
-    auto it = m.find(t);
-    return it == m.end() ? none : it->second;
-}
-
-template <class T> bool deser(const CVSymbol &s, T &out)
-{
-    auto e = SymbolDeserializer::deserializeAs<T>(s);
-    if (!e) {
-        consumeError(e.takeError());
-        return false;
-    }
-    out = std::move(*e);
-    return true;
-}
-
-template <class T> bool deserType(CVType t, T &out)
-{
-    if (auto e = TypeDeserializer::deserializeAs<T>(t, out)) {
-        consumeError(std::move(e));
-        return false;
-    }
-    return true;
 }
 
 bool isProc(SymbolKind k)
@@ -215,18 +103,17 @@ Variant variantOf(const APSInt &v)
     Variant r;
     unsigned w = v.getBitWidth();
     if (w <= 8) {
-        r.Type = v.isSigned() ? PDB_VariantType::Int8 : PDB_VariantType::UInt8;
-        if (v.isSigned()) r.Value.Int8 = (int8_t)v.getSExtValue(); else r.Value.UInt8 = (uint8_t)v.getZExtValue();
+        r.type = v.isSigned() ? Variant::I1 : Variant::UI1;
     } else if (w <= 16) {
-        r.Type = PDB_VariantType::Int16;
-        r.Value.Int16 = (int16_t)v.getZExtValue();
+        r.type = Variant::I2;
+        r.i = (int16_t)v.getZExtValue();
+        return r;
     } else if (w <= 32) {
-        r.Type = v.isSigned() ? PDB_VariantType::Int32 : PDB_VariantType::UInt32;
-        if (v.isSigned()) r.Value.Int32 = (int32_t)v.getSExtValue(); else r.Value.UInt32 = (uint32_t)v.getZExtValue();
+        r.type = v.isSigned() ? Variant::I4 : Variant::UI4;
     } else {
-        r.Type = v.isSigned() ? PDB_VariantType::Int64 : PDB_VariantType::UInt64;
-        if (v.isSigned()) r.Value.Int64 = v.getSExtValue(); else r.Value.UInt64 = v.getZExtValue();
+        r.type = v.isSigned() ? Variant::I8 : Variant::UI8;
     }
+    if (v.isSigned()) r.i = v.getSExtValue(); else r.u = v.getZExtValue();
     return r;
 }
 
@@ -235,10 +122,10 @@ Variant variantOf(const APSInt &v)
 // ------------------------------------------------------------------ symbols
 
 // A function from a module symbol stream (S_GPROC32 and friends).
-class OmFunction : public OmSym {
+class OmFunction : public Sym {
 public:
-    OmFunction(NativeSession &s, SymIndexId id, uint16_t modi, uint32_t off, ProcSym ps)
-        : OmSym(s, PDB_SymType::Function, id), modi(modi), off(off), ps(std::move(ps)) {}
+    OmFunction(uint16_t modi, uint32_t off, ProcSym ps)
+        : Sym(SymTag::Function), modi(modi), off(off), ps(std::move(ps)) {}
     uint16_t modi;
     uint32_t off;
     ProcSym ps;
@@ -274,7 +161,7 @@ public:
         case P_relativeVirtualAddress: v = Val::u_(start()); return true;
         case P_virtualAddress: v = Val::u_(start() + M->loadAddress); return true;
         case P_length: v = Val::u_(ps.CodeSize); return true;
-        case P_locationType: v = Val::u_((uint32_t)PDB_LocType::Static); return true;
+        case P_locationType: v = Val::u_((uint32_t)LocType::Static); return true;
         case P_isStatic: if (!isStatic) return false; v = Val::b_(true); return true;
         case P_framePointerPresent: v = Val::b_(has(ps.Flags, ProcSymFlags::HasFP)); return true;
         case P_interruptReturn: v = Val::b_(has(ps.Flags, ProcSymFlags::HasIRET)); return true;
@@ -370,20 +257,20 @@ public:
 };
 
 // FuncDebugStart / FuncDebugEnd of a function.
-class OmFuncDebug : public OmSym {
+class OmFuncDebug : public Sym {
 public:
-    OmFuncDebug(NativeSession &s, SymIndexId id, PDB_SymType tag, const OmFunction *fn)
-        : OmSym(s, tag, id), fn(fn) {}
+    OmFuncDebug(SymTag tag, const OmFunction *fn)
+        : Sym(tag), fn(fn) {}
     const OmFunction *fn;
     bool prop(Prop p, Val &v) const override
     {
-        uint32_t delta = getSymTag() == PDB_SymType::FuncDebugStart ? fn->ps.DbgStart : fn->ps.DbgEnd;
+        uint32_t delta = getSymTag() == SymTag::FuncDebugStart ? fn->ps.DbgStart : fn->ps.DbgEnd;
         switch (p) {
         case P_addressSection: v = Val::u_(fn->ps.Segment); return true;
         case P_addressOffset: v = Val::u_(fn->ps.CodeOffset + delta); return true;
         case P_relativeVirtualAddress: v = Val::u_(fn->start() + delta); return true;
         case P_virtualAddress: v = Val::u_(fn->start() + delta + M->loadAddress); return true;
-        case P_locationType: v = Val::u_((uint32_t)PDB_LocType::Static); return true;
+        case P_locationType: v = Val::u_((uint32_t)LocType::Static); return true;
         case P_lexicalParent: case P_lexicalParentId: v = Val::sym(lexParent); return true;
         case P_isStatic: case P_framePointerPresent: case P_interruptReturn: case P_farReturn:
         case P_noReturn: case P_notReached: case P_customCallingConvention: case P_noInline:
@@ -395,10 +282,10 @@ public:
 };
 
 // S_BLOCK32.
-class OmBlock : public OmSym {
+class OmBlock : public Sym {
 public:
-    OmBlock(NativeSession &s, SymIndexId id, uint16_t modi, uint32_t off, BlockSym bs)
-        : OmSym(s, PDB_SymType::Block, id), modi(modi), off(off), bs(std::move(bs)) {}
+    OmBlock(uint16_t modi, uint32_t off, BlockSym bs)
+        : Sym(SymTag::Block), modi(modi), off(off), bs(std::move(bs)) {}
     uint16_t modi;
     uint32_t off;
     BlockSym bs;
@@ -413,7 +300,7 @@ public:
         case P_relativeVirtualAddress: v = Val::u_(rva); return true;
         case P_virtualAddress: v = Val::u_(rva + M->loadAddress); return true;
         case P_length: v = Val::u_(bs.CodeSize); return true;
-        case P_locationType: v = Val::u_((uint32_t)PDB_LocType::Static); return true;
+        case P_locationType: v = Val::u_((uint32_t)LocType::Static); return true;
         case P_lexicalParent: case P_lexicalParentId: v = Val::sym(lexParent); return true;
         default: return false;
         }
@@ -422,12 +309,12 @@ public:
 };
 
 // Data: globals, statics, members, static members, constants, enumerators.
-class OmData : public OmSym {
+class OmData : public Sym {
 public:
     enum Kind { Global, Member, StaticMember, Constant, Enumerator, RegRel, Register };
-    OmData(NativeSession &s, SymIndexId id, Kind k) : OmSym(s, PDB_SymType::Data, id), k(k) {}
+    OmData(Kind k) : Sym(SymTag::Data), k(k) {}
     Kind k;
-    PDB_DataKind dataKind = PDB_DataKind::Unknown;
+    DataKind dataKind = DataKind::Unknown;
     std::string nm;
     TypeIndex type;
     SymIndexId typeId = 0;  // when set, overrides `type`
@@ -469,11 +356,11 @@ public:
             v = Val::u_((uint32_t)access);
             return true;
         case P_locationType:
-            if (k == Constant || k == Enumerator || staticConst) v = Val::u_((uint32_t)PDB_LocType::Constant);
-            else if (k == Member) v = Val::u_((uint32_t)(bitfield ? PDB_LocType::BitField : PDB_LocType::ThisRel));
-            else if (k == RegRel) v = Val::u_((uint32_t)PDB_LocType::RegRel);
-            else if (k == Register) v = Val::u_((uint32_t)PDB_LocType::Enregistered);
-            else v = Val::u_((uint32_t)(tls ? PDB_LocType::TLS : PDB_LocType::Static));
+            if (k == Constant || k == Enumerator || staticConst) v = Val::u_((uint32_t)LocType::Constant);
+            else if (k == Member) v = Val::u_((uint32_t)(bitfield ? LocType::BitField : LocType::ThisRel));
+            else if (k == RegRel) v = Val::u_((uint32_t)LocType::RegRel);
+            else if (k == Register) v = Val::u_((uint32_t)LocType::Enregistered);
+            else v = Val::u_((uint32_t)(tls ? LocType::TLS : LocType::Static));
             return true;
         case P_offset:
             if (k == RegRel) { v = Val::i_(regOffset); return true; }
@@ -497,7 +384,7 @@ public:
             if (k == Constant || k == Enumerator) {
                 // Constants of enum type report the enum's base type and size (14.51).
                 SymIndexId t = typeId ? typeId : M->typeSym(type);
-                if (M->tag(t) != PDB_SymType::Enum) return false;
+                if (M->tag(t) != SymTag::Enum) return false;
                 return M->get(t, p, v);
             }
             return false;
@@ -512,9 +399,9 @@ public:
 };
 
 // S_PUB32.
-class OmPublic : public OmSym {
+class OmPublic : public Sym {
 public:
-    OmPublic(NativeSession &s, SymIndexId id, PublicSym32 ps) : OmSym(s, PDB_SymType::PublicSymbol, id), ps(std::move(ps)) {}
+    OmPublic(PublicSym32 ps) : Sym(SymTag::PublicSymbol), ps(std::move(ps)) {}
     PublicSym32 ps;
     uint32_t len = 0;
     bool noChildren() const override { return true; }
@@ -541,7 +428,7 @@ public:
         case P_relativeVirtualAddress: v = Val::u_(rva); return true;
         case P_virtualAddress: v = Val::u_(rva + M->loadAddress); return true;
         case P_length: v = Val::u_(len); return true;
-        case P_locationType: v = Val::u_((uint32_t)PDB_LocType::Static); return true;
+        case P_locationType: v = Val::u_((uint32_t)LocType::Static); return true;
         case P_lexicalParent: case P_lexicalParentId: v = Val::sym(lexParent); return true;
         case P_code: v = Val::b_(code); return true;
         case P_function: v = Val::b_(has(ps.Flags, PublicSymFlags::Function)); return true;
@@ -554,10 +441,10 @@ public:
 };
 
 // S_COMPILE3 (or S_COMPILE2) of a module.
-class OmCompilandDetails : public OmSym {
+class OmCompilandDetails : public Sym {
 public:
-    OmCompilandDetails(NativeSession &s, SymIndexId id, Compile3Sym cs)
-        : OmSym(s, PDB_SymType::CompilandDetails, id), cs(std::move(cs)) {}
+    OmCompilandDetails(Compile3Sym cs)
+        : Sym(SymTag::CompilandDetails), cs(std::move(cs)) {}
     Compile3Sym cs;
     bool prop(Prop p, Val &v) const override
     {
@@ -592,10 +479,10 @@ public:
 };
 
 // One name/value pair of a module's build environment.
-class OmCompilandEnv : public OmSym {
+class OmCompilandEnv : public Sym {
 public:
-    OmCompilandEnv(NativeSession &s, SymIndexId id, std::string n, std::string val)
-        : OmSym(s, PDB_SymType::CompilandEnv, id), n(std::move(n)), val(std::move(val)) {}
+    OmCompilandEnv(std::string n, std::string val)
+        : Sym(SymTag::CompilandEnv), n(std::move(n)), val(std::move(val)) {}
     std::string n, val;
     bool prop(Prop p, Val &v) const override
     {
@@ -613,9 +500,9 @@ public:
 };
 
 // LF_BCLASS / LF_VBCLASS / LF_IVBCLASS.
-class OmBaseClass : public OmSym {
+class OmBaseClass : public Sym {
 public:
-    OmBaseClass(NativeSession &s, SymIndexId id) : OmSym(s, PDB_SymType::BaseClass, id) {}
+    OmBaseClass() : Sym(SymTag::BaseClass) {}
     SymIndexId base = 0;  // the base UDT
     MemberAccess access = MemberAccess::None;
     int32_t offset = 0;
@@ -650,9 +537,9 @@ public:
 };
 
 // LF_VFUNCTAB.
-class OmVTable : public OmSym {
+class OmVTable : public Sym {
 public:
-    OmVTable(NativeSession &s, SymIndexId id, TypeIndex t) : OmSym(s, PDB_SymType::VTable, id), t(t) {}
+    OmVTable(TypeIndex t) : Sym(SymTag::VTable), t(t) {}
     TypeIndex t;
     bool prop(Prop p, Val &v) const override
     {
@@ -670,10 +557,10 @@ public:
 };
 
 // An inlined call site (S_INLINESITE).
-class OmInlineSite : public OmSym {
+class OmInlineSite : public Sym {
 public:
-    OmInlineSite(NativeSession &s, SymIndexId id, uint16_t modi, uint32_t off, uint32_t end)
-        : OmSym(s, PDB_SymType::InlineSite, id), modi(modi), off(off), end(end) {}
+    OmInlineSite(uint16_t modi, uint32_t off, uint32_t end)
+        : Sym(SymTag::InlineSite), modi(modi), off(off), end(end) {}
     uint16_t modi;
     uint32_t off, end;
     uint16_t seg = 0;
@@ -694,7 +581,7 @@ public:
         case P_addressOffset: v = Val::u_(start); return true;
         case P_relativeVirtualAddress: v = Val::u_(rva); return true;
         case P_virtualAddress: v = Val::u_(rva + M->loadAddress); return true;
-        case P_locationType: v = Val::u_((uint32_t)PDB_LocType::Static); return true;
+        case P_locationType: v = Val::u_((uint32_t)LocType::Static); return true;
         default: return false;
         }
     }
@@ -703,16 +590,16 @@ public:
 
 // The inlinee of an inline site: the real 14.30 DLL returns a symbol with
 // SymTagNull here.
-class OmInlinee : public OmSym {
+class OmInlinee : public Sym {
 public:
-    OmInlinee(NativeSession &s, SymIndexId id) : OmSym(s, PDB_SymType::None, id) {}
+    OmInlinee() : Sym(SymTag::None) {}
     bool prop(Prop, Val &) const override { return false; }
 };
 
 // S_COFFGROUP of the linker module.
-class OmCoffGroup : public OmSym {
+class OmCoffGroup : public Sym {
 public:
-    OmCoffGroup(NativeSession &s, SymIndexId id, CoffGroupSym cg) : OmSym(s, PDB_SymType::CoffGroup, id), cg(std::move(cg)) {}
+    OmCoffGroup(CoffGroupSym cg) : Sym(SymTag::CoffGroup), cg(std::move(cg)) {}
     CoffGroupSym cg;
     bool prop(Prop p, Val &v) const override
     {
@@ -726,17 +613,17 @@ public:
         case P_virtualAddress: v = Val::u_(rva + M->loadAddress); return true;
         case P_length: v = Val::u_(cg.Size); return true;
         case P_characteristics: v = Val::u_(cg.Characteristics); return true;
-        case P_locationType: v = Val::u_((uint32_t)PDB_LocType::Static); return true;
+        case P_locationType: v = Val::u_((uint32_t)LocType::Static); return true;
         default: return false;
         }
     }
 };
 
 // S_UNAMESPACE.
-class OmUsingNamespace : public OmSym {
+class OmUsingNamespace : public Sym {
 public:
-    OmUsingNamespace(NativeSession &s, SymIndexId id, std::string nm)
-        : OmSym(s, PDB_SymType::UsingNamespace, id), nm(std::move(nm)) {}
+    OmUsingNamespace(std::string nm)
+        : Sym(SymTag::UsingNamespace), nm(std::move(nm)) {}
     std::string nm;
     bool prop(Prop p, Val &v) const override
     {
@@ -749,10 +636,10 @@ public:
 };
 
 // S_CALLSITEINFO.
-class OmCallSite : public OmSym {
+class OmCallSite : public Sym {
 public:
-    OmCallSite(NativeSession &s, SymIndexId id, CallSiteInfoSym cs)
-        : OmSym(s, PDB_SymType::CallSite, id), cs(std::move(cs)) {}
+    OmCallSite(CallSiteInfoSym cs)
+        : Sym(SymTag::CallSite), cs(std::move(cs)) {}
     CallSiteInfoSym cs;
     bool prop(Prop p, Val &v) const override
     {
@@ -769,10 +656,10 @@ public:
 
 // A nested type entry (LF_NESTTYPE) of a class: the type under its nested
 // name, with the class as class parent.
-class OmNested : public OmSym {
+class OmNested : public Sym {
 public:
-    OmNested(NativeSession &s, SymIndexId id, PDB_SymType tag, SymIndexId target, std::string nm)
-        : OmSym(s, tag, id), target(target), nm(std::move(nm)) {}
+    OmNested(SymTag tag, SymIndexId target, std::string nm)
+        : Sym(tag), target(target), nm(std::move(nm)) {}
     SymIndexId target;
     std::string nm;
     bool prop(Prop p, Val &v) const override
@@ -788,10 +675,10 @@ public:
 };
 
 // A class method without an implementation in the PDB (declaration only).
-class OmMethod : public OmSym {
+class OmMethod : public Sym {
 public:
-    OmMethod(NativeSession &s, SymIndexId id, OneMethodRecord m)
-        : OmSym(s, PDB_SymType::Function, id), m(std::move(m)) {}
+    OmMethod(OneMethodRecord m)
+        : Sym(SymTag::Function), m(std::move(m)) {}
     OneMethodRecord m;
     bool overloaded = false;
     bool prop(Prop p, Val &v) const override
@@ -826,43 +713,42 @@ public:
     }
 };
 
-template <class T, class... A> SymIndexId Model::make(A &&...args)
-{
-    SymIndexId id = ns.getSymbolCache().createSymbol<T>(std::forward<A>(args)...);
-    auto *s = static_cast<OmSym *>(&ns.getSymbolCache().getNativeSymbolById(id));
-    s->M = this;
-    omIndex[id] = s;
-    return id;
-}
-
 // ------------------------------------------------------------------ model
 
-Model::Model(std::unique_ptr<IPDBSession> s)
-    : ns(static_cast<NativeSession &>(*s)), owner(std::move(s)) {}
+Model::Model(std::unique_ptr<PdbFile> f) : pdb(std::move(f)) {}
 
 Model::~Model() = default;
 
 std::unique_ptr<Model> Model::openBuffer(std::vector<uint8_t> data, std::string &err)
 {
-    std::unique_ptr<IPDBSession> s;
     auto mb = MemoryBuffer::getMemBufferCopy(
         StringRef(reinterpret_cast<const char *>(data.data()), data.size()), "stream");
-    if (auto e = NativeSession::createFromPdb(std::move(mb), s)) {
-        err = toString(std::move(e));
+    auto f = PdbFile::open(std::move(mb), err);
+    if (!f) return nullptr;
+    std::unique_ptr<Model> m(new Model(std::move(f)));
+    m->init();
+    return m;
+}
+
+std::unique_ptr<Model> Model::open(const std::string &path, std::string &err)
+{
+    auto mb = MemoryBuffer::getFile(path, /*IsText=*/false, /*RequiresNullTerminator=*/false);
+    if (!mb) {
+        err = mb.getError().message();
         return nullptr;
     }
-    std::unique_ptr<Model> m(new Model(std::move(s)));
-    m->exe = m->ns.getNativeGlobalScope().getSymIndexId();
+    auto f = PdbFile::open(std::move(*mb), err);
+    if (!f) return nullptr;
+    std::unique_ptr<Model> m(new Model(std::move(f)));
+    m->pdbPath = path;
+    m->init();
     return m;
 }
 
 bool Model::identity(GUID70 &guid, uint32_t &sig, uint32_t &age)
 {
-    auto info = ns.getPDBFile().getPDBInfoStream();
-    if (!info) {
-        consumeError(info.takeError());
-        return false;
-    }
+    InfoStream *info = pdb->info();
+    if (!info) return false;
     auto g = info->getGuid();
     memcpy(guid.b, &g, 16);
     sig = info->getSignature();
@@ -870,84 +756,12 @@ bool Model::identity(GUID70 &guid, uint32_t &sig, uint32_t &age)
     return true;
 }
 
-std::unique_ptr<Model> Model::open(const std::string &path, std::string &err)
-{
-    std::unique_ptr<IPDBSession> s;
-    if (auto e = NativeSession::createFromPdbPath(path, s)) {
-        err = toString(std::move(e));
-        return nullptr;
-    }
-    std::unique_ptr<Model> m(new Model(std::move(s)));
-    m->pdbPath = path;
-    m->exe = m->ns.getNativeGlobalScope().getSymIndexId();
-    return m;
-}
-
-bool Model::valid(SymIndexId id) const
-{
-    return id != 0 && ns.getSymbolCache().getSymbolById(id) != nullptr;
-}
-
-NativeRawSymbol &Model::raw(SymIndexId id) const { return ns.getSymbolCache().getNativeSymbolById(id); }
-
-PDB_SymType Model::tag(SymIndexId id) const { return valid(id) ? raw(id).getSymTag() : PDB_SymType::None; }
-
-OmSym *Model::ours(SymIndexId id) const
-{
-    auto it = omIndex.find(id);
-    return it == omIndex.end() ? nullptr : it->second;
-}
-
-uint32_t Model::rva(uint32_t sect, uint32_t off) const { return ns.getRVAFromSectOffset(sect, off); }
-
-bool Model::sectOff(uint32_t r, uint32_t &sect, uint32_t &off) const
-{
-    return ns.addressForRVA(r, sect, off);
-}
-
-// A base type LLVM's native reader has no symbol for (__int128,
-// __float128, 16-bit floats, wider booleans...).
-class OmBuiltin : public OmSym {
-public:
-    OmBuiltin(NativeSession &s, SymIndexId id, uint32_t bt, uint32_t len)
-        : OmSym(s, PDB_SymType::BuiltinType, id), bt(bt), len(len) {}
-    uint32_t bt, len;
-    bool prop(Prop p, Val &v) const override
-    {
-        switch (p) {
-        case P_baseType: v = Val::u_(bt); return true;
-        case P_length: v = Val::u_(len); return true;
-        case P_lexicalParent: case P_lexicalParentId: v = Val::sym(M->exe); return true;
-        case P_unmodifiedType: case P_unmodifiedTypeId: v = Val::sym(getSymIndexId()); return true;
-        case P_constType: case P_volatileType: case P_unalignedType: case P_constantExport: v = Val::b_(false); return true;
-        default: return false;
-        }
-    }
-};
-
-SymIndexId Model::typeSym(TypeIndex ti)
-{
-    SymIndexId id = ns.getSymbolCache().findSymbolByTypeIndex(fullDecl(ti));
-    if (id || !ti.isSimple() || ti.getSimpleMode() != SimpleTypeMode::Direct) return id;
-    auto it = extraBuiltins.find(ti.getIndex());
-    if (it != extraBuiltins.end()) return it->second;
-    uint32_t bt = 0, len = 0;
-    if (!simpleBasicType((uint32_t)ti.getSimpleKind(), bt, len)) return 0;
-    id = make<OmBuiltin>(bt, len);
-    extraBuiltins[ti.getIndex()] = id;
-    return id;
-}
-
-// Forward references resolved to their definition. LLVM's
-// TpiStream::findFullDeclForForwardRef relies on the TPI hash buckets and
-// misses some definitions in lld-linked optimized PDBs; this falls back to
-// matching the unique name (or name) over the whole stream.
 TypeIndex Model::fullDecl(TypeIndex ti)
 {
     if (ti.isSimple() || ti.isNoneType()) return ti;
-    auto *types = tpiTypes(ns);
+    auto *types = pdb->types();
     if (!types) return ti;
-    CVType t = types->getType(ti);
+    CVType t = pdb->type(ti);
     if (!isUdtForwardRef(t)) return ti;
     auto it = fwdCache.find(ti);
     if (it != fwdCache.end()) return it->second;
@@ -1033,13 +847,11 @@ std::string Model::name(SymIndexId id)
 
 bool Model::get(SymIndexId id, Prop p, Val &v)
 {
-    if (!valid(id)) return false;
-    if (p >= P_COUNT) {
-        OmSym *o = ours(id);
-        return o && o->prop(p, v);
-    }
+    Sym *o = ours(id);
+    if (!o) return false;
+    if (p >= P_COUNT) return o->prop(p, v);
     if (p == P_symIndexId) { v = Val::u_(id); return true; }
-    if (p == P_symTag) { v = Val::u_((uint32_t)tag(id)); return true; }
+    if (p == P_symTag) { v = Val::u_((uint32_t)o->tag); return true; }
     if (propKinds[p] == K_SYM) {
         Prop ip = idPropOf(p);
         if (ip != P_COUNT) {
@@ -1050,11 +862,11 @@ bool Model::get(SymIndexId id, Prop p, Val &v)
     }
     if (p == P_coffGroup) {
         // The COFF group holding the symbol's address (DIA 14.51).
-        PDB_SymType t = tag(id);
-        if (t == PDB_SymType::Function || t == PDB_SymType::FuncDebugStart || t == PDB_SymType::FuncDebugEnd ||
-            t == PDB_SymType::Data || t == PDB_SymType::PublicSymbol || t == PDB_SymType::Block ||
-            t == PDB_SymType::CallSite || t == PDB_SymType::InlineSite || t == PDB_SymType::CoffGroup ||
-            t == PDB_SymType::Label || t == PDB_SymType::Thunk) {
+        SymTag t = o->tag;
+        if (t == SymTag::Function || t == SymTag::FuncDebugStart || t == SymTag::FuncDebugEnd ||
+            t == SymTag::Data || t == SymTag::PublicSymbol || t == SymTag::Block ||
+            t == SymTag::CallSite || t == SymTag::InlineSite || t == SymTag::CoffGroup ||
+            t == SymTag::Label || t == SymTag::Thunk) {
             Val sec, off;
             if (!get(id, P_addressSection, sec) || !get(id, P_addressOffset, off)) return false;
             SymIndexId g = coffGroupAt((uint32_t)sec.u, (uint32_t)off.u);
@@ -1064,247 +876,20 @@ bool Model::get(SymIndexId id, Prop p, Val &v)
         }
         return false;
     }
-    if (OmSym *o = ours(id)) {
-        if (!o->prop(p, v)) return false;
-        if (v.kind == Val::Sym && !valid((SymIndexId)v.u) && propKinds[p] != K_SYM) v = Val::u_(0);
-        return true;
-    }
-    NativeRawSymbol &r = raw(id);
-    PDB_SymType t = r.getSymTag();
-    // Fix-ups where LLVM's native reader differs from the real DLL.
-    switch (p) {
-    case P_lexicalParentId:
-        if (t == PDB_SymType::Exe) return false;
-        if (t == PDB_SymType::Compiland || !(tagProps(t)[p])) {
-            if (!tagProps(t)[p]) return false;
-        }
-        v = Val::sym(exe);
-        return true;
-    case P_name:
-        if (t == PDB_SymType::Exe) {
-            std::string n = pdbPath;
-            size_t s = n.find_last_of("\\/");
-            if (s != std::string::npos) n = n.substr(s + 1);
-            size_t d = n.find_last_of('.');
-            if (d != std::string::npos) n = n.substr(0, d);
-            v = Val::str(n);
-            return true;
-        }
-        if (t == PDB_SymType::ArrayType) { v = Val::str(""); return true; }
-        break;
-    case P_symbolsFileName:
-        if (t == PDB_SymType::Exe) {
-            std::string n = pdbPath;
-            std::replace(n.begin(), n.end(), '/', '\\');
-            v = Val::str(n);
-            return true;
-        }
-        break;
-    case P_isStripped:
-        if (t == PDB_SymType::Exe) {
-            // LLVM's hasPrivateSymbols() is the negation (see docs/plan.md).
-            v = Val::b_(!r.hasPrivateSymbols());
-            return true;
-        }
-        break;
-    case P_constantExport:
-        if (tagProps(t)[p]) { v = Val::b_(r.isConstType()); return true; }
-        return false;
-    case P_hfaDouble: case P_hfaFloat:
-        if (t == PDB_SymType::UDT && tagProps(t)[p]) {
-            // CV_prop_t.hfa (bits 11-12): 1 float, 2 double.
-            uint32_t hfa = (udtOptions(id) >> 11) & 3;
-            v = Val::b_(hfa == (p == P_hfaFloat ? 1u : 2u));
-            return true;
-        }
-        if (tagProps(t)[p]) { v = Val::b_(false); return true; }
-        return false;
-    case P_exportIsForwarder: case P_isWinRTPointer:
-        if (tagProps(t)[p]) { v = Val::b_(false); return true; }
-        return false;
-    case P_classParentId:
-        if (t == PDB_SymType::FunctionArg) break;
-        if (t == PDB_SymType::FunctionSig || t == PDB_SymType::PointerType || t == PDB_SymType::UDT ||
-            t == PDB_SymType::Enum) {
-            SymIndexId c = r.getClassParentId();
-            if (!c) return false;
-            v = Val::sym(c);
-            return true;
-        }
-        break;
-    case P_unmodifiedTypeId:
-        if (t == PDB_SymType::UDT || t == PDB_SymType::Enum) {
-            SymIndexId u = r.getUnmodifiedTypeId();
-            if (!u) return false;
-            v = Val::sym(u);
-            return true;
-        }
-        if (t == PDB_SymType::BuiltinType) {
-            // The plain base type behind a const/volatile one.
-            TypeIndex ti = typeIndexOf(id);
-            if (auto *types = tpiTypes(ns))
-                if (!ti.isNoneType() && !ti.isSimple() && types->getType(ti).kind() == LF_MODIFIER) {
-                    ModifierRecord mr(TypeRecordKind::Modifier);
-                    if (deserType(types->getType(ti), mr)) {
-                        v = Val::sym(typeSym(mr.getModifiedType()));
-                        return true;
-                    }
-                }
-            v = Val::sym(id);
-            return true;
-        }
-        break;
-    case P_virtualTableShapeId:
-        if (t == PDB_SymType::UDT) {
-            if (r.getUdtKind() == PDB_UdtType::Union) return false;
-            v = Val::sym(r.getVirtualTableShapeId());
-            return true;
-        }
-        break;
-    case P_noexcept:
-        if (t == PDB_SymType::FunctionSig) {
-            // 14.30 reported it only for non-member function types. The flag
-            // is bit 3 of the CodeView function options (MSVC sets it).
-            uint8_t opts = 0;
-            auto *types = tpiTypes(ns);
-            TypeIndex ti = typeIndexOf(id);
-            if (types && !ti.isNoneType()) {
-                CVType ft = types->getType(ti);
-                if (ft.kind() == LF_PROCEDURE) {
-                    ProcedureRecord pr(TypeRecordKind::Procedure);
-                    if (deserType(ft, pr)) opts = (uint8_t)pr.getOptions();
-                } else if (ft.kind() == LF_MFUNCTION) {
-                    MemberFunctionRecord mr(TypeRecordKind::MemberFunction);
-                    if (deserType(ft, mr)) opts = (uint8_t)mr.getOptions();
-                }
-            }
-            v = Val::b_((opts & 0x08) != 0);
-            return true;
-        }
-        break;
-    case P_thisAdjust:
-        if (t == PDB_SymType::FunctionSig) {
-            if (!r.getClassParentId()) return false;
-            v = Val::i_(r.getThisAdjust());
-            return true;
-        }
-        break;
-    case P_objectPointerType:
-        if (t == PDB_SymType::FunctionSig) {
-            if (!r.getClassParentId()) return false;
-            auto *types = tpiTypes(ns);
-            TypeIndex ti = typeIndexOf(id);
-            if (!types || ti.isNoneType()) return false;
-            MemberFunctionRecord mf(TypeRecordKind::MemberFunction);
-            if (!deserType(types->getType(ti), mf) || mf.getThisType().isNoneType()) return false;
-            v = Val::sym(typeSym(mf.getThisType()));
-            return true;
-        }
-        break;
-    case P_baseType:
-        if (t == PDB_SymType::BuiltinType) {
-            uint32_t bt, len;
-            if (basicType(id, bt, len)) {
-                v = Val::u_(bt);
-                return true;
-            }
-        } else if (t == PDB_SymType::Enum) {
-            Val ty;
-            uint32_t bt, len;
-            if (get(id, P_typeId, ty) && basicType((SymIndexId)ty.u, bt, len)) {
-                v = Val::u_(bt);
-                return true;
-            }
-        }
-        break;
-    case P_machineType:
-        if (t == PDB_SymType::Exe) {
-            auto dbi = ns.getPDBFile().getPDBDbiStream();
-            if (!dbi) {
-                consumeError(dbi.takeError());
-                return false;
-            }
-            v = Val::u_((uint32_t)dbi->getMachineType());
-            return true;
-        }
-        break;
-    case P_signature:
-        if (t == PDB_SymType::Exe) {
-            auto info = ns.getPDBFile().getPDBInfoStream();
-            if (!info) {
-                consumeError(info.takeError());
-                return false;
-            }
-            v = Val::u_(info->getSignature());
-            return true;
-        }
-        break;
-    case P_sealed:
-        if (t == PDB_SymType::UDT || t == PDB_SymType::Enum) {
-            v = Val::b_((udtOptions(id) & (uint16_t)ClassOptions::Sealed) != 0);
-            return true;
-        }
-        break;
-    default:
-        break;
-    }
-    if (!tagProps(t)[p]) return false;
-    if (!rawGet(r, p, v)) return false;
-    if (p == P_unmodifiedTypeId && t == PDB_SymType::BuiltinType) {
-        // The plain base type of a const/volatile one.
-        SymIndexId self = id;
-        (void)self;
-    }
+    if (!o->prop(p, v)) return false;
+    if (v.kind == Val::Sym && !valid((SymIndexId)v.u) && propKinds[p] != K_SYM) v = Val::u_(0);
     return true;
 }
 
 // ------------------------------------------------------------------ records
-
-CVSymbol Model::moduleRecord(uint16_t modi, uint32_t off)
-{
-    auto ms = ns.getModuleDebugStream(modi);
-    if (!ms) {
-        consumeError(ms.takeError());
-        return CVSymbol();
-    }
-    return *ms->getSymbolArray().at(off);
-}
-
-uint32_t Model::moduleCount() const
-{
-    auto dbi = ns.getPDBFile().getPDBDbiStream();
-    if (!dbi) {
-        consumeError(dbi.takeError());
-        return 0;
-    }
-    return dbi->modules().getModuleCount();
-}
-
-SymIndexId Model::compiland(uint16_t modi)
-{
-    auto c = ns.getSymbolCache().getOrCreateCompiland(modi);
-    return c ? c->getSymIndexId() : 0;
-}
-
-int Model::moduleOf(SymIndexId compilandId) const
-{
-    for (uint32_t i = 0, n = moduleCount(); i < n; i++) {
-        auto c = ns.getSymbolCache().getOrCreateCompiland(i);
-        if (c && c->getSymIndexId() == compilandId) return (int)i;
-    }
-    return -1;
-}
 
 SymIndexId Model::procSym(uint16_t modi, uint32_t off)
 {
     auto key = std::make_pair(modi, off);
     auto it = procByRecord.find(key);
     if (it != procByRecord.end()) return it->second;
-    auto ms = ns.getModuleDebugStream(modi);
-    if (!ms) {
-        consumeError(ms.takeError());
-        return 0;
-    }
+    auto *ms = pdb->module(modi);
+    if (!ms) return 0;
     CVSymbolArray syms = ms->getSymbolArray();
     auto I = syms.at(off);
     if (I == syms.end() || !isProc(I->kind())) return 0;
@@ -1333,89 +918,63 @@ SymIndexId Model::procSym(uint16_t modi, uint32_t off)
         if (isProc(J->kind())) break;
     }
     // Member function: bind to the class's method record.
-    if (!ps.FunctionType.isSimple()) {
-        auto tpi = ns.getPDBFile().getPDBTpiStream();
-        if (tpi) {
-            CVType ft = tpi->typeCollection().getType(ps.FunctionType);
-            if (ft.kind() == LF_MFUNCTION) {
-                MemberFunctionRecord mf(TypeRecordKind::MemberFunction);
-                if (deserType(ft, mf)) {
-                    f->classParent = typeSym(mf.getClassType());
-                    // Look for a method of that name and type in the class.
-                    std::string qual = name(f->classParent);
-                    std::string nm = ps.Name.str();
-                    std::string shortName = nm;
-                    if (!qual.empty() && nm.size() > qual.size() + 2 && nm.compare(0, qual.size(), qual) == 0 &&
-                        nm.compare(qual.size(), 2, "::") == 0)
-                        shortName = nm.substr(qual.size() + 2);
-                    auto &u = raw(f->classParent);
-                    (void)u;
-                    // Walk the class field list.
-                    CVType ct = tpi->typeCollection().getType(mf.getClassType());
-                    TypeIndex fl;
-                    if (ct.kind() == LF_CLASS || ct.kind() == LF_STRUCTURE || ct.kind() == LF_INTERFACE) {
-                        ClassRecord cr(TypeRecordKind::Class);
-                        if (deserType(ct, cr)) {
-                            if (cr.isForwardRef()) {
-                                auto full = tpi->findFullDeclForForwardRef(mf.getClassType());
-                                if (full) {
-                                    CVType c2 = tpi->typeCollection().getType(*full);
-                                    ClassRecord cr2(TypeRecordKind::Class);
-                                    if (deserType(c2, cr2)) fl = cr2.getFieldList();
-                                } else {
-                                    consumeError(full.takeError());
-                                }
-                            } else {
-                                fl = cr.getFieldList();
-                            }
-                        }
-                    }
-                    if (!fl.isNoneType()) {
-                        CVType flt = tpi->typeCollection().getType(fl);
-                        FieldListRecord flr(TypeRecordKind::FieldList);
-                        struct V : TypeVisitorCallbacks {
-                            std::string want;
-                            TypeIndex type;
-                            LazyRandomTypeCollection *types;
-                            OmFunction *f;
-                            Error visitKnownMember(CVMemberRecord &, OneMethodRecord &m) override
-                            {
-                                if (m.getName() == want && m.getType() == type) set(m);
-                                return Error::success();
-                            }
-                            Error visitKnownMember(CVMemberRecord &, OverloadedMethodRecord &m) override
-                            {
-                                if (m.getName() != want) return Error::success();
-                                CVType ml = types->getType(m.getMethodList());
-                                MethodOverloadListRecord list(TypeRecordKind::MethodOverloadList);
-                                if (deserType(ml, list))
-                                    for (auto &o : list.getMethods())
-                                        if (o.getType() == type) {
-                                            set(o);
-                                            f->overloaded = true;
-                                        }
-                                return Error::success();
-                            }
-                            void set(const OneMethodRecord &m)
-                            {
-                                f->isMethod = true;
-                                f->shortName = want;
-                                f->access = m.getAccess();
-                                f->mkind = m.getMethodKind();
-                                f->mopts = m.getOptions();
-                                f->vftableOffset = m.isIntroducingVirtual() ? m.getVFTableOffset() : 0;
-                            }
-                        } vis;
-                        vis.want = shortName;
-                        vis.type = ps.FunctionType;
-                        vis.types = &tpi->typeCollection();
-                        vis.f = f;
-                        if (deserType(flt, flr)) consumeError(visitMemberRecordStream(flr.Data, vis));
-                    }
+    CVType ft = pdb->type(ps.FunctionType);
+    MemberFunctionRecord mf(TypeRecordKind::MemberFunction);
+    if (ft.kind() == LF_MFUNCTION && deserType(ft, mf)) {
+        f->classParent = typeSym(mf.getClassType());
+        // Look for a method of that name and type in the class.
+        std::string qual = name(f->classParent);
+        std::string nm = ps.Name.str();
+        std::string shortName = nm;
+        if (!qual.empty() && nm.size() > qual.size() + 2 && nm.compare(0, qual.size(), qual) == 0 &&
+            nm.compare(qual.size(), 2, "::") == 0)
+            shortName = nm.substr(qual.size() + 2);
+        // Walk the class field list.
+        CVType ct = pdb->type(fullDecl(mf.getClassType()));
+        TypeIndex fl;
+        ClassRecord cr(TypeRecordKind::Class);
+        if ((ct.kind() == LF_CLASS || ct.kind() == LF_STRUCTURE || ct.kind() == LF_INTERFACE) && deserType(ct, cr) &&
+            !cr.isForwardRef())
+            fl = cr.getFieldList();
+        FieldListRecord flr(TypeRecordKind::FieldList);
+        if (!fl.isNoneType() && deserType(pdb->type(fl), flr)) {
+            struct V : TypeVisitorCallbacks {
+                std::string want;
+                TypeIndex type;
+                PdbFile *pdb;
+                OmFunction *f;
+                Error visitKnownMember(CVMemberRecord &, OneMethodRecord &m) override
+                {
+                    if (m.getName() == want && m.getType() == type) set(m);
+                    return Error::success();
                 }
-            }
-        } else {
-            consumeError(tpi.takeError());
+                Error visitKnownMember(CVMemberRecord &, OverloadedMethodRecord &m) override
+                {
+                    if (m.getName() != want) return Error::success();
+                    MethodOverloadListRecord list(TypeRecordKind::MethodOverloadList);
+                    if (deserType(pdb->type(m.getMethodList()), list))
+                        for (auto &o : list.getMethods())
+                            if (o.getType() == type) {
+                                set(o);
+                                f->overloaded = true;
+                            }
+                    return Error::success();
+                }
+                void set(const OneMethodRecord &m)
+                {
+                    f->isMethod = true;
+                    f->shortName = want;
+                    f->access = m.getAccess();
+                    f->mkind = m.getMethodKind();
+                    f->mopts = m.getOptions();
+                    f->vftableOffset = m.isIntroducingVirtual() ? m.getVFTableOffset() : 0;
+                }
+            } vis;
+            vis.want = shortName;
+            vis.type = ps.FunctionType;
+            vis.pdb = pdb.get();
+            vis.f = f;
+            consumeError(visitMemberRecordStream(flr.Data, vis));
         }
     }
     procByRecord[key] = id;
@@ -1427,11 +986,8 @@ SymIndexId Model::procSym(uint16_t modi, uint32_t off)
 void Model::moduleChildren(uint16_t modi, SymIndexId parent, uint32_t begin, uint32_t end,
                            std::vector<SymIndexId> &out, SymIndexId func)
 {
-    auto ms = ns.getModuleDebugStream(modi);
-    if (!ms) {
-        consumeError(ms.takeError());
-        return;
-    }
+    auto *ms = pdb->module(modi);
+    if (!ms) return;
     CVSymbolArray syms = ms->getSymbolArray();
     for (auto I = begin ? syms.at(begin) : syms.begin(); I != syms.end() && (end == 0 || I.offset() < end); ++I) {
         SymbolKind k = I->kind();
@@ -1494,29 +1050,24 @@ void Model::moduleChildren(uint16_t modi, SymIndexId parent, uint32_t begin, uin
                         break;
                     }
                 }
-                auto ipi = ns.getPDBFile().getPDBIpiStream();
-                if (ipi) {
-                    CVType ft = ipi->typeCollection().getType(is.Inlinee);
-                    if (ft.kind() == LF_FUNC_ID) {
-                        FuncIdRecord fr(TypeRecordKind::FuncId);
-                        if (deserType(ft, fr)) {
-                            site->nm = fr.getName().str();
-                            site->type = fr.getFunctionType();
-                            if (!fr.getParentScope().isNoneType()) {
-                                StringIdRecord sr(TypeRecordKind::StringId);
-                                if (deserType(ipi->typeCollection().getType(fr.getParentScope()), sr))
-                                    site->nm = sr.getString().str() + "::" + site->nm;
-                            }
-                        }
-                    } else if (ft.kind() == LF_MFUNC_ID) {
-                        MemberFuncIdRecord fr(TypeRecordKind::MemberFuncId);
-                        if (deserType(ft, fr)) {
-                            site->nm = name(typeSym(fr.getClassType())) + "::" + fr.getName().str();
-                            site->type = fr.getFunctionType();
+                CVType ft = pdb->id(is.Inlinee);
+                if (ft.kind() == LF_FUNC_ID) {
+                    FuncIdRecord fr(TypeRecordKind::FuncId);
+                    if (deserType(ft, fr)) {
+                        site->nm = fr.getName().str();
+                        site->type = fr.getFunctionType();
+                        if (!fr.getParentScope().isNoneType()) {
+                            StringIdRecord sr(TypeRecordKind::StringId);
+                            if (deserType(pdb->id(fr.getParentScope()), sr))
+                                site->nm = sr.getString().str() + "::" + site->nm;
                         }
                     }
-                } else {
-                    consumeError(ipi.takeError());
+                } else if (ft.kind() == LF_MFUNC_ID) {
+                    MemberFuncIdRecord fr(TypeRecordKind::MemberFuncId);
+                    if (deserType(ft, fr)) {
+                        site->nm = name(typeSym(fr.getClassType())) + "::" + fr.getName().str();
+                        site->type = fr.getFunctionType();
+                    }
                 }
                 site->inlinee = make<OmInlinee>();
                 recordSyms[key] = id;
@@ -1539,7 +1090,7 @@ void Model::moduleChildren(uint16_t modi, SymIndexId parent, uint32_t begin, uin
                 id = make<OmData>(OmData::Constant);
                 auto *d = static_cast<OmData *>(ours(id));
                 d->nm = cs.Name.str();
-                d->dataKind = PDB_DataKind::Constant;
+                d->dataKind = DataKind::Constant;
                 d->type = cs.Type;
                 d->value = variantOf(cs.Value);
                 d->lexParent = parent;
@@ -1583,8 +1134,8 @@ void Model::moduleChildren(uint16_t modi, SymIndexId parent, uint32_t begin, uin
                 d->seg = ds.Segment;
                 d->off = ds.DataOffset;
                 d->hasAddr = true;
-                d->dataKind = func ? PDB_DataKind::StaticLocal
-                                   : ((k == S_GDATA32 || k == S_GTHREAD32) ? PDB_DataKind::Global : PDB_DataKind::FileStatic);
+                d->dataKind = func ? DataKind::StaticLocal
+                                   : ((k == S_GDATA32 || k == S_GTHREAD32) ? DataKind::Global : DataKind::FileStatic);
                 d->tls = k == S_GTHREAD32 || k == S_LTHREAD32;
                 d->lexParent = parent;
                 recordSyms[key] = id;
@@ -1616,11 +1167,11 @@ void Model::moduleChildren(uint16_t modi, SymIndexId parent, uint32_t begin, uin
                 }
                 // Parameters come first in the function's own scope, as many
                 // as the function type has (plus `this`).
-                d->dataKind = PDB_DataKind::Local;
+                d->dataKind = DataKind::Local;
                 if (parent == func) {
                     auto &n = paramsSeen[func];
                     if (n < paramCount(func)) {
-                        d->dataKind = d->nm == "this" ? PDB_DataKind::ObjectPtr : PDB_DataKind::Param;
+                        d->dataKind = d->nm == "this" ? DataKind::ObjectPtr : DataKind::Param;
                         n++;
                     }
                 }
@@ -1680,18 +1231,15 @@ void OmFunction::children(std::vector<SymIndexId> &out) const
     (void)key;
     // FuncDebugStart / FuncDebugEnd.
     if (!dbgStart) {
-        dbgStart = m.make<OmFuncDebug>(PDB_SymType::FuncDebugStart, this);
-        dbgEnd = m.make<OmFuncDebug>(PDB_SymType::FuncDebugEnd, this);
+        dbgStart = m.make<OmFuncDebug>(SymTag::FuncDebugStart, this);
+        dbgEnd = m.make<OmFuncDebug>(SymTag::FuncDebugEnd, this);
         m.ours(dbgStart)->lexParent = getSymIndexId();
         m.ours(dbgEnd)->lexParent = getSymIndexId();
     }
     out.push_back(dbgStart);
     out.push_back(dbgEnd);
-    auto ms = m.ns.getModuleDebugStream(modi);
-    if (!ms) {
-        consumeError(ms.takeError());
-        return;
-    }
+    auto *ms = m.pdb->module(modi);
+    if (!ms) return;
     CVSymbolArray syms = ms->getSymbolArray();
     auto I = syms.at(off);
     uint32_t begin = std::next(I).offset();
@@ -1700,11 +1248,8 @@ void OmFunction::children(std::vector<SymIndexId> &out) const
 
 void OmInlineSite::children(std::vector<SymIndexId> &out) const
 {
-    auto ms = M->ns.getModuleDebugStream(modi);
-    if (!ms) {
-        consumeError(ms.takeError());
-        return;
-    }
+    auto *ms = M->pdb->module(modi);
+    if (!ms) return;
     CVSymbolArray syms = ms->getSymbolArray();
     auto I = syms.at(off);
     M->moduleChildren(modi, getSymIndexId(), std::next(I).offset(), end, out, func);
@@ -1712,11 +1257,8 @@ void OmInlineSite::children(std::vector<SymIndexId> &out) const
 
 void OmBlock::children(std::vector<SymIndexId> &out) const
 {
-    auto ms = M->ns.getModuleDebugStream(modi);
-    if (!ms) {
-        consumeError(ms.takeError());
-        return;
-    }
+    auto *ms = M->pdb->module(modi);
+    if (!ms) return;
     CVSymbolArray syms = ms->getSymbolArray();
     auto I = syms.at(off);
     M->moduleChildren(modi, getSymIndexId(), std::next(I).offset(), bs.End, out, func);
@@ -1729,11 +1271,10 @@ namespace om {
 
 namespace {
 
-// A FunctionArgType: one argument of a FunctionType. LLVM creates these
-// without a SymIndexId, so we keep our own.
-class OmFuncArg : public OmSym {
+// A FunctionArgType: one argument of a FunctionType.
+class OmFuncArg : public Sym {
 public:
-    OmFuncArg(NativeSession &s, SymIndexId id, TypeIndex t) : OmSym(s, PDB_SymType::FunctionArg, id), t(t) {}
+    OmFuncArg(TypeIndex t) : Sym(SymTag::FunctionArg), t(t) {}
     TypeIndex t;
     bool prop(Prop p, Val &v) const override
     {
@@ -1748,31 +1289,11 @@ public:
 
 }  // namespace
 
-static LazyRandomTypeCollection *tpiTypes(NativeSession &ns)
-{
-    auto tpi = ns.getPDBFile().getPDBTpiStream();
-    if (!tpi) {
-        consumeError(tpi.takeError());
-        return nullptr;
-    }
-    return &tpi->typeCollection();
-}
-
-static TpiStream *tpiStream(NativeSession &ns)
-{
-    auto tpi = ns.getPDBFile().getPDBTpiStream();
-    if (!tpi) {
-        consumeError(tpi.takeError());
-        return nullptr;
-    }
-    return &*tpi;
-}
-
 uint16_t Model::udtOptions(SymIndexId id)
 {
     CVType t;
     TypeIndex full;
-    if (!resolveTag(*this, ns, typeIndexOf(id), t, full)) return 0;
+    if (!resolveTag(typeIndexOf(id), t, full)) return 0;
     switch (t.kind()) {
     case LF_CLASS: case LF_STRUCTURE: case LF_INTERFACE: {
         ClassRecord cr(TypeRecordKind::Class);
@@ -1791,61 +1312,24 @@ uint16_t Model::udtOptions(SymIndexId id)
     }
 }
 
-TypeIndex Model::typeIndexOf(SymIndexId id)
+bool Model::resolveTag(TypeIndex ti, CVType &out, TypeIndex &full)
 {
-    if (!typeIndexBuilt) {
-        typeIndexBuilt = true;
-        if (auto *types = tpiTypes(ns)) {
-            for (auto ti = types->getFirst(); ti; ti = types->getNext(*ti)) {
-                CVType t = types->getType(*ti);
-                if (isUdtForwardRef(t)) continue;
-                switch (t.kind()) {
-                case LF_CLASS: case LF_STRUCTURE: case LF_UNION: case LF_INTERFACE: case LF_ENUM:
-                case LF_POINTER: case LF_ARRAY: case LF_PROCEDURE: case LF_MFUNCTION: case LF_MODIFIER:
-                case LF_VTSHAPE: {
-                    SymIndexId s = typeSym(*ti);
-                    if (s) typeIndexMap.emplace(s, *ti);
-                    break;
-                }
-                default:
-                    break;
-                }
-            }
-        }
-    }
-    auto it = typeIndexMap.find(id);
-    return it == typeIndexMap.end() ? TypeIndex::None() : it->second;
-}
-
-// The record of a (possibly modified) UDT or enum, resolved to its full
-// definition.
-static bool resolveTag(Model &m, NativeSession &ns, TypeIndex ti, CVType &out, TypeIndex &full)
-{
-    auto *types = tpiTypes(ns);
-    if (!types || ti.isSimple() || ti.isNoneType()) return false;
-    CVType t = types->getType(ti);
+    if (ti.isSimple() || ti.isNoneType()) return false;
+    CVType t = pdb->type(ti);
     if (t.kind() == LF_MODIFIER) {
         ModifierRecord mr(TypeRecordKind::Modifier);
         if (!deserType(t, mr)) return false;
-        return resolveTag(m, ns, mr.getModifiedType(), out, full);
+        return resolveTag(mr.getModifiedType(), out, full);
     }
-    if (isUdtForwardRef(t)) {
-        auto f = tpiStream(ns)->findFullDeclForForwardRef(ti);
-        if (!f) {
-            consumeError(f.takeError());
-            return false;
-        }
-        ti = *f;
-        t = types->getType(ti);
-    }
-    out = t;
+    ti = fullDecl(ti);
+    out = pdb->type(ti);
     full = ti;
-    return true;
+    return out.kind() != 0;
 }
 
 void Model::typeMembers(SymIndexId udt, TypeIndex fieldList, std::vector<SymIndexId> &out)
 {
-    auto *types = tpiTypes(ns);
+    auto *types = pdb->types();
     if (!types || fieldList.isNoneType()) return;
     struct V : TypeVisitorCallbacks {
         Model *m;
@@ -1871,7 +1355,7 @@ void Model::typeMembers(SymIndexId udt, TypeIndex fieldList, std::vector<SymInde
                 SymIndexId id = m->make<OmData>(OmData::Member);
                 auto *d = static_cast<OmData *>(m->ours(id));
                 d->nm = r.getName().str();
-                d->dataKind = PDB_DataKind::Member;
+                d->dataKind = DataKind::Member;
                 d->memberOffset = (int32_t)r.getFieldOffset();
                 d->access = r.getAccess();
                 d->classParent = udt;
@@ -1899,7 +1383,7 @@ void Model::typeMembers(SymIndexId udt, TypeIndex fieldList, std::vector<SymInde
                 SymIndexId id = m->make<OmData>(OmData::StaticMember);
                 auto *d = static_cast<OmData *>(m->ours(id));
                 d->nm = r.getName().str();
-                d->dataKind = PDB_DataKind::StaticMember;
+                d->dataKind = DataKind::StaticMember;
                 d->access = r.getAccess();
                 d->classParent = udt;
                 d->lexParent = m->exe;
@@ -1915,7 +1399,7 @@ void Model::typeMembers(SymIndexId udt, TypeIndex fieldList, std::vector<SymInde
                 SymIndexId id = m->make<OmData>(OmData::Enumerator);
                 auto *d = static_cast<OmData *>(m->ours(id));
                 d->nm = r.getName().str();
-                d->dataKind = PDB_DataKind::Constant;
+                d->dataKind = DataKind::Constant;
                 d->classParent = udt;
                 d->lexParent = m->exe;
                 d->typeId = udt;  // the enum itself (DIA 14.51; 14.30 reported int)
@@ -1998,8 +1482,8 @@ void Model::typeMembers(SymIndexId udt, TypeIndex fieldList, std::vector<SymInde
         Error visitKnownMember(CVMemberRecord &, NestedTypeRecord &r) override
         {
             SymIndexId target = m->typeSym(r.getNestedType());
-            PDB_SymType tt = m->tag(target);
-            if (tt != PDB_SymType::UDT && tt != PDB_SymType::Enum) {
+            SymTag tt = m->tag(target);
+            if (tt != SymTag::UDT && tt != SymTag::Enum) {
                 index++;
                 return Error::success();
             }
@@ -2022,11 +1506,11 @@ void Model::typeMembers(SymIndexId udt, TypeIndex fieldList, std::vector<SymInde
     vis.out = &out;
     vis.types = types;
     TypeIndex fl = fieldList;
-    if (tag(udt) == PDB_SymType::Enum) {
+    if (tag(udt) == SymTag::Enum) {
         vis.isEnum = true;
         CVType et;
         TypeIndex full;
-        if (resolveTag(*this, ns, typeIndexOf(udt), et, full)) {
+        if (resolveTag(typeIndexOf(udt), et, full)) {
             EnumRecord er(TypeRecordKind::Enum);
             if (deserType(et, er)) vis.enumType = er.getUnderlyingType();
         }
@@ -2046,7 +1530,7 @@ void Model::udtChildren(SymIndexId udt, std::vector<SymIndexId> &out)
     TypeIndex ti = typeIndexOf(udt);
     CVType t;
     TypeIndex full;
-    if (!resolveTag(*this, ns, ti, t, full)) return;
+    if (!resolveTag(ti, t, full)) return;
     // Members belong to the unmodified type.
     SymIndexId owner = typeSym(full);
     TypeIndex fl;
@@ -2076,11 +1560,9 @@ void Model::bindStaticMember(OmData *d)
 {
     // A static data member is defined by a global with the qualified name.
     std::string q = name(d->classParent) + "::" + d->nm;
-    auto gs = ns.getPDBFile().getPDBGlobalsStream();
-    auto ss = ns.getPDBFile().getPDBSymbolStream();
+    auto *gs = pdb->globals();
+    auto *ss = pdb->symbols();
     if (!gs || !ss) {
-        if (!gs) consumeError(gs.takeError());
-        if (!ss) consumeError(ss.takeError());
         return;
     }
     for (auto &r : gs->findRecordsByName(q, *ss)) {
@@ -2104,11 +1586,9 @@ void Model::bindStaticMember(OmData *d)
 SymIndexId Model::findMethodImpl(SymIndexId udt, StringRef name, TypeIndex type)
 {
     std::string q = this->name(udt) + "::" + name.str();
-    auto gs = ns.getPDBFile().getPDBGlobalsStream();
-    auto ss = ns.getPDBFile().getPDBSymbolStream();
+    auto *gs = pdb->globals();
+    auto *ss = pdb->symbols();
     if (!gs || !ss) {
-        if (!gs) consumeError(gs.takeError());
-        if (!ss) consumeError(ss.takeError());
         return 0;
     }
     for (auto &r : gs->findRecordsByName(q, *ss)) {
@@ -2144,7 +1624,7 @@ SymIndexId Model::globalData(const DataSym &ds, SymbolKind k)
         d->hasAddr = true;
         // The globals stream's copy is a symbol of its own, under the exe,
         // whose findChildren fails with S_FALSE (as observed).
-        d->dataKind = (k == S_GDATA32 || k == S_GTHREAD32) ? PDB_DataKind::Global : PDB_DataKind::FileStatic;
+        d->dataKind = (k == S_GDATA32 || k == S_GTHREAD32) ? DataKind::Global : DataKind::FileStatic;
         d->tls = k == S_GTHREAD32 || k == S_LTHREAD32;
         d->lexParent = exe;
         d->fromGlobals = true;
@@ -2154,11 +1634,8 @@ SymIndexId Model::globalData(const DataSym &ds, SymbolKind k)
 
 void Model::compilandChildren(uint16_t modi, SymIndexId c, std::vector<SymIndexId> &out)
 {
-    auto ms = ns.getModuleDebugStream(modi);
-    if (!ms) {
-        consumeError(ms.takeError());
-        return;
-    }
+    auto *ms = pdb->module(modi);
+    if (!ms) return;
     // Build environment: S_OBJNAME, S_ENVBLOCK, S_BUILDINFO.
     auto &env = envSyms[modi];
     if (env.empty()) {
@@ -2175,12 +1652,8 @@ void Model::compilandChildren(uint16_t modi, SymIndexId c, std::vector<SymIndexI
             } else if (rec.kind() == S_BUILDINFO) {
                 BuildInfoSym bi(SymbolRecordKind::BuildInfoSym);
                 if (!deser(rec, bi)) continue;
-                auto ipi = ns.getPDBFile().getPDBIpiStream();
-                if (!ipi) {
-                    consumeError(ipi.takeError());
-                    continue;
-                }
-                auto &ids = ipi->typeCollection();
+                if (!pdb->ids()) continue;
+                auto &ids = *pdb->ids();
                 BuildInfoRecord br(TypeRecordKind::BuildInfo);
                 if (!deserType(ids.getType(bi.BuildId), br)) continue;
                 static const char *keys[] = {"cwd", "cl", "src", "pdb", "cmd"};
@@ -2218,29 +1691,31 @@ void Model::compilandChildren(uint16_t modi, SymIndexId c, std::vector<SymIndexI
 
 void Model::buildGlobalChildren(std::vector<SymIndexId> &out)
 {
-    SymbolCache &cache = ns.getSymbolCache();
     for (uint32_t i = 0, n = moduleCount(); i < n; i++)
         if (SymIndexId c = compiland(i)) out.push_back(c);
-    auto addAll = [&](std::unique_ptr<IPDBEnumSymbols> e, std::vector<SymIndexId> *keep) {
-        if (!e) return;
-        while (auto s = e->getNext()) {
-            out.push_back(s->getSymIndexId());
-            if (keep) keep->push_back(s->getSymIndexId());
-        }
+    auto addAll = [&](const std::vector<SymIndexId> &ids, std::vector<SymIndexId> *keep) {
+        out.insert(out.end(), ids.begin(), ids.end());
+        if (keep) keep->insert(keep->end(), ids.begin(), ids.end());
     };
     std::vector<SymIndexId> udts, enums, sigs;
-    addAll(cache.createTypeEnumerator({LF_STRUCTURE, LF_CLASS, LF_UNION, LF_INTERFACE}), &udts);
-    addAll(cache.createTypeEnumerator(LF_ENUM), &enums);
-    addAll(cache.createTypeEnumerator(LF_POINTER), nullptr);
-    addAll(cache.createTypeEnumerator(LF_ARRAY), nullptr);
+    addAll(typesOfKind({LF_STRUCTURE, LF_CLASS, LF_UNION, LF_INTERFACE}), &udts);
+    addAll(typesOfKind({LF_ENUM}), &enums);
+    addAll(typesOfKind({LF_POINTER}), nullptr);
+    addAll(typesOfKind({LF_ARRAY}), nullptr);
     // Procedures before member functions: a shared argument list belongs
     // to the first function type listing it in this order (closest to what
     // the real DLL reports; its exact rule is not known yet).
-    addAll(cache.createTypeEnumerator(LF_PROCEDURE), &sigs);
-    addAll(cache.createTypeEnumerator(LF_MFUNCTION), &sigs);
-    addAll(cache.createGlobalsEnumerator(S_UDT), nullptr);
+    addAll(typesOfKind({LF_PROCEDURE}), &sigs);
+    addAll(typesOfKind({LF_MFUNCTION}), &sigs);
+    // Typedefs: S_UDT records of the globals stream.
+    auto *gs = pdb->globals();
+    auto *ss = pdb->symbols();
+    if (gs && ss)
+        for (uint32_t off : gs->getGlobalsTable())
+            if (ss->readRecord(off).kind() == S_UDT)
+                if (SymIndexId t = typedefSym(off)) out.push_back(t);
     // const/volatile base types.
-    if (auto *types = tpiTypes(ns)) {
+    if (auto *types = pdb->types()) {
         for (auto ti = types->getFirst(); ti; ti = types->getNext(*ti)) {
             CVType t = types->getType(*ti);
             if (t.kind() != LF_MODIFIER) continue;
@@ -2250,8 +1725,6 @@ void Model::buildGlobalChildren(std::vector<SymIndexId> &out)
         }
     }
     // Globals stream.
-    auto gs = ns.getPDBFile().getPDBGlobalsStream();
-    auto ss = ns.getPDBFile().getPDBSymbolStream();
     if (gs && ss) {
         for (uint32_t off : gs->getGlobalsTable()) {
             CVSymbol s = ss->readRecord(off);
@@ -2278,7 +1751,7 @@ void Model::buildGlobalChildren(std::vector<SymIndexId> &out)
                     id = make<OmData>(OmData::Constant);
                     auto *d = static_cast<OmData *>(ours(id));
                     d->nm = cs.Name.str();
-                    d->dataKind = PDB_DataKind::Constant;
+                    d->dataKind = DataKind::Constant;
                     d->type = cs.Type;
                     d->value = variantOf(cs.Value);
                     d->lexParent = exe;
@@ -2291,9 +1764,6 @@ void Model::buildGlobalChildren(std::vector<SymIndexId> &out)
                 break;
             }
         }
-    } else {
-        if (!gs) consumeError(gs.takeError());
-        if (!ss) consumeError(ss.takeError());
     }
     for (SymIndexId s : sigs)
         for (SymIndexId a : children(s)) out.push_back(a);
@@ -2314,8 +1784,8 @@ void Model::buildGlobalChildren(std::vector<SymIndexId> &out)
 std::vector<uint8_t> Model::flagsOf(SymIndexId id)
 {
     const auto &c = children(id);
-    PDB_SymType t = tag(id);
-    if (t == PDB_SymType::UDT || t == PDB_SymType::BaseClass) return std::vector<uint8_t>(c.size(), 1);
+    SymTag t = tag(id);
+    if (t == SymTag::UDT || t == SymTag::BaseClass) return std::vector<uint8_t>(c.size(), 1);
     auto it = childFlags.find(id);
     if (it != childFlags.end() && it->second.size() == c.size()) return it->second;
     return std::vector<uint8_t>(c.size(), 0);
@@ -2325,13 +1795,9 @@ const std::vector<SymIndexId> &Model::publics()
 {
     if (publicsLoaded) return publicList;
     publicsLoaded = true;
-    auto ps = ns.getPDBFile().getPDBPublicsStream();
-    auto ss = ns.getPDBFile().getPDBSymbolStream();
-    if (!ps || !ss) {
-        if (!ps) consumeError(ps.takeError());
-        if (!ss) consumeError(ss.takeError());
-        return publicList;
-    }
+    auto *ps = pdb->publics();
+    auto *ss = pdb->symbols();
+    if (!ps || !ss) return publicList;
     std::vector<OmPublic *> pubs;
     for (uint32_t off : ps->getPublicsTable()) {
         CVSymbol s = ss->readRecord(off);
@@ -2382,77 +1848,64 @@ const std::vector<SymIndexId> &Model::children(SymIndexId id, bool *noChildren)
     }
     std::vector<SymIndexId> out;
     bool none = false;
-    PDB_SymType t = tag(id);
     if (id == exe) {
         buildGlobalChildren(out);
-    } else if (OmSym *o = ours(id)) {
+    } else {
+        Sym *o = ours(id);
         none = o->noChildren();
         o->children(out);
-    } else if (t == PDB_SymType::Compiland) {
-        int modi = moduleOf(id);
-        if (modi >= 0) compilandChildren((uint16_t)modi, id, out);
-    } else if (t == PDB_SymType::UDT || t == PDB_SymType::Enum) {
-        udtChildren(id, out);
-    } else if (t == PDB_SymType::FunctionSig) {
-        TypeIndex ti = typeIndexOf(id);
-        auto *types = tpiTypes(ns);
-        if (types && !ti.isNoneType()) {
-            CVType ft = types->getType(ti);
-            TypeIndex argList;
-            if (ft.kind() == LF_PROCEDURE) {
-                ProcedureRecord pr(TypeRecordKind::Procedure);
-                if (deserType(ft, pr)) argList = pr.getArgumentList();
-            } else if (ft.kind() == LF_MFUNCTION) {
-                MemberFunctionRecord mr(TypeRecordKind::MemberFunction);
-                if (deserType(ft, mr)) argList = mr.getArgumentList();
-            }
-            ArgListRecord al(TypeRecordKind::ArgList);
-            if (!argList.isNoneType() && deserType(types->getType(argList), al)) {
-                // Argument symbols belong to the argument list, which function
-                // types share; the class parent is the first type using it.
-                for (size_t i = 0; i < al.getIndices().size(); i++) {
-                    auto key = std::make_pair((SymIndexId)(0x80000000u | argList.getIndex()), (uint32_t)i);
-                    auto m = memberSyms.find(key);
-                    SymIndexId a;
-                    if (m != memberSyms.end()) {
-                        a = m->second;
-                    } else {
-                        a = make<OmFuncArg>(al.getIndices()[i]);
-                        ours(a)->classParent = id;
-                        ours(a)->lexParent = exe;
-                        memberSyms[key] = a;
-                    }
-                    out.push_back(a);
-                }
-            }
-        }
-    } else if (t == PDB_SymType::Typedef) {
-        none = true;
     }
     noChildCache[id] = none;
     if (noChildren) *noChildren = none;
     return childCache[id] = std::move(out);
 }
 
+void Model::sigArgs(SymIndexId sig, std::vector<SymIndexId> &out)
+{
+    CVType ft = pdb->type(typeIndexOf(sig));
+    TypeIndex argList;
+    if (ft.kind() == LF_PROCEDURE) {
+        ProcedureRecord pr(TypeRecordKind::Procedure);
+        if (deserType(ft, pr)) argList = pr.getArgumentList();
+    } else if (ft.kind() == LF_MFUNCTION) {
+        MemberFunctionRecord mr(TypeRecordKind::MemberFunction);
+        if (deserType(ft, mr)) argList = mr.getArgumentList();
+    }
+    ArgListRecord al(TypeRecordKind::ArgList);
+    if (argList.isNoneType() || !deserType(pdb->type(argList), al)) return;
+    // Argument symbols belong to the argument list, which function types
+    // share; the class parent is the first type using it.
+    for (size_t i = 0; i < al.getIndices().size(); i++) {
+        auto key = std::make_pair((SymIndexId)(0x80000000u | argList.getIndex()), (uint32_t)i);
+        auto m = memberSyms.find(key);
+        SymIndexId a;
+        if (m != memberSyms.end()) {
+            a = m->second;
+        } else {
+            a = make<OmFuncArg>(al.getIndices()[i]);
+            ours(a)->classParent = sig;
+            ours(a)->lexParent = exe;
+            memberSyms[key] = a;
+        }
+        out.push_back(a);
+    }
+}
+
 bool Model::constThis(TypeIndex mfType)
 {
-    auto *types = tpiTypes(ns);
-    if (!types || mfType.isSimple() || mfType.isNoneType()) return false;
     MemberFunctionRecord mr(TypeRecordKind::MemberFunction);
-    if (!deserType(types->getType(mfType), mr) || mr.getThisType().isNoneType() || mr.getThisType().isSimple())
+    if (!deserType(pdb->type(mfType), mr) || mr.getThisType().isNoneType() || mr.getThisType().isSimple())
         return false;
     PointerRecord pr(TypeRecordKind::Pointer);
-    if (!deserType(types->getType(mr.getThisType()), pr) || pr.getReferentType().isSimple()) return false;
-    return types->getType(pr.getReferentType()).kind() == LF_MODIFIER;
+    if (!deserType(pdb->type(mr.getThisType()), pr) || pr.getReferentType().isSimple()) return false;
+    return pdb->type(pr.getReferentType()).kind() == LF_MODIFIER;
 }
 
 uint32_t Model::paramCount(SymIndexId func)
 {
     auto *f = dynamic_cast<OmFunction *>(ours(func));
     if (!f) return 0;
-    auto *types = tpiTypes(ns);
-    if (!types || f->ps.FunctionType.isSimple()) return 0;
-    CVType ft = types->getType(f->ps.FunctionType);
+    CVType ft = pdb->type(f->ps.FunctionType);
     if (ft.kind() == LF_PROCEDURE) {
         ProcedureRecord pr(TypeRecordKind::Procedure);
         return deserType(ft, pr) ? pr.getParameterCount() : 0;
@@ -2473,7 +1926,7 @@ SymIndexId Model::coffGroupAt(uint32_t sect, uint32_t off)
             SymIndexId c = compiland((uint16_t)i);
             if (name(c) != "* Linker *") continue;
             for (SymIndexId k : children(c))
-                if (tag(k) == PDB_SymType::CoffGroup) coffGroups.push_back(k);
+                if (tag(k) == SymTag::CoffGroup) coffGroups.push_back(k);
         }
     }
     for (SymIndexId g : coffGroups) {
@@ -2503,18 +1956,15 @@ const std::vector<LineEntry> &Model::lines(uint16_t modi)
     auto it = lineCache.find(modi);
     if (it != lineCache.end()) return it->second;
     auto &out = lineCache[modi];
-    auto ms = ns.getModuleDebugStream(modi);
-    if (!ms) {
-        consumeError(ms.takeError());
-        return out;
-    }
+    auto *ms = pdb->module(modi);
+    if (!ms) return out;
     auto checksums = ms->findChecksumsSubsection();
     if (!checksums) {
         consumeError(checksums.takeError());
         return out;
     }
     files();
-    auto strings = ns.getPDBFile().getStringTable();
+    const PDBStringTable *strings = pdb->strings();
     for (const auto &ss : ms->subsections()) {
         if (ss.kind() != DebugSubsectionKind::Lines) continue;
         DebugLinesSubsectionRef lines;
@@ -2557,7 +2007,6 @@ const std::vector<LineEntry> &Model::lines(uint16_t modi)
             }
         }
     }
-    if (!strings) consumeError(strings.takeError());
     return out;
 }
 
@@ -2579,17 +2028,11 @@ const std::vector<SourceFile> &Model::files()
 {
     if (filesLoaded) return fileList;
     filesLoaded = true;
-    auto strings = ns.getPDBFile().getStringTable();
-    if (!strings) {
-        consumeError(strings.takeError());
-        return fileList;
-    }
+    const PDBStringTable *strings = pdb->strings();
+    if (!strings) return fileList;
     for (uint32_t i = 0, n = moduleCount(); i < n; i++) {
-        auto ms = ns.getModuleDebugStream(i);
-        if (!ms) {
-            consumeError(ms.takeError());
-            continue;
-        }
+        auto *ms = pdb->module(i);
+        if (!ms) continue;
         auto checksums = ms->findChecksumsSubsection();
         if (!checksums) {
             consumeError(checksums.takeError());
@@ -2634,11 +2077,8 @@ const std::vector<SectionContrib> &Model::sectionContribs()
 {
     if (contribsLoaded) return contribs;
     contribsLoaded = true;
-    auto dbi = ns.getPDBFile().getPDBDbiStream();
-    if (!dbi) {
-        consumeError(dbi.takeError());
-        return contribs;
-    }
+    DbiStream *dbi = pdb->dbi();
+    if (!dbi) return contribs;
     struct V : ISectionContribVisitor {
         std::vector<om::SectionContrib> *out;
         void visit(const pdb::SectionContrib &c) override
@@ -2662,12 +2102,8 @@ const std::vector<SectionContrib> &Model::sectionContribs()
 
 uint32_t Model::segmentCount()
 {
-    auto dbi = ns.getPDBFile().getPDBDbiStream();
-    if (!dbi) {
-        consumeError(dbi.takeError());
-        return 0;
-    }
-    return (uint32_t)dbi->getSectionMap().size();
+    DbiStream *dbi = pdb->dbi();
+    return dbi ? (uint32_t)dbi->getSectionMap().size() : 0;
 }
 
 bool Model::simpleBasicType(uint32_t kind, uint32_t &bt, uint32_t &len)
@@ -2706,44 +2142,20 @@ bool Model::simpleBasicType(uint32_t kind, uint32_t &bt, uint32_t &len)
 
 bool Model::basicType(SymIndexId id, uint32_t &bt, uint32_t &len)
 {
-    static const SimpleTypeKind kinds[] = {
-        SimpleTypeKind::None, SimpleTypeKind::Void, SimpleTypeKind::HResult, SimpleTypeKind::SignedCharacter,
-        SimpleTypeKind::UnsignedCharacter, SimpleTypeKind::NarrowCharacter, SimpleTypeKind::WideCharacter,
-        SimpleTypeKind::Character16, SimpleTypeKind::Character32, SimpleTypeKind::Character8,
-        SimpleTypeKind::SByte, SimpleTypeKind::Byte, SimpleTypeKind::Int16Short, SimpleTypeKind::UInt16Short,
-        SimpleTypeKind::Int16, SimpleTypeKind::UInt16, SimpleTypeKind::Int32Long, SimpleTypeKind::UInt32Long,
-        SimpleTypeKind::Int32, SimpleTypeKind::UInt32, SimpleTypeKind::Int64Quad, SimpleTypeKind::UInt64Quad,
-        SimpleTypeKind::Int64, SimpleTypeKind::UInt64, SimpleTypeKind::Float32, SimpleTypeKind::Float64,
-        SimpleTypeKind::Float80, SimpleTypeKind::Boolean8,
-    };
-    if (simpleKinds.empty()) {
-        for (auto k : kinds)
-            if (SymIndexId s = ns.getSymbolCache().findSymbolByTypeIndex(TypeIndex(k))) simpleKinds.emplace(s, (uint32_t)k);
-        simpleKinds.emplace(0, 0);
-    }
-    uint32_t kind;
-    auto it = simpleKinds.find(id);
-    if (it != simpleKinds.end()) {
-        kind = it->second;
-    } else {
-        TypeIndex ti = typeIndexOf(id);
-        auto *types = tpiTypes(ns);
-        if (!types || ti.isNoneType() || ti.isSimple() || types->getType(ti).kind() != LF_MODIFIER) return false;
-        ModifierRecord mr(TypeRecordKind::Modifier);
-        if (!deserType(types->getType(ti), mr) || !mr.getModifiedType().isSimple()) return false;
-        kind = (uint32_t)mr.getModifiedType().getSimpleKind();
-    }
-    return simpleBasicType(kind, bt, len);
+    if (tag(id) != SymTag::BuiltinType) return false;
+    Val b, l;
+    if (!get(id, P_baseType, b) || !get(id, P_length, l)) return false;
+    bt = (uint32_t)b.u;
+    len = (uint32_t)l.u;
+    return true;
 }
 
 std::vector<DebugStream> Model::debugStreams()
 {
     std::vector<DebugStream> out;
-    auto dbi = ns.getPDBFile().getPDBDbiStream();
-    if (!dbi) {
-        consumeError(dbi.takeError());
-        return out;
-    }
+    DbiStream *dbi = pdb->dbi();
+    if (!dbi) return out;
+    PDBFile &file = pdb->file();
     struct K { DbgHeaderType t; const char *name; uint32_t size; };
     static const K kinds[] = {
         {DbgHeaderType::FPO, "FPO", 16},          {DbgHeaderType::Exception, "EXCEPTION", 1},
@@ -2755,12 +2167,12 @@ std::vector<DebugStream> Model::debugStreams()
     };
     for (auto &k : kinds) {
         uint32_t idx = dbi->getDebugStreamIndex(k.t);
-        if (idx == kInvalidStreamIndex || idx >= ns.getPDBFile().getNumStreams()) continue;
+        if (idx == kInvalidStreamIndex || idx >= file.getNumStreams()) continue;
         DebugStream d;
         d.name = k.name;
         d.recordSize = k.size;
-        uint32_t size = ns.getPDBFile().getStreamByteSize(idx);
-        auto stream = ns.getPDBFile().createIndexedStream(idx);
+        uint32_t size = file.getStreamByteSize(idx);
+        auto stream = file.createIndexedStream(idx);
         if (!stream) continue;
         d.data.resize(size);
         BinaryStreamReader r(*stream);
@@ -2801,32 +2213,32 @@ void Model::buildAddressMap()
     // Functions, their blocks and static locals; module-level data.
     std::function<void(SymIndexId, SymIndexId)> scope = [&](SymIndexId parent, SymIndexId func) {
         for (SymIndexId k : children(parent)) {
-            PDB_SymType kt = tag(k);
+            SymTag kt = tag(k);
             AddrEntry e;
-            if (kt == PDB_SymType::Function && ours(k) && !func) {
+            if (kt == SymTag::Function && ours(k) && !func) {
                 if (!entry(k, e)) continue;
                 funcMap.push_back(e);
                 scope(k, k);
-            } else if (kt == PDB_SymType::Block) {
+            } else if (kt == SymTag::Block) {
                 if (!entry(k, e)) continue;
                 e.parent = func;
                 blockMap.push_back(e);
                 scope(k, func);
-            } else if (kt == PDB_SymType::Data) {
+            } else if (kt == SymTag::Data) {
                 if (entry(k, e)) dataMap.push_back(e);
             }
         }
     };
     for (SymIndexId c : children(exe)) {
-        PDB_SymType t = tag(c);
+        SymTag t = tag(c);
         AddrEntry e;
-        if (t == PDB_SymType::Compiland) {
+        if (t == SymTag::Compiland) {
             scope(c, 0);
-        } else if (t == PDB_SymType::PublicSymbol) {
+        } else if (t == SymTag::PublicSymbol) {
             if (entry(c, e)) publicMap.push_back(e);
-        } else if (t == PDB_SymType::Data) {
+        } else if (t == SymTag::Data) {
             auto *d = static_cast<OmData *>(ours(c));
-            if (d && d->fromGlobals && d->dataKind == PDB_DataKind::Global && entry(c, e)) dataMap.push_back(e);
+            if (d && d->fromGlobals && d->dataKind == DataKind::Global && entry(c, e)) dataMap.push_back(e);
         }
     }
     auto byAddr = [](const AddrEntry &a, const AddrEntry &b) {
@@ -2851,7 +2263,7 @@ void Model::buildAddressMap()
     });
 }
 
-SymIndexId Model::findByRVA(uint32_t r, PDB_SymType want, int32_t *disp)
+SymIndexId Model::findByRVA(uint32_t r, SymTag want, int32_t *disp)
 {
     buildAddressMap();
     uint32_t sect = 0, off = 0;
@@ -2877,13 +2289,13 @@ SymIndexId Model::findByRVA(uint32_t r, PDB_SymType want, int32_t *disp)
     };
     const AddrEntry *hit = nullptr;
     switch (want) {
-    case PDB_SymType::Function: hit = containing(funcMap); break;
-    case PDB_SymType::Block:
+    case SymTag::Function: hit = containing(funcMap); break;
+    case SymTag::Block:
         if (auto *f = containing(funcMap)) hit = innermostBlock(f->id);
         break;
-    case PDB_SymType::Data: hit = preceding(dataMap); break;
-    case PDB_SymType::PublicSymbol: hit = preceding(publicMap); break;
-    case PDB_SymType::None:
+    case SymTag::Data: hit = preceding(dataMap); break;
+    case SymTag::PublicSymbol: hit = preceding(publicMap); break;
+    case SymTag::None:
         if (auto *f = containing(funcMap)) {
             hit = innermostBlock(f->id);
             if (!hit) hit = f;
@@ -2920,8 +2332,7 @@ std::vector<SymIndexId> Model::symbolsByAddr()
 std::string Model::typeName(SymIndexId id)
 {
     if (!valid(id)) return "";
-    auto &r = raw(id);
-    PDB_SymType t = r.getSymTag();
+    SymTag t = tag(id);
     auto cv = [&](std::string s) {
         Val v;
         std::string pre;
@@ -2930,32 +2341,32 @@ std::string Model::typeName(SymIndexId id)
         return pre + s;
     };
     switch (t) {
-    case PDB_SymType::BuiltinType: {
+    case SymTag::BuiltinType: {
         Val bt, len;
         get(id, P_baseType, bt);
         get(id, P_length, len);
         std::string n;
-        switch ((PDB_BuiltinType)bt.u) {
-        case PDB_BuiltinType::Void: n = "void"; break;
-        case PDB_BuiltinType::Char: n = "char"; break;
-        case PDB_BuiltinType::WCharT: n = "wchar_t"; break;
-        case PDB_BuiltinType::Char8: n = "char8_t"; break;
-        case PDB_BuiltinType::Char16: n = "char16_t"; break;
-        case PDB_BuiltinType::Char32: n = "char32_t"; break;
-        case PDB_BuiltinType::Bool: n = "bool"; break;
-        case PDB_BuiltinType::Float: n = len.u == 4 ? "float" : len.u == 8 ? "double" : "long double"; break;
-        case PDB_BuiltinType::Int: case PDB_BuiltinType::Long:
-            n = len.u == 1 ? "char" : len.u == 2 ? "short" : len.u == 4 ? (bt.u == (uint32_t)PDB_BuiltinType::Long ? "long" : "int") : "__int64";
+        switch ((uint32_t)bt.u) {
+        case btVoid: n = "void"; break;
+        case btChar: n = "char"; break;
+        case btWChar: n = "wchar_t"; break;
+        case btChar8: n = "char8_t"; break;
+        case btChar16: n = "char16_t"; break;
+        case btChar32: n = "char32_t"; break;
+        case btBool: n = "bool"; break;
+        case btFloat: n = len.u == 4 ? "float" : len.u == 8 ? "double" : "long double"; break;
+        case btInt: case btLong:
+            n = len.u == 1 ? "char" : len.u == 2 ? "short" : len.u == 4 ? (bt.u == btLong ? "long" : "int") : "__int64";
             if (len.u == 1) n = "signed char";
             break;
-        case PDB_BuiltinType::UInt: case PDB_BuiltinType::ULong:
-            n = len.u == 1 ? "unsigned char" : len.u == 2 ? "unsigned short" : len.u == 4 ? (bt.u == (uint32_t)PDB_BuiltinType::ULong ? "unsigned long" : "unsigned int") : "unsigned __int64";
+        case btUInt: case btULong:
+            n = len.u == 1 ? "unsigned char" : len.u == 2 ? "unsigned short" : len.u == 4 ? (bt.u == btULong ? "unsigned long" : "unsigned int") : "unsigned __int64";
             break;
         default: n = "?"; break;
         }
         return cv(n);
     }
-    case PDB_SymType::PointerType: {
+    case SymTag::PointerType: {
         Val ty, ref, rref, c;
         get(id, P_type, ty);
         bool isRef = get(id, P_reference, ref) && ref.u;
@@ -2963,23 +2374,23 @@ std::string Model::typeName(SymIndexId id)
         // As observed: references print as "& const", pointer cv is dropped.
         return typeName((SymIndexId)ty.u) + (isRRef ? " *" : isRef ? " & const" : " *");
     }
-    case PDB_SymType::UDT: {
+    case SymTag::UDT: {
         Val k;
         get(id, P_udtKind, k);
-        const char *kw = k.u == (uint32_t)PDB_UdtType::Class ? "class " : k.u == (uint32_t)PDB_UdtType::Union ? "union " : "struct ";
+        const char *kw = k.u == (uint32_t)UdtKind::Class ? "class " : k.u == (uint32_t)UdtKind::Union ? "union " : "struct ";
         return cv(kw + name(id));
     }
-    case PDB_SymType::Enum:
+    case SymTag::Enum:
         return cv(name(id));
-    case PDB_SymType::Typedef:
+    case SymTag::Typedef:
         return name(id);
-    case PDB_SymType::ArrayType: {
+    case SymTag::ArrayType: {
         Val ty, n;
         get(id, P_type, ty);
         get(id, P_count, n);
         return typeName((SymIndexId)ty.u) + "[" + std::to_string(n.u) + "]";
     }
-    case PDB_SymType::FunctionSig: {
+    case SymTag::FunctionSig: {
         Val ty;
         get(id, P_type, ty);
         std::string s = typeName((SymIndexId)ty.u) + " (";

@@ -12,7 +12,6 @@
 #include "dia2_stubs_gen.h"
 
 using namespace om;
-using llvm::pdb::PDB_SymType;
 
 extern std::atomic<long> g_objects;
 
@@ -569,7 +568,6 @@ public:
     HRESULT STDMETHODCALLTYPE put_loadAddress(ULONGLONG v) override
     {
         m->loadAddress = v;
-        m->ns.setLoadAddress(v);
         return S_OK;
     }
     HRESULT STDMETHODCALLTYPE get_globalScope(IDiaSymbol **p) override
@@ -605,7 +603,7 @@ public:
         if (!out) return E_POINTER;
         *out = nullptr;
         int32_t d = 0;
-        SymIndexId id = m->findByRVA(rva, (PDB_SymType)tag, &d);
+        SymIndexId id = m->findByRVA(rva, (SymTag)tag, &d);
         if (disp) *disp = d;
         if (!id) return S_FALSE;
         return newSymbol(this, id, out);
@@ -828,25 +826,24 @@ public:
         VariantInit(out);
         Val v;
         if (!s->m->get(id, p, v) || v.kind != Val::Var) return S_FALSE;
-        using llvm::pdb::PDB_VariantType;
         if (v.strVar) {
             out->vt = VT_BSTR;
             out->bstrVal = toBSTR(v.s);
             return S_OK;
         }
-        switch (v.var.Type) {
-        case PDB_VariantType::Int8: out->vt = VT_I1; out->cVal = v.var.Value.Int8; break;
-        case PDB_VariantType::Int16: out->vt = VT_I2; out->iVal = v.var.Value.Int16; break;
-        case PDB_VariantType::Int32: out->vt = VT_I4; out->lVal = v.var.Value.Int32; break;
-        case PDB_VariantType::Int64: out->vt = VT_I8; out->llVal = v.var.Value.Int64; break;
-        case PDB_VariantType::UInt8: out->vt = VT_UI1; out->bVal = v.var.Value.UInt8; break;
-        case PDB_VariantType::UInt16: out->vt = VT_UI2; out->uiVal = v.var.Value.UInt16; break;
-        case PDB_VariantType::UInt32: out->vt = VT_UI4; out->ulVal = v.var.Value.UInt32; break;
-        case PDB_VariantType::UInt64: out->vt = VT_UI8; out->ullVal = v.var.Value.UInt64; break;
-        case PDB_VariantType::Single: out->vt = VT_R4; out->fltVal = v.var.Value.Single; break;
-        case PDB_VariantType::Double: out->vt = VT_R8; out->dblVal = v.var.Value.Double; break;
-        case PDB_VariantType::Bool: out->vt = VT_BOOL; out->boolVal = v.var.Value.Bool ? VARIANT_TRUE : VARIANT_FALSE; break;
-        case PDB_VariantType::String: out->vt = VT_BSTR; out->bstrVal = toBSTR(v.s); break;
+        switch (v.var.type) {
+        case Variant::I1: out->vt = VT_I1; out->cVal = (CHAR)v.var.i; break;
+        case Variant::I2: out->vt = VT_I2; out->iVal = (SHORT)v.var.i; break;
+        case Variant::I4: out->vt = VT_I4; out->lVal = (LONG)v.var.i; break;
+        case Variant::I8: out->vt = VT_I8; out->llVal = v.var.i; break;
+        case Variant::UI1: out->vt = VT_UI1; out->bVal = (BYTE)v.var.u; break;
+        case Variant::UI2: out->vt = VT_UI2; out->uiVal = (USHORT)v.var.u; break;
+        case Variant::UI4: out->vt = VT_UI4; out->ulVal = (ULONG)v.var.u; break;
+        case Variant::UI8: out->vt = VT_UI8; out->ullVal = v.var.u; break;
+        case Variant::R4: out->vt = VT_R4; out->fltVal = (float)v.var.d; break;
+        case Variant::R8: out->vt = VT_R8; out->dblVal = v.var.d; break;
+        case Variant::Bool: out->vt = VT_BOOL; out->boolVal = v.var.u ? VARIANT_TRUE : VARIANT_FALSE; break;
+        case Variant::Str: out->vt = VT_BSTR; out->bstrVal = toBSTR(v.s); break;
         default: return S_FALSE;
         }
         return S_OK;
@@ -897,19 +894,19 @@ public:
             pickFlags.push_back(flags_[ci]);
         }
         LONG reported = -1;
-        PDB_SymType t = s->m->tag(id);
+        SymTag t = s->m->tag(id);
         if (!name && tag == 0 &&
-            (t == PDB_SymType::FuncDebugStart || t == PDB_SymType::FuncDebugEnd || t == PDB_SymType::CompilandEnv)) {
+            (t == SymTag::FuncDebugStart || t == SymTag::FuncDebugEnd || t == SymTag::CompilandEnv)) {
             // The real DLL reports the enclosing compiland's child count for
             // these leaf symbols (except the "cwd" and "obj" environment
             // entries) but enumerates nothing.
             SymIndexId c = id;
             Val v;
-            for (int i = 0; i < 8 && s->m->tag(c) != PDB_SymType::Compiland && s->m->get(c, P_lexicalParent, v); i++)
+            for (int i = 0; i < 8 && s->m->tag(c) != SymTag::Compiland && s->m->get(c, P_lexicalParent, v); i++)
                 c = (SymIndexId)v.u;
             std::string n = s->m->name(id);
-            if (s->m->tag(c) == PDB_SymType::Compiland)
-                reported = (t == PDB_SymType::CompilandEnv && (n == "cwd" || n == "obj"))
+            if (s->m->tag(c) == SymTag::Compiland)
+                reported = (t == SymTag::CompilandEnv && (n == "cwd" || n == "obj"))
                                ? 0 : (LONG)s->m->children(c).size();
         }
         auto *e = new DiaEnumSymbols(s, pick, reported);
