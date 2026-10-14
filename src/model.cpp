@@ -432,8 +432,8 @@ public:
         case P_addressSection: if (!hasAddr) return false; v = Val::u_(seg); return true;
         case P_addressOffset: if (!hasAddr) return false; v = Val::u_(off); return true;
         // An absolute address (section 0, or the section map's absolute
-        // entry past the section headers): no RVA past the headers, and a
-        // virtual address of 0 (as observed).
+        // entry past the section headers): no RVA past the headers, and the
+        // offset as virtual address (as observed).
         case P_hasAbsoluteAddress:
             if (!hasAddr || tls || !M->absoluteSection(seg)) return false;
             v = Val::b_(true);
@@ -444,7 +444,7 @@ public:
             return true;
         case P_virtualAddress:
             if (!hasAddr || tls) return false;
-            v = Val::u_(M->absoluteSection(seg) ? 0 : M->rva(seg, off) + M->loadAddress);
+            v = Val::u_(M->absoluteSection(seg) ? off : M->rva(seg, off) + M->loadAddress);
             return true;
         case P_baseType: case P_length:
             if (p == P_length && bitfield) { v = Val::u_(bitLen); return true; }
@@ -484,7 +484,7 @@ public:
         case P_addressOffset: v = Val::u_(ps.Offset); return true;
         case P_hasAbsoluteAddress: if (!M->absoluteSection(ps.Segment)) return false; v = Val::b_(true); return true;
         case P_relativeVirtualAddress: if (ps.Segment && M->absoluteSection(ps.Segment)) return false; v = Val::u_(rva); return true;
-        case P_virtualAddress: v = Val::u_(M->absoluteSection(ps.Segment) ? 0 : rva + M->loadAddress); return true;
+        case P_virtualAddress: v = Val::u_(M->absoluteSection(ps.Segment) ? ps.Offset : rva + M->loadAddress); return true;
         case P_length: v = Val::u_(len); return true;
         case P_locationType: v = Val::u_((uint32_t)LocType::Static); return true;
         case P_lexicalParent: case P_lexicalParentId: v = Val::sym(lexParent); return true;
@@ -2192,9 +2192,14 @@ const std::vector<SymIndexId> &Model::publics()
     }
     // Length (as observed): up to the next public at a higher RVA, in any
     // section, but not past the end of the section contribution holding
-    // the symbol; 0 for the last one.
+    // the symbol; 0 for the last one. Publics at absolute addresses (past
+    // the section headers) come after all others, by offset: they measure
+    // up to the next of them, and the last public with an RVA measures 0.
     std::vector<OmPublic *> sorted = pubs;
-    auto rvaOf = [&](OmPublic *p) -> uint64_t { return rva(p->ps.Segment, p->ps.Offset); };
+    auto rvaOf = [&](OmPublic *p) -> uint64_t {
+        if (p->ps.Segment && absoluteSection(p->ps.Segment)) return (1ull << 32) + p->ps.Offset;
+        return rva(p->ps.Segment, p->ps.Offset);
+    };
     std::stable_sort(sorted.begin(), sorted.end(), [&](OmPublic *a, OmPublic *b) { return rvaOf(a) < rvaOf(b); });
     const auto &sc = sectionContribs();
     for (size_t i = 0; i < sorted.size(); i++) {
@@ -2204,6 +2209,7 @@ const std::vector<SymIndexId> &Model::publics()
         for (size_t j = i + 1; j < sorted.size(); j++)
             if (rvaOf(sorted[j]) > r) {
                 end = rvaOf(sorted[j]);
+                if ((end >> 32) != (r >> 32)) end = 0;
                 break;
             }
         if (end)
@@ -2717,6 +2723,30 @@ void Model::buildAddressMap()
     std::stable_sort(addrMap.begin(), addrMap.end(), [](const AddrEntry &a, const AddrEntry &b) {
         return a.rva < b.rva;
     });
+    // Then the symbols at absolute addresses past the section headers, by
+    // offset, one per offset, data before publics (as observed).
+    std::vector<std::pair<std::pair<uint32_t, int>, AddrEntry>> abs;
+    for (SymIndexId c : children(exe)) {
+        SymTag t = tag(c);
+        if (t != SymTag::Data && t != SymTag::PublicSymbol) continue;
+        Val sec, off;
+        if (!get(c, P_addressSection, sec) || !sec.u || !absoluteSection((uint32_t)sec.u)) continue;
+        if (!get(c, P_addressOffset, off)) continue;
+        AddrEntry e;
+        e.rva = (uint32_t)off.u;
+        e.sect = (uint32_t)sec.u;
+        e.id = c;
+        e.tag = t;
+        e.name = name(c);
+        abs.push_back({{e.rva, t == SymTag::Data ? 0 : 1}, e});
+    }
+    std::stable_sort(abs.begin(), abs.end(), [](const auto &a, const auto &b) {
+        if (a.first != b.first) return a.first < b.first;
+        return a.second.name < b.second.name;
+    });
+    std::set<uint32_t> absCovered;
+    for (auto &a : abs)
+        if (absCovered.insert(a.first.first).second) addrMap.push_back(a.second);
 }
 
 SymIndexId Model::findByRVA(uint32_t r, SymTag want, int32_t *disp)
