@@ -173,6 +173,12 @@ bool PdbFile::sectOff(uint32_t r, uint32_t &sect, uint32_t &off)
     return true;
 }
 
+bool PdbFile::absoluteSection(uint32_t sect)
+{
+    DbiStream *d = dbi();
+    return !sect || (d && sect > d->getSectionHeaders().size());
+}
+
 // lld ends the section map with an absolute entry whose frame is one past
 // the last section (MSVC's link uses frame 0); with such a map the real DLL
 // fails RVA lookups in the last section with E_UNEXPECTED.

@@ -73,6 +73,9 @@ public:
     bool sectOff(uint32_t rva, uint32_t &sect, uint32_t &off);
     // RVA lookups at or after the start of the last section fail (see pdb.cpp).
     bool inLastSection(uint32_t rva);
+    // Section 0 or a section number past the section headers (the section
+    // map's absolute entry).
+    bool absoluteSection(uint32_t sect);
 
 private:
     PdbFile() = default;

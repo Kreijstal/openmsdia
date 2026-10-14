@@ -176,6 +176,7 @@ public:
     bool sectOff(uint32_t rva, uint32_t &sect, uint32_t &off) const { return pdb->sectOff(rva, sect, off); }
     SymIndexId findByRVA(uint32_t rva, SymTag tag, int32_t *disp = nullptr);
     bool inLastSection(uint32_t rva) const { return pdb->inLastSection(rva); }
+    bool absoluteSection(uint32_t sect) const { return pdb->absoluteSection(sect); }
     std::vector<SymIndexId> symbolsByAddr();
     // The Symbols table: the exe, the compilands and everything below them,
     // then the rest of the exe's children.

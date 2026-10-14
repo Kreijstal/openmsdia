@@ -419,8 +419,21 @@ public:
             return true;
         case P_addressSection: if (!hasAddr) return false; v = Val::u_(seg); return true;
         case P_addressOffset: if (!hasAddr) return false; v = Val::u_(off); return true;
-        case P_relativeVirtualAddress: if (!hasAddr || tls) return false; v = Val::u_(M->rva(seg, off)); return true;
-        case P_virtualAddress: if (!hasAddr || tls) return false; v = Val::u_(M->rva(seg, off) + M->loadAddress); return true;
+        // An absolute address (section 0, or the section map's absolute
+        // entry past the section headers): no RVA past the headers, and a
+        // virtual address of 0 (as observed).
+        case P_hasAbsoluteAddress:
+            if (!hasAddr || tls || !M->absoluteSection(seg)) return false;
+            v = Val::b_(true);
+            return true;
+        case P_relativeVirtualAddress:
+            if (!hasAddr || tls || (seg && M->absoluteSection(seg))) return false;
+            v = Val::u_(M->rva(seg, off));
+            return true;
+        case P_virtualAddress:
+            if (!hasAddr || tls) return false;
+            v = Val::u_(M->absoluteSection(seg) ? 0 : M->rva(seg, off) + M->loadAddress);
+            return true;
         case P_baseType: case P_length:
             if (p == P_length && bitfield) { v = Val::u_(bitLen); return true; }
             if (k == Constant || k == Enumerator) {
@@ -457,8 +470,9 @@ public:
         case P_undecoratedNameEx0: v = Val::str(diaUndecorate(ps.Name.str(), g_exOptions)); return true;
         case P_addressSection: v = Val::u_(ps.Segment); return true;
         case P_addressOffset: v = Val::u_(ps.Offset); return true;
-        case P_relativeVirtualAddress: v = Val::u_(rva); return true;
-        case P_virtualAddress: v = Val::u_(rva + M->loadAddress); return true;
+        case P_hasAbsoluteAddress: if (!M->absoluteSection(ps.Segment)) return false; v = Val::b_(true); return true;
+        case P_relativeVirtualAddress: if (ps.Segment && M->absoluteSection(ps.Segment)) return false; v = Val::u_(rva); return true;
+        case P_virtualAddress: v = Val::u_(M->absoluteSection(ps.Segment) ? 0 : rva + M->loadAddress); return true;
         case P_length: v = Val::u_(len); return true;
         case P_locationType: v = Val::u_((uint32_t)LocType::Static); return true;
         case P_lexicalParent: case P_lexicalParentId: v = Val::sym(lexParent); return true;
