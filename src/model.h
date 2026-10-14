@@ -282,6 +282,12 @@ public:
 
     void moduleChildren(uint16_t modi, SymIndexId parent, uint32_t begin, uint32_t end,
                         std::vector<SymIndexId> &out, SymIndexId func);
+    // A cross-scope id (high bit set) of a module, as the IPI index it names.
+    llvm::codeview::TypeIndex crossScope(uint16_t modi, llvm::codeview::TypeIndex ti);
+    std::map<uint16_t, std::vector<std::pair<std::string, std::vector<uint32_t>>>> crossImports;
+    std::map<uint16_t, std::map<uint32_t, uint32_t>> crossExports;
+    std::set<uint16_t> crossImportsRead, crossExportsRead;
+    std::map<std::string, uint32_t> moduleByName;
     // S_SEPCODE blocks of a module, per function they were separated from.
     void sepCodes(uint16_t modi);
     // Of several functions at one address (identical code folding), the

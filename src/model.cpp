@@ -20,6 +20,8 @@
 #include "llvm/DebugInfo/CodeView/TypeVisitorCallbacks.h"
 #include "llvm/DebugInfo/MSF/MappedBlockStream.h"
 #include "llvm/DebugInfo/PDB/Native/DbiModuleDescriptor.h"
+#include "llvm/DebugInfo/CodeView/DebugCrossExSubsection.h"
+#include "llvm/DebugInfo/CodeView/DebugCrossImpSubsection.h"
 #include "llvm/DebugInfo/PDB/Native/DbiModuleList.h"
 #include "llvm/DebugInfo/PDB/Native/DbiStream.h"
 #include "llvm/DebugInfo/PDB/Native/GlobalsStream.h"
@@ -957,9 +959,10 @@ public:
 // S_CALLSITEINFO.
 class OmCallSite : public Sym {
 public:
-    OmCallSite(CallSiteInfoSym cs)
-        : Sym(SymTag::CallSite), cs(std::move(cs)) {}
+    OmCallSite(CallSiteInfoSym cs, uint16_t modi)
+        : Sym(SymTag::CallSite), cs(std::move(cs)), modi(modi) {}
     CallSiteInfoSym cs;
+    uint16_t modi;
     bool prop(Prop p, Val &v) const override
     {
         switch (p) {
@@ -967,7 +970,7 @@ public:
         case P_addressSection: v = Val::u_(cs.Segment); return true;
         case P_addressOffset: v = Val::u_(cs.CodeOffset); return true;
         case P_relativeVirtualAddress: v = Val::u_(M->rva(cs.Segment, cs.CodeOffset)); return true;
-        case P_type: case P_typeId: v = Val::sym(M->typeSym(cs.Type)); return true;
+        case P_type: case P_typeId: v = Val::sym(M->typeSym(M->crossScope(modi, cs.Type))); return true;
         default: return false;
         }
     }
@@ -1279,6 +1282,72 @@ int Model::calleeIndex(SymIndexId id)
     return c ? c->index : -1;
 }
 
+// An id with the high bit set is a cross-scope reference (/LTCG, combase):
+// bits 20-30 index the module's DEBUG_S_CROSSSCOPEIMPORTS entries (a
+// module name and ids local to that module), bits 0-19 the id within that
+// entry; the exporting module's DEBUG_S_CROSSSCOPEEXPORTS maps its local
+// ids to IPI indices.
+TypeIndex Model::crossScope(uint16_t modi, TypeIndex ti)
+{
+    uint32_t raw = ti.getIndex();
+    if (!(raw & 0x80000000u)) return ti;
+    auto &imports = crossImports[modi];
+    if (!crossImportsRead.count(modi)) {
+        crossImportsRead.insert(modi);
+        if (auto *ms = pdb->module(modi))
+            for (const auto &ss : ms->subsections()) {
+                if (ss.kind() != DebugSubsectionKind::CrossScopeImports) continue;
+                DebugCrossModuleImportsSubsectionRef ref;
+                if (auto e = ref.initialize(ss.getRecordData())) {
+                    consumeError(std::move(e));
+                    continue;
+                }
+                for (const auto &item : ref) {
+                    std::string mod;
+                    if (const PDBStringTable *st = pdb->strings()) {
+                        auto n = st->getStringForID(item.Header->ModuleNameOffset);
+                        if (n) mod = n->str();
+                        else consumeError(n.takeError());
+                    }
+                    std::vector<uint32_t> ids;
+                    for (auto id : item.Imports) ids.push_back(id);
+                    imports.push_back({mod, std::move(ids)});
+                }
+            }
+    }
+    uint32_t imp = (raw >> 20) & 0x7FF, local = raw & 0xFFFFF;
+    if (imp >= imports.size() || local >= imports[imp].second.size()) return TypeIndex::None();
+    uint32_t exportedLocal = imports[imp].second[local];
+    // The exporting module, by name.
+    if (moduleByName.empty()) {
+        DbiStream *dbi = pdb->dbi();
+        for (uint32_t i = 0; dbi && i < moduleCount(); i++) {
+            DbiModuleDescriptor d = dbi->modules().getModuleDescriptor(i);
+            moduleByName.emplace(d.getModuleName().str(), i);
+            moduleByName.emplace(d.getObjFileName().str(), i);
+        }
+    }
+    auto m = moduleByName.find(imports[imp].first);
+    if (m == moduleByName.end()) return TypeIndex::None();
+    uint16_t ex = (uint16_t)m->second;
+    auto &exports = crossExports[ex];
+    if (!crossExportsRead.count(ex)) {
+        crossExportsRead.insert(ex);
+        if (auto *ms = pdb->module(ex))
+            for (const auto &ss : ms->subsections()) {
+                if (ss.kind() != DebugSubsectionKind::CrossScopeExports) continue;
+                DebugCrossModuleExportsSubsectionRef ref;
+                if (auto e = ref.initialize(ss.getRecordData())) {
+                    consumeError(std::move(e));
+                    continue;
+                }
+                for (const auto &x : ref) exports[x.Local] = x.Global;
+            }
+    }
+    auto g = exports.find(exportedLocal);
+    return g == exports.end() ? TypeIndex::None() : TypeIndex(g->second);
+}
+
 SymIndexId Model::procSym(uint16_t modi, uint32_t off)
 {
     auto key = std::make_pair(modi, off);
@@ -1468,7 +1537,7 @@ void Model::moduleChildren(uint16_t modi, SymIndexId parent, uint32_t begin, uin
                         break;
                     }
                 }
-                funcIdName(is.Inlinee, site->nm, site->type);
+                funcIdName(crossScope(modi, is.Inlinee), site->nm, site->type);
                 site->inlinee = make<OmInlinee>();
                 recordSyms[key] = id;
             }
@@ -1660,7 +1729,7 @@ void Model::moduleChildren(uint16_t modi, SymIndexId parent, uint32_t begin, uin
                 } else {
                     std::string nm;
                     TypeIndex type;
-                    SymIndexId fn = funcIdTarget(cs.Indices[i], nm, type);
+                    SymIndexId fn = funcIdTarget(crossScope(modi, cs.Indices[i]), nm, type);
                     id = make<OmCallee>(nm, type, fn, (int)i, k == S_CALLEES ? SymTag::Callee : SymTag::Caller);
                     // After the indices: one invocation count per entry
                     // (PGO builds; LLVM's record class does not read them).
@@ -1679,7 +1748,7 @@ void Model::moduleChildren(uint16_t modi, SymIndexId parent, uint32_t begin, uin
             CallSiteInfoSym cs(SymbolRecordKind::CallSiteInfoSym);
             if (!deser(*I, cs)) continue;
             auto it = recordSyms.find(key);
-            SymIndexId id = it != recordSyms.end() ? it->second : make<OmCallSite>(cs);
+            SymIndexId id = it != recordSyms.end() ? it->second : make<OmCallSite>(cs, modi);
             ours(id)->lexParent = parent;
             recordSyms[key] = id;
             out.push_back(id);
@@ -2622,10 +2691,7 @@ const std::vector<LineEntry> &Model::lines(uint16_t modi)
     }
     files();
     const PDBStringTable *strings = pdb->strings();
-    // Line subsections by start address: folded functions leave several at
-    // one address, and the real DLL keeps one of them (the same choice as
-    // for the functions, see preferredProc).
-    std::map<std::pair<uint32_t, uint32_t>, std::vector<std::vector<LineEntry>>> byStart;
+    std::vector<std::pair<std::pair<uint32_t, uint32_t>, std::vector<LineEntry>>> blocks;
     for (const auto &ss : ms->subsections()) {
         if (ss.kind() != DebugSubsectionKind::Lines) continue;
         DebugLinesSubsectionRef lines;
@@ -2635,9 +2701,8 @@ const std::vector<LineEntry> &Model::lines(uint16_t modi)
             continue;
         }
         const auto &hdr = *lines.header();
-        auto &group = byStart[{hdr.RelocSegment, hdr.RelocOffset}];
-        group.emplace_back();
-        auto &sub = group.back();
+        blocks.push_back({{hdr.RelocSegment, hdr.RelocOffset}, {}});
+        auto &sub = blocks.back().second;
         for (const auto &block : lines) {
             uint32_t file = 0;
             auto ci = checksums->getArray().at(block.NameIndex);
@@ -2671,18 +2736,10 @@ const std::vector<LineEntry> &Model::lines(uint16_t modi)
             }
         }
     }
-    for (auto &kv : byStart) {
-        auto &group = kv.second;
-        size_t pick = 0;
-        if (group.size() > 1) {
-            std::vector<uint32_t> order;
-            for (size_t i = 0; i < group.size(); i++) order.push_back((uint32_t)i);
-            pick = preferredProc(modi, order);
-        }
-        out.insert(out.end(), group[pick].begin(), group[pick].end());
-    }
+    for (auto &b : blocks) out.insert(out.end(), b.second.begin(), b.second.end());
     // In address order (MSVC writes one line block per COMDAT function, in
-    // no particular order).
+    // no particular order). Blocks of folded functions at one address are
+    // ordered differently by the real DLL (not reproduced).
     std::stable_sort(out.begin(), out.end(), [&](const LineEntry &a, const LineEntry &b) {
         return rva(a.sect, a.off) < rva(b.sect, b.off);
     });
