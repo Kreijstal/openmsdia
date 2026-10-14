@@ -311,6 +311,34 @@ public:
     }
 };
 
+// An LF_MODIFIER of a simple pointer type (const std::nullptr_t, whose
+// CodeView type is the 16-bit near pointer to void): a pointer symbol
+// with the modifier's qualifiers, the simple pointer as unmodified type,
+// and none of the pointer-kind properties (as observed).
+class SymModPointer : public TypeSym {
+public:
+    SymModPointer(TypeIndex ti, TypeIndex simple, ModifierOptions mods)
+        : TypeSym(SymTag::PointerType, ti), simple(simple), mods(mods) {}
+    TypeIndex simple;
+    ModifierOptions mods;
+    bool prop(Prop p, Val &v) const override
+    {
+        if (common(p, v) || cvProp(p, v, mods)) return true;
+        switch (p) {
+        case P_type: case P_typeId: v = Val::sym(M->typeSym(simple.makeDirect())); return true;
+        case P_unmodifiedType: case P_unmodifiedTypeId: v = Val::sym(M->typeSym(simple)); return true;
+        case P_length:
+            if (auto *ptr = dynamic_cast<SymPointer *>(M->ours(M->typeSym(simple)))) {
+                v = Val::u_(ptr->length());
+                return true;
+            }
+            return false;
+        case P_reference: v = Val::b_(false); return true;
+        default: return false;
+        }
+    }
+};
+
 // LF_ARRAY.
 class SymArray : public TypeSym {
 public:
@@ -504,9 +532,8 @@ SymIndexId Model::createTypeSym(TypeIndex ti)
         TypeIndex m = mr.getModifiedType();
         if (m.isSimple()) {
             uint32_t bt, len;
-            if (m.getSimpleMode() != SimpleTypeMode::Direct ||
-                !simpleBasicType((uint32_t)m.getSimpleKind(), bt, len))
-                return 0;
+            if (m.getSimpleMode() != SimpleTypeMode::Direct) return make<SymModPointer>(ti, m, mr.getModifiers());
+            if (!simpleBasicType((uint32_t)m.getSimpleKind(), bt, len)) return 0;
             return make<SymBuiltin>(ti, (uint32_t)m.getSimpleKind(), mr.getModifiers(), m);
         }
         // Only class, union and enum types are modified this way; pointers
