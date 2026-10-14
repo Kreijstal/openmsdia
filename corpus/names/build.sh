@@ -9,15 +9,22 @@
 set -euo pipefail
 here=$(cd "$(dirname "$0")" && pwd)
 out=$(mkdir -p "$1" && cd "$1" && pwd)
-command -v cygpath >/dev/null && out=$(cygpath -m "$out")
+if command -v cygpath >/dev/null; then
+    out=$(cygpath -m "$out")
+    export MSYS2_ARG_CONV_EXCL="*"  # every path below is already a Windows path
+fi
 cd "$here"
-cl=(-nologo -c -Z7 -GS- -Zl -GR -std:c++20 -Od -EHs-c- -Zc:threadSafeInit- -Wno-everything)
-link=(-nologo -debug -entry:start -subsystem:console -nodefaultlib -incremental:no -brepro)
-clang-cl --target=x86_64-pc-windows-msvc "${cl[@]}" names.cpp "-Fo$out/names_clang.obj"
-lld-link "${link[@]}" "-pdb:$out/names_clang.pdb" "-out:$out/names_clang.exe" "$out/names_clang.obj"
-clang-cl --target=i686-pc-windows-msvc "${cl[@]}" names.cpp "-Fo$out/names_clang_x86.obj"
-lld-link "${link[@]}" -safeseh:no "-pdb:$out/names_clang_x86.pdb" "-out:$out/names_clang_x86.exe" \
-    "$out/names_clang_x86.obj"
+cl=(clang --driver-mode=cl -nologo)
+ccflags=(-c -Z7 -GS- -Zl -GR -std:c++20 -Od -EHs-c- -Zc:threadSafeInit- -Wno-everything)
+link() { # machine name obj [link options]
+    local machine=$1 name=$2 obj=$3; shift 3
+    lld-link -nologo -machine:$machine "$obj" -debug -entry:start -subsystem:console \
+        -nodefaultlib -incremental:no -brepro "-pdb:$out/$name.pdb" "-out:$out/$name.exe" "$@"
+}
+"${cl[@]}" --target=x86_64-pc-windows-msvc "${ccflags[@]}" names.cpp "-Fo$out/names_clang.obj"
+link x64 names_clang "$out/names_clang.obj"
+"${cl[@]}" --target=i686-pc-windows-msvc "${ccflags[@]}" names.cpp "-Fo$out/names_clang_x86.obj"
+link x86 names_clang_x86 "$out/names_clang_x86.obj" -safeseh:no
 python3 - manglings.txt > "$out/names_list.s" <<'PY'
 import sys
 print('\t.text\n\t.globl start\nstart:\n\tret')
@@ -30,5 +37,5 @@ for line in open(sys.argv[1], encoding='utf-8'):
     print('\t.globl "%s"\n"%s":\n\tret' % (n, n))
 PY
 clang --target=x86_64-pc-windows-msvc -c "$out/names_list.s" -o "$out/names_list.obj"
-lld-link "${link[@]}" "-pdb:$out/names_list.pdb" "-out:$out/names_list.exe" "$out/names_list.obj"
+link x64 names_list "$out/names_list.obj"
 echo "name corpus built in $out"

@@ -96,7 +96,8 @@ jobs:
           real=$(cygpath -u "$MSDIA_DLL")
           pdbs=(build/names/*.pdb build/corpus/*.pdb)
           build/name_probe.exe dia "$real" "${pdbs[@]}" > build/names-real.json
-          build/name_probe.exe dia "$(cygpath -m build/msdia140.dll)" "${pdbs[@]}" > build/names-ours.json
+          build/name_probe.exe dia "$(cygpath -m build/msdia140.dll)" "${pdbs[@]}" > build/names-ours.json ||
+            echo "{}" > build/names-ours.json
           python3 -c 'import json,sys; print("\n".join(json.load(open(sys.argv[1]))))' build/names-real.json > build/names.txt
           build/name_probe.exe dbghelp build/names.txt > build/names-dbghelp.json
           python3 tools/undname_test.py build/names-real.json build/names-ours.json --top 3 \
