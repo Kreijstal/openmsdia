@@ -253,6 +253,10 @@ public:
                 return true;
             }
             if (p == P_wasInlined) { v = Val::b_(F(FrameProcedureOptions::Inlined)); return true; }
+            // S_FRAMEPROC flag bits as observed: 21 (GuardCfg) is
+            // hasControlFlowCheck, 23 noexcept.
+            if (p == P_hasControlFlowCheck) { v = Val::b_(F(FrameProcedureOptions::GuardCfg)); return true; }
+            if (p == P_noexcept) { v = Val::b_(hasFrame && ((uint32_t)fp.Flags & (1u << 23))); return true; }
             v = Val::u_(0);
             return true;
         case P_hasValidPGOCounts: v = Val::b_(F(FrameProcedureOptions::ValidProfileCounts)); return true;
