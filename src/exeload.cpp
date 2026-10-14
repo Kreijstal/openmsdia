@@ -190,7 +190,10 @@ HRESULT findPdb(const wchar_t *exe, const wchar_t *searchPath, IUnknown *callbac
         if (cb1)
             for (size_t k = 0; k + 28 <= dir.size(); k += 28) cb1->NotifyDebugDir(TRUE, 28, &dir[k]);
     }
+    // The recorded path is used with backslashes (lld may record '/').
     std::wstring recorded = widen(info.path);
+    for (auto &c : recorded)
+        if (c == L'/') c = L'\\';
     size_t slash = recorded.find_last_of(L"\\/");
     std::wstring pdbName = slash == std::wstring::npos ? recorded : recorded.substr(slash + 1);
     // The executable's extension names a symbols subdirectory.

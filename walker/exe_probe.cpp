@@ -59,6 +59,8 @@ static std::string mapOne(std::string s, const std::string &from, const char *to
 }
 static std::string mapped(std::string s)
 {
+    for (auto &c : s)
+        if (c == '/') c = '\\';
     char root[MAX_PATH] = "";
     GetEnvironmentVariableA("SystemRoot", root, MAX_PATH);
     s = mapOne(s, utf8(g_work.c_str()), "<W>");
@@ -371,6 +373,8 @@ int wmain(int argc, wchar_t **argv)
     size_t slash = orig.find_last_of("\\/");
     g_pdbName = slash == std::string::npos ? orig : orig.substr(slash + 1);
     if (slash != std::string::npos) g_origDir = orig.substr(0, slash);
+    for (auto &c : g_origDir)
+        if (c == '/') c = '\\';
     std::wstring pdbW(g_pdbName.begin(), g_pdbName.end());
     // A path of the same length that does not exist: Z:\x\x...\name.pdb
     std::string missing = "Z:\\";
