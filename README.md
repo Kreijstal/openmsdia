@@ -53,27 +53,30 @@ Phases 0 to 3 of `docs/plan.md` are in place, up to a useful subset:
   statically linked and imports only Windows system DLLs; it also runs
   under Wine 11 with the same output as on Windows. Unimplemented
   methods return E_NOTIMPL; see `docs/plan.md`.
+- **Windows' own PDBs** (CI job `mspdb`): the public PDBs of the runner's
+  ntdll, kernel32, kernelbase, user32, combase, ucrtbase, d3d11, mshtml
+  and the 32-bit ntdll, kernel32 and user32, fetched from Microsoft's
+  symbol server by `tools/fetch_ms_pdbs.py` (cached, never committed) and
+  walked with both DLLs.
+- **Real DIA consumers** (CI job `consumers`): Ghidra's PDB exporter
+  (`pdb.exe`, built from Ghidra's sources) and the DIA SDK's Dia2Dump
+  sample (built from the runner's Visual Studio, used as a black box)
+  run with the real `msdia140.dll` and with ours, loaded by
+  registration-free COM: `tools/consumers.sh` copies each tool beside the
+  DLL with an application manifest mapping the `DiaSource` class to
+  `msdia140.dll` (see `docs/plan.md`). The call patterns they showed are
+  probed by `walker/call_probe.cpp`.
 
 ### Score
 
-CI (run 38587995801, GitHub `windows-latest`) walks 18 PDBs with the
+CI (run 38635883873, GitHub `windows-latest`) walks 18 PDBs with the
 runner's `msdia140.dll` 14.51.36257.0 and with ours: 9 built with clang 23
 + lld (`c_basic`, `c_more`, `cpp_classes`, `cpp_more`; `-O0`, `-O2`, and
 32-bit x86 `c_basic_x86`, `cpp_more_x86`) and 9 with MSVC 14.51 (`/Od`,
-`/O2`, x86, and `msvc_features` with `/guard:cf`):
-
-| section | matched | total | % |
-|---|---:|---:|---:|
-| symbols | 1231719 | 1231719 | 100.0 |
-| lines | 12288 | 12288 | 100.0 |
-| files | 260 | 260 | 100.0 |
-| byaddr | 45721 | 45721 | 100.0 |
-| symbolsByAddr | 636 | 636 | 100.0 |
-| tables | 16158 | 16158 | 100.0 |
-| debugStreams | 22 | 22 | 100.0 |
-| load | 270 | 270 | 100.0 |
-| **overall** | 1307074 | 1307074 | 100.0 |
-| fields where the real DLL returned a value (not S_FALSE) | 286524 | 286524 | 100.0 |
+`/O2`, x86, and `msvc_features` with `/guard:cf`): 1391980/1391980
+fields match (469583/469583 where the real DLL returned a value; the
+walker now also records, per getter, whether a failing getter writes its
+output, debug stream contents and all frame data rows).
 
 Every field the walker records matches on all 18 PDBs, including the
 frame data rows of the x86 PDBs (156 rows, with `execute` against a fake
@@ -108,6 +111,20 @@ Three more tests run in CI against the same real DLL:
   sites, assembler modules with labels and functions without frame data,
   linker-written import modules, classes defined twice, absolute
   symbols, member typedefs and S_CALLEES records.
+
+- **Microsoft's public PDBs** (job `mspdb`, 11 PDBs, 183,802,687 fields):
+  before this work (run 38599337708) 96.3% overall; now (run 38635883873)
+  98.0%: user32, wntdll_x86, wkernel32_x86, wuser32_x86 100% exactly;
+  ntdll, kernel32, kernelbase, mshtml 100.0% (all but 35 to 1,827 fields,
+  folded functions); ucrtbase 99.9%, d3d11 99.8% (folded functions);
+  combase 97.5% (95.7% before: a full LTCG PDB, see `docs/plan.md`).
+- **Real consumers** (job `consumers`, 13 PDBs: corpus and ntdll,
+  kernel32, user32, ucrtbase, 32-bit kernel32): Dia2Dump's output is
+  identical on 5 PDBs and ≥ 98.7% identical on the others (at the start:
+  83.5% to 99.99%); Ghidra's exporter's output is identical on 6 PDBs and
+  ≥ 95.8% on the others once symbol ids are left aside (it prints
+  symIndexIds, which differ). `call_probe`: 3216/3234 call patterns
+  match 14.51.
 
 Against the local 14.30.30626.0 oracle (`oracle/`, 9 clang PDBs) the
 score is 99.9% overall, 99.7% on value fields; OpenMSDIA follows 14.51

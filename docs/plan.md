@@ -38,9 +38,10 @@
   vtable-call tracing with the oracle (phase 0b). Done for the four
   callback interfaces of `loadDataForExe` (see "Load callbacks" below):
   the real DLL queries the callback for their IIDs, so they can be
-  observed. Interfaces the DLL implements itself (`IDiaEnumFrameData`,
-  `IDiaSession2`...) cannot be found that way: a client has to ask for
-  them, and their IIDs are in no public, non-header source.
+  observed. Interfaces the DLL implements itself can be found when a
+  client asks for them: `IDiaEnumSegments` and `IDiaEnumFrameData` were
+  found by tracing Ghidra's exporter's QueryInterface calls on our tables
+  (see "Observed through real consumers").
 
 ## Design
 
@@ -107,9 +108,13 @@ tool ──COM──▶ COM objects (src/com.cpp; declarations generated from th
 - **Phase 3, implementation (useful subset done):** our own DIA model on
   LLVM's low-level PDB readers; see "Implementation" below. `tools/diff_walk.py` compares walker outputs;
   CI scores OpenMSDIA against the runner's real 14.51 on every push.
-- **Phase 4, real tools:** Ghidra's PDB analyzer on Windows and Wine, then
-  `dump_syms` and PerfView/TraceEvent. Also `loadDataForExe` (PDB lookup by
-  CodeView record and symbol path), `IDiaStackWalker` and injected sources.
+- **Phase 4, real tools (started):** Ghidra's PDB exporter (`pdb.exe`) and
+  the DIA SDK's Dia2Dump run in CI with both DLLs (`tools/consumers.sh`,
+  registration-free COM), their outputs compared line by line; the call
+  patterns they showed are probed by `walker/call_probe.cpp`. Microsoft's
+  public PDBs of the runner's Windows binaries are walked in CI (`mspdb`).
+  Next: Ghidra on Wine, `dump_syms`, PerfView/TraceEvent,
+  `IDiaStackWalker` and injected sources.
 - **Later:** a Wine-side story, either as a builtin DLL or a separate package.
   An msys2-ur package `mingw-w64-openmsdia`.
 
@@ -219,14 +224,15 @@ tool ──COM──▶ COM objects (src/com.cpp; declarations generated from th
   template argument loses its parameter list (`Class<int >`), and calling
   convention `C` is `__pascal` (14.51: `__preserve_none`).
 - **The Symbols table** is fixed when it is created, not a cache: the
-  exe, the compilands, each compiland's symbols depth first, then the
-  globals, publics and types in TPI order, each type followed by its
+  exe, the compilands, the exe's global data, typedefs, constants and
+  publics, then each compiland's symbols depth first (including the
+  S_LOCAL and S_FILESTATIC variables, as Data, which no findChildren
+  returns), then the types in TPI order, each type followed by its
   children again for every type that has them (a const-modified class
   repeats its class's members, function types sharing an argument list
-  repeat its arguments). Its count also includes the S_LOCAL and
-  S_FILESTATIC symbols, which are listed there and in no findChildren.
-  Found by enumerating the real table (`IDiaTable` as
-  `IDiaEnumSymbols`): its count is the same right after loading.
+  repeat its arguments). The count was found by enumerating the real
+  table (`IDiaTable` as `IDiaEnumSymbols`); the order through Ghidra's
+  exporter. The table is enumerated last of the eight tables.
 - **Observed in the C runtime's PDB** (the PGO build, `corpus/pgo`):
   - an LF_NESTTYPE entry is a nested UDT/Enum only when its target has
     the nested flag; any other entry (a typedef of a namespace-scope
@@ -266,6 +272,79 @@ tool ──COM──▶ COM objects (src/com.cpp; declarations generated from th
     past the section headers; their publics measure up to the next of
     them, after all publics with an RVA (the last of which measures 0);
   - lines at one address keep their line-table order in findLinesByRVA.
+- **Observed in Windows' public PDBs** (ntdll, kernel32, kernelbase,
+  user32, ucrtbase, d3d11, mshtml, combase; 32-bit ntdll, kernel32,
+  user32; the CI job `mspdb`):
+  - the exe's age, and the one validated against, is the DBI stream's
+    (the info stream's is 4 in these PDBs, the executable's 1);
+  - XDATA and PDATA streams starting with a 32-byte header (version 1,
+    header size 32, data size) are served without it, one byte per
+    element;
+  - a public without the code flag is `code` when the section
+    contribution holding it has IMAGE_SCN_CNT_CODE (assembler routines,
+    delay-load helpers; not string literals merged into .text), and
+    stays a data export;
+  - S_SEPCODE is an unnamed Block whose lexical parent is the function at
+    its parent address, a child of its compiland and of that function;
+    function lookups fail inside it, block and untagged lookups return
+    it, getSymbolsByAddr lists the function at its address;
+  - S_ANNOTATION is an Annotation child of the exe (via S_ANNOTATIONREF)
+    and of the compiland or function holding it, with one unnamed
+    constant BSTR Data per string, whose findChildren reports the
+    compiland's child count;
+  - the old FPO records (FPO_DATA) follow the NEWFPO rows in the
+    FrameData table as FrameTypeFPO rows (sizes in dwords times 4,
+    `allocatesBasePointer`, no program, maximum stack, C++ EH or function
+    start; `execute` fails with E_UNEXPECTED without touching the frame);
+    `execute` counts a saved EBP only for `$T0 $ebp = $eip $T0 4 + ^ =`
+    programs, not for those aligning the stack through EBX;
+  - folded functions (identical COMDAT folding) share an address: only a
+    function of the module owning the section contribution there is
+    found (none when that module has no symbol there), the first record
+    in a module of fewer than 8 functions; in larger modules the real
+    DLL picks one by its own sort order (first, last or in between),
+    which is not reproduced (the last record is used);
+  - combase (a full PDB): S_INLINESITE2 is an inline site with an
+    invocation count; PGO functions report their PGO counters as 0 and
+    the phase from their COFF group name (`.text$lp00SPGO`: 00SPGO); a
+    callee's PGOEdgeCount is the count S_CALLEES stores after its
+    indices; callees, inline sites and call site types use ids with the
+    high bit set, resolved through DEBUG_S_CROSSSCOPEIMPORTS/EXPORTS only
+    in part;
+  - interface-qualified names `?Q<interface>@` undecorate as
+    `Class::[Interface]::Method` (mshtml).
+- **Observed through real consumers** (the CI job `consumers`: Ghidra's
+  PDB exporter and the DIA SDK's Dia2Dump, loaded with each DLL by
+  registration-free COM; `walker/call_probe.cpp` then probes each
+  pattern with the real DLL):
+  - a getter that fails zeroes its output, except for 37 properties
+    that leave it alone (the symbol references and their ids, the file
+    and compiler name strings, name, timeStamp, dataExport, the exception
+    handler addresses); Dia2Dump prints outputs without checking;
+  - the global scope enumerates the compilands, the globals stream in
+    its own order (procedures, data, typedefs, constants), the publics,
+    then the types in TPI order, each class followed by its members, each
+    enum by its enumerators and each function type by its arguments;
+    with a tag filter those members, enumerators and arguments are left
+    out; a compiland lists its environment entries where their records
+    are (S_OBJNAME first, S_BUILDINFO's at its place);
+  - a method reached through its class answers get_name with its short
+    name until a getter that needs the function is called (its id,
+    address, length, location, undecorated name), not after its member
+    record's getters (access, type, class and lexical parent, virtual);
+  - source files found through a compiland or a line number report their
+    checksum (MD5 for clang, SHA-256 for MSVC); `findFile` without a
+    compiland gives files without one;
+  - tables are enumerated SourceFiles, LineNumbers, Sections, SegmentMap,
+    InjectedSource, FrameData, InputAssemblyFiles, Symbols; SegmentMap
+    answers `IDiaEnumSegments` (E8368CA9-01D1-419D-AC0C-E31235DBDA9F)
+    and FrameData `IDiaEnumFrameData` (9FC77A4B-3C1C-44ED-A798-
+    6C1DEEA53E1F): the IIDs from Ghidra's QueryInterface calls (traced
+    with `OPENMSDIA_TRACE_QI=<file>`) in its source's order, the slot
+    order by calling each slot of the real objects: `IDiaSegment` frame,
+    offset, length, read, write, execute, section, RVA, VA (the section
+    map); the enumerators as the type library's, with `frameByRVA` and
+    `frameByVA` after Clone (the innermost row).
 - **Frame data** (x86 NEWFPO): the FrameData table's rows, by
   `IDiaTable::Item` or `IEnumUnknown::Next`, are `IDiaFrameData` objects;
   `get_functionParent` fails with E_UNEXPECTED for every row and
@@ -364,8 +443,8 @@ tool ──COM──▶ COM objects (src/com.cpp; declarations generated from th
 - `loadDataFromMiscInfo` (.dbg files), `getStreamSize`/`getStreamRawData`,
   `ValidatePdb`, registration; symbol server downloads (only local
   symbol stores are searched); the registry search paths.
-- `IDiaEnumFrameData` (its IID is not observable, see above); frame
-  data lookups by address; `IDiaTable::Item` for tables other than
+- Frame data lookups by address on the session (`IDiaEnumFrameData`
+  itself is implemented, its IID observed through Ghidra's exporter); `IDiaTable::Item` for tables other than
   FrameData.
 - Session: `findChildrenExByAddr/VA/RVA`, `findSymbolByToken`, inline
   frame and inlinee line queries, IL offsets, input assemblies, MD token
@@ -386,10 +465,13 @@ tool ──COM──▶ COM objects (src/com.cpp; declarations generated from th
 line, source file, address lookup, table or debug stream is one
 comparison; getters that return S_FALSE count too, so the second line
 (fields where the real DLL returned a value) is the stricter number.
-See the README for the current numbers (CI run 38587995801: 18 PDBs,
-1307074/1307074 fields, 286524/286524 value fields).
+See the README for the current numbers (CI run 38635883873: 18 PDBs,
+1391980/1391980 fields, 469583/469583 value fields; the PGO build
+15011116/15011116; Microsoft's PDBs 98.0%).
 
-Further tests in CI: the undecorator on 2170 names times 26 option sets
+Further tests in CI: Microsoft's public PDBs (`mspdb`, reported apart),
+Ghidra's exporter and Dia2Dump with both DLLs and `call_probe`
+(`consumers`); the undecorator on 2170 names times 26 option sets
 (`tools/undname_test.py`; every name matches for every documented
 option), `loadDataForExe` in 44 scenarios on 4 executables
 (`tools/exeload_test.py`), and the PGO build that links the C runtime
@@ -397,12 +479,24 @@ option), `loadDataForExe` in 44 scenarios on 4 executables
 97.6% in the previous release).
 
 Not covered by the corpus at all: managed code, injected sources,
-OMAP-mapped (optimized/instrumented) images, S_CALLERS, S_SEPCODE,
-labels of x64 clang code (clang emits none), `IDiaStackWalker`. S_CALLERS
-and S_SEPCODE could not be produced: an MSVC 14.51 x64 PGO build
-(instrumented build, training run that never takes the error paths,
-optimized build) with small and with large never-executed blocks emits
-S_CALLEES (3528, mostly in the CRT) and S_INLINEES but neither record.
+OMAP-mapped (optimized/instrumented) images, S_CALLERS, labels of x64
+clang code (clang emits none), `IDiaStackWalker`. S_CALLERS and S_SEPCODE
+could not be produced: an MSVC 14.51 x64 PGO build (instrumented build,
+training run that never takes the error paths, optimized build) with
+small and with large never-executed blocks emits S_CALLEES (3528, mostly
+in the CRT) and S_INLINEES but neither record. Windows' public PDBs
+(`mspdb` job) have S_SEPCODE (several hundred per PDB), S_ANNOTATION,
+S_INLINESITE2, old FPO data and identical-code folding; none of them has
+S_CALLERS either, so that code has still never run.
+
+How the consumers load OpenMSDIA (`tools/consumers.sh`): each tool is
+linked with `/MANIFEST:NO` and copied into a directory of its own with an
+`msdia140.dll` (the real one or ours) and an application manifest,
+`<tool>.exe.manifest`, whose `<file name="msdia140.dll">` declares the
+`DiaSource` class (`<comClass clsid="{E6756135-1E65-4D17-8576-610761398C3C}"
+threadingModel="Both"/>`). `CoCreateInstance(DiaSource)` then loads the
+DLL beside the tool without any registration; with an empty
+`msdia140.dll` the tool fails, which shows the manifest is what loads it.
 
 ### LLVM: worth upstreaming (documentation only)
 
@@ -459,3 +553,17 @@ works on LLVM's reader. Nothing is sent upstream from this project.
 the compilers. Wine already has `dlls/diasymreader`, with `CreateNGenPdbWriter` still a
 stub. Implementing it there, on LLVM's PDB writer, is a separate and much
 smaller task.
+
+### Open (from Windows' PDBs and the consumers)
+
+- Folded functions in modules of 8 or more functions: the real DLL's
+  choice follows its own sort order, not reproduced; nor which of
+  several folded functions in other modules it finds when the owning
+  module has none (mshtml, ntdll's AllocateMemory).
+- combase: the order of folded functions' line blocks, most cross-scope
+  ids (high bit set; the import index does not index the module's
+  imports as read), lambda methods of classes defined twice.
+- Symbol ids: tools that print symIndexIds (Ghidra) see other numbers.
+- 14.51 answers QueryInterface for D4D55C6B-2C67-4C1A-B8F2-7E8F3D5E2A1D
+  on symbols (asked by Dia2Dump), an interface not in its type library.
+- S_CALLERS: no PDB seen has one.
