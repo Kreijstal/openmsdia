@@ -1629,7 +1629,9 @@ void Model::moduleChildren(uint16_t modi, SymIndexId parent, uint32_t begin, uin
                     if (!deser(*I, ls)) continue;
                     d->nm = ls.Name.str();
                     d->type = ls.Type;
-                    d->dataKind = has(ls.Flags, LocalSymFlags::IsParameter) ? DataKind::Param : DataKind::Local;
+                    d->dataKind = !has(ls.Flags, LocalSymFlags::IsParameter) ? DataKind::Local
+                                  : d->nm == "this"                              ? DataKind::ObjectPtr
+                                                                                 : DataKind::Param;
                 } else {
                     FileStaticSym fs(SymbolRecordKind::FileStaticSym);
                     if (!deser(*I, fs)) continue;
@@ -2841,19 +2843,22 @@ const std::vector<SourceFile> &Model::files()
                 idx = f->second;
             }
             auto &mods = fileList[idx].modules;
-            if (std::find(mods.begin(), mods.end(), (uint16_t)i) == mods.end()) mods.push_back((uint16_t)i);
+            if (std::find(mods.begin(), mods.end(), (uint16_t)i) == mods.end()) {
+                mods.push_back((uint16_t)i);
+                moduleFiles[(uint16_t)i].push_back(idx);
+            }
         }
     }
     return fileList;
 }
 
+// In the order of the module's file checksums (as findFile with a
+// compiland lists them, observed through Dia2Dump).
 std::vector<uint32_t> Model::filesOfModule(uint16_t modi)
 {
-    std::vector<uint32_t> out;
-    const auto &fl = files();
-    for (uint32_t i = 0; i < fl.size(); i++)
-        if (std::find(fl[i].modules.begin(), fl[i].modules.end(), modi) != fl[i].modules.end()) out.push_back(i);
-    return out;
+    files();
+    auto it = moduleFiles.find(modi);
+    return it == moduleFiles.end() ? std::vector<uint32_t>() : it->second;
 }
 
 const std::vector<SectionContrib> &Model::sectionContribs()
@@ -3070,11 +3075,14 @@ std::vector<DebugStream> Model::debugStreams()
     PDBFile &file = pdb->file();
     struct K { DbgHeaderType t; const char *name; uint32_t size; };
     static const K kinds[] = {
+        // In the order the real DLL enumerates them (Dia2Dump): the section
+        // headers after the frame data.
         {DbgHeaderType::FPO, "FPO", 16},          {DbgHeaderType::Exception, "EXCEPTION", 1},
         {DbgHeaderType::Fixup, "FIXUP", 10},      {DbgHeaderType::OmapToSrc, "OMAPTO", 8},
-        {DbgHeaderType::OmapFromSrc, "OMAPFROM", 8}, {DbgHeaderType::SectionHdr, "SECTIONHEADERS", 40},
+        {DbgHeaderType::OmapFromSrc, "OMAPFROM", 8},
         {DbgHeaderType::TokenRidMap, "TOKENRIDMAP", 4}, {DbgHeaderType::Xdata, "XDATA", 1},
         {DbgHeaderType::Pdata, "PDATA", 12},     {DbgHeaderType::NewFPO, "NEWFPO", 32},
+        {DbgHeaderType::SectionHdr, "SECTIONHEADERS", 40},
         {DbgHeaderType::SectionHdrOrig, "SECTIONHEADERS_ORIG", 40},
     };
     for (auto &k : kinds) {

@@ -346,6 +346,7 @@ private:
     std::vector<SourceFile> fileList;
     bool filesLoaded = false;
     std::map<std::string, uint32_t> fileIndex;
+    std::map<uint16_t, std::vector<uint32_t>> moduleFiles;  // in checksum order
     std::vector<SectionContrib> contribs;
     bool contribsLoaded = false;
     struct AddrEntry {
