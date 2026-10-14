@@ -948,7 +948,7 @@ TypeIndex Model::fullDecl(TypeIndex ti)
             default:
                 continue;
             }
-            fullByName.emplace(key, *i);
+            fullByName[key] = *i;  // the last definition of a unique name (as observed)
         }
     }
     std::string key, plain;
@@ -1865,7 +1865,13 @@ SymIndexId Model::findMethodImpl(SymIndexId udt, StringRef name, TypeIndex type)
         if (!deser(r.second, pr) || !pr.Module) continue;
         SymIndexId f = procSym(pr.modi(), pr.SymOffset);
         auto *fn = static_cast<OmFunction *>(ours(f));
-        if (fn && fn->ps.FunctionType == type) return f;
+        if (fn && fn->ps.FunctionType == type) {
+            // Of two definitions of one class, the implementation belongs to
+            // the one its method type's class resolves to (as observed).
+            MemberFunctionRecord mf(TypeRecordKind::MemberFunction);
+            if (!type.isSimple() && deserType(pdb->type(type), mf) && typeSym(mf.getClassType()) != udt) continue;
+            return f;
+        }
     }
     return 0;
 }
