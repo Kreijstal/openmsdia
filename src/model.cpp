@@ -241,6 +241,9 @@ public:
     bool frameProp(Prop p, Val &v) const
     {
         auto F = [&](FrameProcedureOptions o) { return hasFrame && has(fp.Flags, o); };
+        // A function without S_FRAMEPROC (assembler routines) has none of
+        // the frame properties (as observed).
+        if (!hasFrame) return false;
         switch (p) {
         case P_coroutineKind: case P_hasControlFlowCheck: case P_isRTCs: case P_isSignRet:
         case P_noexcept: case P_wasInlined:
