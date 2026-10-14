@@ -424,11 +424,12 @@ struct FakeFrame : IDiaStackWalkFrame {
     }
 };
 
-static std::string execute_log(IDiaFrameData *fd)
+static std::string execute_log(IDiaFrameData *fd, ULONG at)
 {
     FakeFrame f;
     ULONGLONG va = 0;
     fd->get_virtualAddress(&va);
+    va += at;
     // CV_REG_EAX.. EDI (17-24), EIP (33).
     f.regs = {{17, 0x11}, {18, 0x12}, {19, 0x13}, {20, 0x14}, {21, 0x100000}, {22, 0x100100}, {23, 0x15}, {24, 0x16}, {33, va}};
     HRESULT hr = fd->execute(&f);
@@ -865,7 +866,12 @@ int wmain(int argc, wchar_t **argv)
                         if (u->QueryInterface(IID_IDiaFrameData, (void **)&fd) == S_OK && fd) {
                             JObj o;
                             collect_props(fd, "IDiaFrameData", o);
-                            o["execute"] = execute_log(fd);
+                            // At the start of the block and after its prolog.
+                            o["execute"] = execute_log(fd, 0);
+                            ULONG prolog = 0, block = 0;
+                            if (fd->get_lengthProlog(&prolog) == S_OK && fd->get_lengthBlock(&block) == S_OK &&
+                                prolog + 1 < block)
+                                o["execute(after prolog)"] = execute_log(fd, prolog + 1);
                             items.push_back(jobj_inline(o));
                             fd->Release();
                         }
