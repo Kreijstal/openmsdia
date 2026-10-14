@@ -2727,6 +2727,7 @@ std::string Model::typeName(SymIndexId id)
             n = len.u == 1 ? "unsigned char" : len.u == 2 ? "unsigned short" : len.u == 4 ? (bt.u == btULong ? "unsigned long" : "unsigned int") : "unsigned __int64";
             break;
         case btNoType: n = "<NoType>"; break;  // the "..." of a variadic function
+        case btHresult: n = "HRESULT"; break;
         default: n = "?"; break;
         }
         return cv(n);
@@ -2736,8 +2737,11 @@ std::string Model::typeName(SymIndexId id)
         get(id, P_type, ty);
         bool isRef = get(id, P_reference, ref) && ref.u;
         bool isRRef = get(id, P_RValueReference, rref) && rref.u;
-        // As observed: references print as "& const", pointer cv is dropped.
-        return typeName((SymIndexId)ty.u) + (isRRef ? " *" : isRef ? " & const" : " *");
+        // As observed: references print as "& const", a pointer's own const
+        // is dropped, its volatile kept.
+        Val vol;
+        bool isVol = !isRef && get(id, P_volatileType, vol) && vol.u;
+        return typeName((SymIndexId)ty.u) + (isRRef ? " *" : isRef ? " & const" : " *") + (isVol ? " volatile" : "");
     }
     case SymTag::UDT: {
         Val k;
@@ -2753,21 +2757,21 @@ std::string Model::typeName(SymIndexId id)
         Val ty, n;
         get(id, P_type, ty);
         get(id, P_count, n);
-        return typeName((SymIndexId)ty.u) + "[" + std::to_string(n.u) + "]";
-    }
-    case SymTag::FunctionSig: {
-        Val ty;
-        get(id, P_type, ty);
-        std::string s = typeName((SymIndexId)ty.u) + " (";
-        bool first = true;
-        for (SymIndexId a : children(id)) {
-            Val at;
-            get(a, P_type, at);
-            s += (first ? "" : ", ") + typeName((SymIndexId)at.u);
-            first = false;
+        // As observed: the element prints without its cv-qualifiers, and
+        // not at all when it is a pointer, an array or a function.
+        std::string elem;
+        SymTag et = tag((SymIndexId)ty.u);
+        if (et != SymTag::PointerType && et != SymTag::ArrayType && et != SymTag::FunctionSig) {
+            elem = typeName((SymIndexId)ty.u);
+            for (const char *q : {"const ", "volatile "})
+                if (elem.rfind(q, 0) == 0) elem = elem.substr(strlen(q));
         }
-        return s + ")";
+        return elem + "[" + std::to_string(n.u) + "]";
     }
+    // A function type prints as nothing: a function pointer is " *" (as
+    // observed).
+    case SymTag::FunctionSig:
+        return "";
     default:
         return name(id);
     }
