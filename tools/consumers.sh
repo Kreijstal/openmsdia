@@ -65,6 +65,8 @@ for t in "${tools[@]}"; do
     fi
     for who in real ours; do
         mkdir -p "$out/$name/$who"
+        # Ours records the interfaces the tool asks for and does not get.
+        if [ $who = ours ]; then export OPENMSDIA_TRACE_QI="$(cygpath -w "$out/$name/qi.txt")"; else unset OPENMSDIA_TRACE_QI; fi
         for p in "${pdbs[@]}"; do
             n=$(basename "$p" .pdb)
             # Dia2Dump takes the options first, Ghidra's pdb.exe the file first.
@@ -78,5 +80,10 @@ for t in "${tools[@]}"; do
             echo "$?" > "$out/$name/$who/$n.rc"
         done
     done
+done
+unset OPENMSDIA_TRACE_QI
+for t in "${tools[@]}"; do
+    name=$(basename "$t" .exe)
+    [ -f "$out/$name/qi.txt" ] && { echo "$name asked ours for:"; sort "$out/$name/qi.txt" | uniq -c; }
 done
 # Compare with tools/consumer_diff.py.

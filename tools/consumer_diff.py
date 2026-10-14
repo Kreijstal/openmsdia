@@ -17,6 +17,8 @@ def lines(path):
         return 0
 
 def main():
+    # Outputs hold any bytes; never fail on the console's encoding.
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     args = sys.argv[1:]
     md = None
     if "--markdown" in args:
