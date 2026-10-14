@@ -362,16 +362,26 @@ public:
     HRESULT STDMETHODCALLTYPE get_lengthParams(ULONG *p) override { return put(p, r().paramsSize); }
     // Old FPO rows have no maximum stack, program, C++ EH or function start
     // flag, and say whether they allocate EBP (as observed).
-    HRESULT STDMETHODCALLTYPE get_maxStack(ULONG *p) override { return r().fpo ? S_FALSE : put(p, r().maxStack); }
+    // On S_FALSE these zero their output (observed with sentinels).
+    HRESULT STDMETHODCALLTYPE get_maxStack(ULONG *p) override
+    {
+        if (r().fpo) return put(p, 0) == S_OK ? S_FALSE : E_POINTER;
+        return put(p, r().maxStack);
+    }
     HRESULT STDMETHODCALLTYPE get_lengthProlog(ULONG *p) override { return put(p, r().prologSize); }
     HRESULT STDMETHODCALLTYPE get_lengthSavedRegisters(ULONG *p) override { return put(p, r().savedRegsSize); }
     HRESULT STDMETHODCALLTYPE get_program(BSTR *p) override;
     HRESULT STDMETHODCALLTYPE get_systemExceptionHandling(LONG *p) override { return putB(p, r().flags & 1); }
     HRESULT STDMETHODCALLTYPE get_cplusplusExceptionHandling(LONG *p) override
     {
-        return r().fpo ? S_FALSE : putB(p, r().flags & 2);
+        if (r().fpo) return putB(p, false) == S_OK ? S_FALSE : E_POINTER;
+        return putB(p, r().flags & 2);
     }
-    HRESULT STDMETHODCALLTYPE get_functionStart(LONG *p) override { return r().fpo ? S_FALSE : putB(p, r().flags & 4); }
+    HRESULT STDMETHODCALLTYPE get_functionStart(LONG *p) override
+    {
+        if (r().fpo) return putB(p, false) == S_OK ? S_FALSE : E_POINTER;
+        return putB(p, r().flags & 4);
+    }
     // FrameTypeFrameData, FrameTypeFPO for old FPO records.
     HRESULT STDMETHODCALLTYPE get_type(ULONG *p) override { return put(p, r().fpo ? 0 : 4); }
     HRESULT STDMETHODCALLTYPE get_allocatesBasePointer(LONG *p) override
@@ -1525,8 +1535,7 @@ HRESULT DiaFrameData::get_virtualAddress(ULONGLONG *p)
 HRESULT DiaFrameData::get_program(BSTR *p)
 {
     if (!p) return E_POINTER;
-    *p = nullptr;
-    if (r().fpo) return S_FALSE;
+    if (r().fpo) return S_FALSE;  // the output left alone (observed)
     *p = toBSTR(s->m->frameProgram(r().frameFunc));
     return S_OK;
 }
@@ -1534,8 +1543,7 @@ HRESULT DiaFrameData::get_program(BSTR *p)
 HRESULT DiaFrameData::get_functionParent(IDiaFrameData **p)
 {
     if (!p) return E_POINTER;
-    *p = nullptr;
-    return E_UNEXPECTED;
+    return E_UNEXPECTED;  // the output left alone (observed)
 }
 // Unwinds one x86 frame the way the real DLL was observed to (with the
 // walker's fake frame): it reads the general registers and the 7 code
