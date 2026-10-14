@@ -17,6 +17,15 @@
 //   tables                    getEnumTables: names in order, and which
 //                             enumerator interfaces each table answers
 //   checksum|<file>           IDiaSourceFile checksum type and bytes
+//   segments                  the SegmentMap table as IDiaEnumSegments
+//                             (E8368CA9-..., from Ghidra's QueryInterface
+//                             order): every slot of each IDiaSegment
+//   framedata                 the FrameData table as IDiaEnumFrameData
+//                             (9FC77A4B-...): count and rows' RVAs
+//   qi|<iid>                  a symbol queried for an interface Dia2Dump
+//                             asks for
+//   namesq|<class>|<getter>   get_name, <getter>, get_name on methods
+//                             reached through their class
 #include <windows.h>
 #include <oleauto.h>
 #include <stdio.h>
@@ -203,6 +212,59 @@ static void tables(IDiaSession *session)
     out["tables"] = list(v);
 }
 
+static std::string checksumOf(IDiaSourceFile *f)
+{
+    DWORD type = 0xA5A5A5A5;
+    HRESULT ht = f->get_checksumType(&type);
+    BYTE data[256];
+    DWORD cb = 0xA5A5A5A5;
+    HRESULT hd = f->get_checksum(sizeof data, &cb, data);
+    std::string bytes;
+    for (DWORD i = 0; hd == S_OK && i < cb && i < sizeof data; i++) {
+        char x[4];
+        snprintf(x, sizeof x, "%02X", data[i]);
+        bytes += x;
+    }
+    return jstr(hex(ht) + " " + hex(type) + " / " + hex(hd) + " " + hex(cb) + " " + bytes);
+}
+
+// The files of each compiland (findFile with the compiland) and of the
+// first line of each, through IDiaLineNumber::get_sourceFile.
+static void moduleChecksums(IDiaSession *session, IDiaSymbol *global)
+{
+    auto comps = children(global, 2);
+    for (auto *c : comps) {
+        IDiaEnumSourceFiles *ef = nullptr;
+        if (session->findFile(c, nullptr, 0, &ef) != S_OK || !ef) continue;
+        for (;;) {
+            IDiaSourceFile *f = nullptr;
+            ULONG got = 0;
+            if (ef->Next(1, &f, &got) != S_OK || got != 1 || !f) break;
+            BSTR b = nullptr;
+            std::string fn = f->get_fileName(&b) == S_OK ? utf8(b) : "?";
+            if (b) SysFreeString(b);
+            out["checksum.compiland|" + fn] = checksumOf(f);
+            IDiaEnumLineNumbers *el = nullptr;
+            if (session->findLines(c, f, &el) == S_OK && el) {
+                IDiaLineNumber *ln = nullptr;
+                ULONG g2 = 0;
+                if (el->Next(1, &ln, &g2) == S_OK && g2 == 1 && ln) {
+                    IDiaSourceFile *lf = nullptr;
+                    if (ln->get_sourceFile(&lf) == S_OK && lf) {
+                        out["checksum.line|" + fn] = checksumOf(lf);
+                        lf->Release();
+                    }
+                    ln->Release();
+                }
+                el->Release();
+            }
+            f->Release();
+        }
+        ef->Release();
+    }
+    release(comps);
+}
+
 static void checksums(IDiaSession *session)
 {
     IDiaEnumSourceFiles *ef = nullptr;
@@ -220,7 +282,9 @@ static void checksums(IDiaSession *session)
         HRESULT hs = f->get_checksum(0, &cb, nullptr);
         BYTE data[256];
         DWORD cb2 = 0;
-        HRESULT hd = cb != 0xA5A5A5A5 && cb <= sizeof data ? f->get_checksum(cb, &cb2, data) : E_FAIL;
+        cb2 = 0xA5A5A5A5;
+        HRESULT hd = f->get_checksum(sizeof data, &cb2, data);
+        if (cb2 > sizeof data) cb2 = 0;
         std::string bytes;
         for (DWORD i = 0; hd == S_OK && i < cb2; i++) {
             char x[4];
@@ -232,6 +296,142 @@ static void checksums(IDiaSession *session)
         f->Release();
     }
     ef->Release();
+}
+
+// IIDs learned from clients' QueryInterface calls (OPENMSDIA_TRACE_QI).
+static const IID kIID_EnumSegments = {0xE8368CA9, 0x01D1, 0x419D, {0xAC, 0x0C, 0xE3, 0x12, 0x35, 0xDB, 0xDA, 0x9F}};
+static const IID kIID_EnumFrameData = {0x9FC77A4B, 0x3C1C, 0x44ED, {0xA7, 0x98, 0x6C, 0x1D, 0xEE, 0xA5, 0x3E, 0x1F}};
+static const IID kIID_SymbolNext = {0xD4D55C6B, 0x2C67, 0x4C1A, {0xB8, 0xF2, 0x7E, 0x8F, 0x3D, 0x5E, 0x2A, 0x1D}};
+
+typedef HRESULT(STDMETHODCALLTYPE *Getter)(void *, ULONGLONG *);
+typedef HRESULT(STDMETHODCALLTYPE *CountFn)(void *, LONG *);
+typedef HRESULT(STDMETHODCALLTYPE *NextFn)(void *, ULONG, IUnknown **, ULONG *);
+
+// An enumerator laid out like DIA's others: IUnknown, get__NewEnum,
+// get_Count (4), Item, Next (6), Skip, Reset, Clone.
+static void probeEnum(IDiaSession *session, const char *table, const IID &iid, const char *key, int slots)
+{
+    IDiaEnumTables *et = nullptr;
+    if (session->getEnumTables(&et) != S_OK || !et) return;
+    for (;;) {
+        IDiaTable *t = nullptr;
+        ULONG got = 0;
+        if (et->Next(1, &t, &got) != S_OK || got != 1 || !t) break;
+        BSTR b = nullptr;
+        std::string n = t->get_name(&b) == S_OK ? utf8(b) : "?";
+        if (b) SysFreeString(b);
+        if (n == table) {
+            IUnknown *e = nullptr;
+            HRESULT hq = t->QueryInterface(iid, (void **)&e);
+            std::vector<std::string> v;
+            v.push_back("QI " + hex((unsigned long)hq));
+            if (hq == S_OK && e) {
+                void **vt = *(void ***)e;
+                LONG cnt = -1;
+                HRESULT hc = ((CountFn)vt[4])(e, &cnt);
+                v.push_back("count " + hex((unsigned long)hc) + " " + std::to_string(cnt));
+                for (int row = 0; row < 64; row++) {
+                    IUnknown *item = nullptr;
+                    ULONG f = 0;
+                    if (((NextFn)vt[6])(e, 1, &item, &f) != S_OK || f != 1 || !item) break;
+                    std::string r = "row";
+                    IDiaFrameData *fd = nullptr;
+                    if (slots == 0 && row < 4 && item->QueryInterface(IID_IDiaFrameData, (void **)&fd) == S_OK && fd) {
+                        // frameByRVA and frameByVA, assumed to follow Clone
+                        // (slots 10 and 11), as the documentation lists them.
+                        DWORD rva = 0;
+                        fd->get_relativeVirtualAddress(&rva);
+                        typedef HRESULT(STDMETHODCALLTYPE * ByRva)(void *, DWORD, IDiaFrameData **);
+                        typedef HRESULT(STDMETHODCALLTYPE * ByVa)(void *, ULONGLONG, IDiaFrameData **);
+                        IDiaFrameData *a = nullptr, *b2 = nullptr;
+                        HRESULT h1 = ((ByRva)vt[10])(e, rva + 1, &a);
+                        HRESULT h2 = ((ByVa)vt[11])(e, (ULONGLONG)rva + 1, &b2);
+                        DWORD ra = 0, rb = 0;
+                        if (a) { a->get_relativeVirtualAddress(&ra); a->Release(); }
+                        if (b2) { b2->get_relativeVirtualAddress(&rb); b2->Release(); }
+                        char x[128];
+                        snprintf(x, sizeof x, " rva=%lX byRVA(+1)=%lX:%lX byVA(+1)=%lX:%lX", (unsigned long)rva,
+                                 (unsigned long)h1, (unsigned long)ra, (unsigned long)h2, (unsigned long)rb);
+                        r += x;
+                        fd->Release();
+                    }
+                    void **iv = *(void ***)item;
+                    for (int sl = 3; sl < 3 + slots; sl++) {
+                        ULONGLONG val = 0xA5A5A5A5A5A5A5A5ull;
+                        HRESULT h = ((Getter)iv[sl])(item, &val);
+                        char x[64];
+                        snprintf(x, sizeof x, " %d:%lX:%llX", sl, (unsigned long)h, val);
+                        r += x;
+                    }
+                    v.push_back(r);
+                    item->Release();
+                }
+                e->Release();
+            }
+            out[key] = list(v);
+        }
+        t->Release();
+    }
+    et->Release();
+}
+
+// get_name, then another getter, then get_name, on methods reached through
+// their class (global findChildren(SymTagUDT), class findChildren(Null)).
+static void nameSequences(IDiaSymbol *global)
+{
+    static const char *getters[] = {"none", "type", "length", "classParent", "lexicalParent", "symIndexId",
+                                    "undecoratedName", "locationType", "access", "virtual", "relativeVirtualAddress"};
+    auto udts = children(global, 11);
+    int n = 0;
+    for (auto *u : udts) {
+        if (n++ >= 40) break;
+        std::string un = name(u);
+        for (const char *g : getters) {
+            auto kids = children(u, 0);
+            std::vector<std::string> v;
+            for (auto *k : kids) {
+                if (tag(k) != 5) continue;
+                std::string a = name(k);
+                std::string sg = g;
+                IDiaSymbol *x = nullptr;
+                DWORD d = 0;
+                ULONGLONG q = 0;
+                BSTR bs = nullptr;
+                if (sg == "type") { if (k->get_type(&x) == S_OK && x) x->Release(); }
+                else if (sg == "length") k->get_length(&q);
+                else if (sg == "classParent") { if (k->get_classParent(&x) == S_OK && x) x->Release(); }
+                else if (sg == "lexicalParent") { if (k->get_lexicalParent(&x) == S_OK && x) x->Release(); }
+                else if (sg == "symIndexId") k->get_symIndexId(&d);
+                else if (sg == "undecoratedName") { if (k->get_undecoratedName(&bs) == S_OK && bs) SysFreeString(bs); }
+                else if (sg == "locationType") k->get_locationType(&d);
+                else if (sg == "access") k->get_access(&d);
+                else if (sg == "virtual") { LONG bb; k->get_virtual(&bb); }
+                else if (sg == "relativeVirtualAddress") k->get_relativeVirtualAddress(&d);
+                v.push_back(a + " | " + name(k));
+            }
+            release(kids);
+            if (!v.empty()) out["namesq|" + un + "#" + std::to_string(n) + "|" + g] = list(v);
+        }
+    }
+    release(udts);
+}
+
+static void probeQI(IDiaSymbol *global)
+{
+    auto kids = children(global, 0);
+    std::map<DWORD, std::string> byTag;
+    for (auto *k : kids) {
+        DWORD t = tag(k);
+        if (byTag.count(t)) continue;
+        IUnknown *p = nullptr;
+        HRESULT h = k->QueryInterface(kIID_SymbolNext, (void **)&p);
+        byTag[t] = hex((unsigned long)h);
+        if (p) p->Release();
+    }
+    release(kids);
+    std::vector<std::string> v;
+    for (auto &kv : byTag) v.push_back(std::to_string(kv.first) + " " + kv.second);
+    out["qi|D4D55C6B"] = list(v);
 }
 
 int wmain(int argc, wchar_t **argv)
@@ -256,6 +456,7 @@ int wmain(int argc, wchar_t **argv)
 
     // Method names first: they depend on what was asked before.
     methodNames(global);
+    nameSequences(global);
     order(global, "Exe");
     byTag(global, "Exe");
     auto comps = children(global, 2);
@@ -271,6 +472,10 @@ int wmain(int argc, wchar_t **argv)
     release(comps);
     tables(session);
     checksums(session);
+    moduleChecksums(session, global);
+    probeEnum(session, "SegmentMap", kIID_EnumSegments, "segments", 9);
+    probeEnum(session, "FrameData", kIID_EnumFrameData, "framedata", 0);
+    probeQI(global);
 
     printf("{\n");
     size_t i = 0;
