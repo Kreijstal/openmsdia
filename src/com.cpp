@@ -100,7 +100,7 @@ public:
     HRESULT make(size_t i, IDiaSymbol **out)
     {
         if (i < views.size() && views[i]) return newViewSymbol(s, ids[i], views[i], out);
-        return i < memberFlags.size() && memberFlags[i] ? newMemberSymbol(s, ids[i], out) : newSymbol(s, ids[i], out);
+        return i < memberFlags.size() && (memberFlags[i] & 1) ? newMemberSymbol(s, ids[i], out) : newSymbol(s, ids[i], out);
     }
     ~DiaEnumSymbols();
     DiaSession *s;
@@ -1034,6 +1034,10 @@ public:
         for (size_t ci = 0; ci < all.size(); ci++) {
             SymIndexId c = all[ci];
             if (tag != 0 && (uint32_t)s->m->tag(c) != (uint32_t)tag) continue;
+            // The global scope lists the members of classes and enums and
+            // the arguments of function types again; with a tag filter it
+            // does not (observed with call_probe).
+            if (tag != 0 && id == s->m->exe && ci < flags_.size() && (flags_[ci] & 3)) continue;
             if (name) {
                 std::string n = s->m->name(c);
                 bool ci = (flags & 2) != 0;  // nsCaseInsensitive

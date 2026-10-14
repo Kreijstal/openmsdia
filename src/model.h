@@ -324,6 +324,7 @@ private:
     std::map<uint32_t, SymIndexId> globalSyms;
     std::map<std::tuple<uint16_t, uint32_t, std::string, uint32_t>, SymIndexId> dataByAddr;
     std::map<uint16_t, std::vector<SymIndexId>> envSyms;
+    std::map<std::pair<uint16_t, uint32_t>, std::vector<SymIndexId>> envAt;  // by source record
     std::vector<SymIndexId> publicList;
     bool publicsLoaded = false;
     std::map<uint16_t, std::vector<LineEntry>> lineCache;

@@ -1545,6 +1545,11 @@ void Model::moduleChildren(uint16_t modi, SymIndexId parent, uint32_t begin, uin
             out.push_back(id);
             continue;
         }
+        if (!func && (k == S_OBJNAME || k == S_ENVBLOCK || k == S_BUILDINFO)) {
+            auto e = envAt.find(key);
+            if (e != envAt.end()) out.insert(out.end(), e->second.begin(), e->second.end());
+            continue;
+        }
         if (k == S_SEPCODE && !func) {
             sepCodes(modi);
             auto it = recordSyms.find(key);
@@ -2237,16 +2242,20 @@ void Model::compilandChildren(uint16_t modi, SymIndexId c, std::vector<SymIndexI
     // Build environment: S_OBJNAME, S_ENVBLOCK, S_BUILDINFO.
     auto &env = envSyms[modi];
     if (env.empty()) {
-        std::vector<std::pair<std::string, std::string>> kv;
-        for (auto &rec : ms->getSymbolArray()) {
+        // Each entry with the record it comes from.
+        std::vector<std::tuple<uint32_t, std::string, std::string>> kv;
+        CVSymbolArray recs = ms->getSymbolArray();
+        for (auto R = recs.begin(); R != recs.end(); ++R) {
+            const CVSymbol &rec = *R;
+            uint32_t at = R.offset();
             if (rec.kind() == S_OBJNAME) {
                 ObjNameSym on(SymbolRecordKind::ObjNameSym);
-                if (deser(rec, on)) kv.push_back({"obj", on.Name.str()});
+                if (deser(rec, on)) kv.push_back({at, "obj", on.Name.str()});
             } else if (rec.kind() == S_ENVBLOCK) {
                 EnvBlockSym eb(SymbolRecordKind::EnvBlockSym);
                 if (deser(rec, eb))
                     for (size_t i = 0; i + 1 < eb.Fields.size(); i += 2)
-                        kv.push_back({eb.Fields[i].str(), eb.Fields[i + 1].str()});
+                        kv.push_back({at, eb.Fields[i].str(), eb.Fields[i + 1].str()});
             } else if (rec.kind() == S_BUILDINFO) {
                 BuildInfoSym bi(SymbolRecordKind::BuildInfoSym);
                 if (!deser(rec, bi)) continue;
@@ -2273,63 +2282,41 @@ void Model::compilandChildren(uint16_t modi, SymIndexId c, std::vector<SymIndexI
                             val += sr.getString().str();
                         }
                     }
-                    kv.push_back({keys[i], val});
+                    kv.push_back({at, keys[i], val});
                 }
             }
         }
         for (auto &p : kv) {
-            SymIndexId id = make<OmCompilandEnv>(p.first, p.second);
+            SymIndexId id = make<OmCompilandEnv>(std::get<1>(p), std::get<2>(p));
             ours(id)->lexParent = c;
             env.push_back(id);
+            envAt[{modi, std::get<0>(p)}].push_back(id);
         }
     }
-    // The object file name (S_OBJNAME, "obj") comes first, the build
-    // environment last (as Dia2Dump lists a compiland's children).
-    size_t rest = 0;
-    if (!env.empty() && name(env[0]) == "obj") {
-        out.push_back(env[0]);
-        rest = 1;
-    }
+    // The environment entries are listed where their records are (the
+    // object name first, the build information where S_BUILDINFO is).
     moduleChildren(modi, c, 0, 0, out, 0);
-    out.insert(out.end(), env.begin() + rest, env.end());
 }
 
 void Model::buildGlobalChildren(std::vector<SymIndexId> &out)
 {
+    // As the real DLL enumerates them (observed with call_probe): the
+    // compilands; the globals stream in its own order (procedures, data,
+    // typedefs, constants); the publics; then the types in TPI order, each
+    // class followed by its members, each enum by its enumerators, each
+    // function type by its arguments (the members, enumerators and
+    // arguments are left out when the children are asked for by tag).
     for (uint32_t i = 0, n = moduleCount(); i < n; i++)
         if (SymIndexId c = compiland(i)) out.push_back(c);
-    auto addAll = [&](const std::vector<SymIndexId> &ids, std::vector<SymIndexId> *keep) {
-        out.insert(out.end(), ids.begin(), ids.end());
-        if (keep) keep->insert(keep->end(), ids.begin(), ids.end());
-    };
-    std::vector<SymIndexId> udts, enums, sigs;
-    addAll(typesOfKind({LF_STRUCTURE, LF_CLASS, LF_UNION, LF_INTERFACE}), &udts);
-    addAll(typesOfKind({LF_ENUM}), &enums);
-    addAll(typesOfKind({LF_POINTER}), nullptr);
-    addAll(typesOfKind({LF_ARRAY}), nullptr);
-    addAll(typesOfKind({LF_PROCEDURE, LF_MFUNCTION}), &sigs);
-    // Typedefs: S_UDT records of the globals stream.
     auto *gs = pdb->globals();
     auto *ss = pdb->symbols();
-    if (gs && ss)
-        for (uint32_t off : gs->getGlobalsTable())
-            if (ss->readRecord(off).kind() == S_UDT)
-                if (SymIndexId t = typedefSym(off)) out.push_back(t);
-    // const/volatile base types.
-    if (auto *types = pdb->types()) {
-        for (auto ti = types->getFirst(); ti; ti = types->getNext(*ti)) {
-            CVType t = types->getType(*ti);
-            if (t.kind() != LF_MODIFIER) continue;
-            ModifierRecord mr(TypeRecordKind::Modifier);
-            if (deserType(t, mr) && mr.getModifiedType().isSimple())
-                if (SymIndexId s = typeSym(*ti)) out.push_back(s);
-        }
-    }
-    // Globals stream.
     if (gs && ss) {
         for (uint32_t off : gs->getGlobalsTable()) {
             CVSymbol s = ss->readRecord(off);
             switch (s.kind()) {
+            case S_UDT:
+                if (SymIndexId t = typedefSym(off)) out.push_back(t);
+                break;
             case S_PROCREF: case S_LPROCREF: {
                 ProcRefSym pr(SymbolRecordKind::ProcRefSym);
                 if (deser(s, pr) && pr.Module)
@@ -2376,27 +2363,52 @@ void Model::buildGlobalChildren(std::vector<SymIndexId> &out)
             }
         }
     }
-    std::vector<std::pair<size_t, SymIndexId>> argViews;
-    for (SymIndexId s : sigs)
-        for (SymIndexId a : children(s)) {
-            argViews.push_back({out.size(), s});
-            out.push_back(a);
-        }
-    {
-        size_t before = out.size();
-        for (SymIndexId u : udts)
-            for (SymIndexId m : children(u)) out.push_back(m);
-        auto &fl = childFlags[exe];
-        fl.assign(out.size(), 0);
-        for (size_t i = before; i < out.size(); i++) fl[i] = 1;
-    }
-    for (SymIndexId e : enums)
-        for (SymIndexId m : children(e)) out.push_back(m);
     for (SymIndexId p : publics()) out.push_back(p);
-    childFlags[exe].resize(out.size(), 0);
+    auto &fl = childFlags[exe];
+    fl.assign(out.size(), 0);
     auto &vw = childViews[exe];
     vw.assign(out.size(), 0);
-    for (auto &av : argViews) vw[av.first] = av.second;
+    auto add = [&](SymIndexId id, uint8_t flag, SymIndexId view) {
+        out.push_back(id);
+        fl.push_back(flag);
+        vw.push_back(view);
+    };
+    if (auto *types = pdb->types()) {
+        auto listed = [&](TypeLeafKind k) {
+            return k == LF_STRUCTURE || k == LF_CLASS || k == LF_UNION || k == LF_INTERFACE || k == LF_ENUM ||
+                   k == LF_POINTER || k == LF_ARRAY || k == LF_PROCEDURE || k == LF_MFUNCTION;
+        };
+        for (auto ti = types->getFirst(); ti; ti = types->getNext(*ti)) {
+            CVType t = types->getType(*ti);
+            bool want = false;
+            if (listed(t.kind())) {
+                // Forward declarations are listed only when nothing defines them.
+                want = !isUdtForwardRef(t) || fullDecl(*ti) == *ti;
+            } else if (t.kind() == LF_MODIFIER) {
+                // Modifiers of the listed kinds and of base types.
+                ModifierRecord mr(TypeRecordKind::Modifier);
+                if (deserType(t, mr))
+                    want = mr.getModifiedType().isSimple() || listed(pdb->type(mr.getModifiedType()).kind());
+            }
+            if (!want) continue;
+            SymIndexId sym = typeSym(*ti);
+            if (!sym) continue;
+            add(sym, 0, 0);
+            switch (tag(sym)) {
+            case SymTag::UDT:
+                for (SymIndexId m : std::vector<SymIndexId>(children(sym))) add(m, 1, 0);
+                break;
+            case SymTag::Enum:
+                for (SymIndexId m : std::vector<SymIndexId>(children(sym))) add(m, 2, 0);
+                break;
+            case SymTag::FunctionSig:
+                for (SymIndexId a : std::vector<SymIndexId>(children(sym))) add(a, 2, sym);
+                break;
+            default:
+                break;
+            }
+        }
+    }
 }
 
 std::vector<uint8_t> Model::flagsOf(SymIndexId id)
