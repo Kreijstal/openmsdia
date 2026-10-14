@@ -740,6 +740,26 @@ public:
     }
 };
 
+// S_HEAPALLOCSITE: a call that allocates memory, with the allocated type.
+// No name and no virtual address (as observed).
+class OmHeapAllocSite : public Sym {
+public:
+    explicit OmHeapAllocSite(HeapAllocationSiteSym h) : Sym(SymTag::HeapAllocationSite), h(std::move(h)) {}
+    HeapAllocationSiteSym h;
+    bool prop(Prop p, Val &v) const override
+    {
+        switch (p) {
+        case P_lexicalParent: case P_lexicalParentId: v = Val::sym(lexParent); return true;
+        case P_addressSection: v = Val::u_(h.Segment); return true;
+        case P_addressOffset: v = Val::u_(h.CodeOffset); return true;
+        case P_relativeVirtualAddress: v = Val::u_(M->rva(h.Segment, h.CodeOffset)); return true;
+        case P_length: v = Val::u_(h.CallInstructionSize); return true;
+        case P_type: case P_typeId: v = Val::sym(M->typeSym(h.Type)); return true;
+        default: return false;
+        }
+    }
+};
+
 // S_UDT of a module stream: a typedef local to its function (lambda
 // closure types) or, outside functions, to its compiland.
 class OmLocalTypedef : public Sym {
@@ -1023,7 +1043,8 @@ bool Model::get(SymIndexId id, Prop p, Val &v)
         if (t == SymTag::Function || t == SymTag::FuncDebugStart || t == SymTag::FuncDebugEnd ||
             t == SymTag::Data || t == SymTag::PublicSymbol || t == SymTag::Block ||
             t == SymTag::CallSite || t == SymTag::InlineSite || t == SymTag::CoffGroup ||
-            t == SymTag::Label || t == SymTag::Thunk || t == SymTag::Callee || t == SymTag::Caller) {
+            t == SymTag::Label || t == SymTag::Thunk || t == SymTag::Callee || t == SymTag::Caller ||
+            t == SymTag::HeapAllocationSite) {
             Val sec, off;
             if (!get(id, P_addressSection, sec) || !get(id, P_addressOffset, off)) return false;
             SymIndexId g = coffGroupAt((uint32_t)sec.u, (uint32_t)off.u);
@@ -1321,6 +1342,16 @@ void Model::moduleChildren(uint16_t modi, SymIndexId parent, uint32_t begin, uin
                 I = syms.at(t.End);
                 if (I == syms.end()) break;
             }
+            continue;
+        }
+        if (func && k == S_HEAPALLOCSITE) {
+            HeapAllocationSiteSym h(SymbolRecordKind::HeapAllocationSiteSym);
+            if (!deser(*I, h)) continue;
+            auto it = recordSyms.find(key);
+            SymIndexId id = it != recordSyms.end() ? it->second : make<OmHeapAllocSite>(h);
+            ours(id)->lexParent = parent;
+            recordSyms[key] = id;
+            out.push_back(id);
             continue;
         }
         if (func && k == S_LABEL32) {
