@@ -2,6 +2,8 @@
 #include "model.h"
 #include "undname.h"
 
+#include <functional>
+
 #include <algorithm>
 #include <bitset>
 #include <cstring>
@@ -2691,6 +2693,55 @@ std::string Model::typeName(SymIndexId id)
     default:
         return name(id);
     }
+}
+
+std::vector<SymIndexId> Model::allSymbols()
+{
+    // As the real DLL lists them: the exe, the compilands, each compiland's
+    // symbols (depth first), then the exe's other children (globals,
+    // publics, types in TPI order), each followed by its own children. A
+    // type's children are listed again for every type that has them (a
+    // modified class repeats its class's members, function types sharing
+    // an argument list repeat its arguments).
+    std::vector<SymIndexId> out{exe};
+    std::set<SymIndexId> seen{exe};
+    std::vector<SymIndexId> top = children(exe);
+    auto add = [&](SymIndexId id) { return seen.insert(id).second ? (out.push_back(id), true) : false; };
+    std::function<void(SymIndexId)> below = [&](SymIndexId id) {
+        for (SymIndexId c : std::vector<SymIndexId>(children(id)))
+            if (add(c)) below(c);
+    };
+    for (SymIndexId c : top)
+        if (tag(c) == SymTag::Compiland) add(c);
+    for (SymIndexId c : top)
+        if (tag(c) == SymTag::Compiland) below(c);
+    for (SymIndexId c : top) {
+        if (!add(c)) continue;
+        SymTag t = tag(c);
+        if (t == SymTag::UDT || t == SymTag::Enum || t == SymTag::FunctionSig) {
+            for (SymIndexId k : std::vector<SymIndexId>(children(c))) {
+                out.push_back(k);
+                seen.insert(k);
+            }
+        } else {
+            below(c);
+        }
+    }
+    return out;
+}
+
+uint32_t Model::hiddenLocalCount()
+{
+    // S_LOCAL and S_FILESTATIC records: symbols of the Symbols table that
+    // no findChildren lists.
+    uint32_t n = 0;
+    for (uint32_t m = 0; m < moduleCount(); m++) {
+        auto *ms = pdb->module((uint16_t)m);
+        if (!ms) continue;
+        for (auto &rec : ms->getSymbolArray())
+            if (rec.kind() == S_LOCAL || rec.kind() == S_FILESTATIC) n++;
+    }
+    return n;
 }
 
 bool Model::undecoratedNameEx(SymIndexId id, unsigned options, std::string &out)

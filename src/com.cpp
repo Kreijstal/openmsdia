@@ -1210,10 +1210,10 @@ HRESULT DiaEnumTables::make(size_t i, IDiaTable **out)
     std::vector<LineEntry> lines;
     switch (i) {
     case 0: {
-        auto *e = new DiaEnumSymbols(s, m.children(m.exe));
-        e->memberFlags = m.flagsOf(m.exe);
-        e->views = m.viewsOf(m.exe);
-        *out = new DiaTable(s, "Symbols", (LONG)m.children(m.exe).size(), e, IID_IDiaEnumSymbols);
+        std::vector<SymIndexId> all = m.allSymbols();
+        auto *e = new DiaEnumSymbols(s, all);
+        // The count includes the S_LOCAL symbols, which are not enumerated.
+        *out = new DiaTable(s, "Symbols", (LONG)(all.size() + m.hiddenLocalCount()), e, IID_IDiaEnumSymbols);
         return S_OK;
     }
     case 1: {

@@ -170,6 +170,10 @@ public:
     SymIndexId findByRVA(uint32_t rva, SymTag tag, int32_t *disp = nullptr);
     bool inLastSection(uint32_t rva) const { return pdb->inLastSection(rva); }
     std::vector<SymIndexId> symbolsByAddr();
+    // The Symbols table: the exe, the compilands and everything below them,
+    // then the rest of the exe's children.
+    std::vector<SymIndexId> allSymbols();
+    uint32_t hiddenLocalCount();
 
     // Lines and files.
     const std::vector<LineEntry> &lines(uint16_t modi);

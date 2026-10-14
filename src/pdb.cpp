@@ -20,6 +20,8 @@
 #include "llvm/Support/BinaryByteStream.h"
 #include "llvm/Support/MemoryBuffer.h"
 
+#include <string.h>
+
 using namespace llvm;
 using namespace llvm::codeview;
 using namespace llvm::pdb;
@@ -41,6 +43,19 @@ std::unique_ptr<PdbFile> PdbFile::open(std::unique_ptr<MemoryBuffer> buf, std::s
 {
     std::unique_ptr<PdbFile> f(new PdbFile);
     f->alloc = std::make_unique<BumpPtrAllocator>();
+    // MSVC's linker can leave the file one partial block short; the real
+    // DLL reads such files, LLVM's MSF reader rejects them. Pad with zeros.
+    if (buf->getBufferSize() >= 36) {
+        uint32_t bs;
+        memcpy(&bs, buf->getBufferStart() + 32, 4);
+        size_t n = buf->getBufferSize();
+        if (bs >= 512 && bs <= 65536 && (bs & (bs - 1)) == 0 && n % bs) {
+            auto padded = WritableMemoryBuffer::getNewMemBuffer(n + (bs - n % bs), buf->getBufferIdentifier());
+            memcpy(padded->getBufferStart(), buf->getBufferStart(), n);
+            memset(padded->getBufferStart() + n, 0, bs - n % bs);
+            buf = std::move(padded);
+        }
+    }
     StringRef path = buf->getBufferIdentifier();
     auto stream = std::make_unique<MemoryBufferByteStream>(std::move(buf), llvm::endianness::little);
     f->pdb = std::make_unique<PDBFile>(path, std::move(stream), *f->alloc);
