@@ -788,7 +788,11 @@ public:
 };
 
 // A nested type entry (LF_NESTTYPE) of a class: the type under its nested
-// name, with the class as class parent.
+// name, with the class as class parent. A nested class or enum (one with
+// the nested flag) is reported with its own tag; any other entry (a member
+// typedef of a namespace-scope class, a base type, a pointer...) is a
+// Typedef whose type is the target and which otherwise answers as the
+// target, with nested set (as observed).
 class OmNested : public Sym {
 public:
     OmNested(SymTag tag, SymIndexId target, std::string nm)
@@ -801,6 +805,14 @@ public:
         case P_name: v = Val::str(nm); return true;
         case P_lexicalParent: case P_lexicalParentId: v = Val::sym(lexParent); return true;
         case P_classParent: case P_classParentId: v = Val::sym(classParent); return true;
+        case P_type: case P_typeId:
+            if (getSymTag() != SymTag::Typedef) return M->get(target, p, v);
+            v = Val::sym(target);
+            return true;
+        case P_nested:
+            if (getSymTag() != SymTag::Typedef) return M->get(target, p, v);
+            v = Val::b_(true);
+            return true;
         default: return M->get(target, p, v);
         }
     }
@@ -1731,11 +1743,14 @@ void Model::typeMembers(SymIndexId udt, TypeIndex fieldList, std::vector<SymInde
         Error visitKnownMember(CVMemberRecord &, NestedTypeRecord &r) override
         {
             SymIndexId target = m->typeSym(r.getNestedType());
-            SymTag tt = m->tag(target);
-            if (tt != SymTag::UDT && tt != SymTag::Enum) {
+            if (!target) {
                 index++;
                 return Error::success();
             }
+            SymTag tt = m->tag(target);
+            Val nested;
+            if ((tt != SymTag::UDT && tt != SymTag::Enum) || !m->get(target, P_nested, nested) || !nested.u)
+                tt = SymTag::Typedef;
             out->push_back(get([&] {
                 SymIndexId id = m->make<OmNested>(tt, target, r.getName().str());
                 m->ours(id)->classParent = udt;
