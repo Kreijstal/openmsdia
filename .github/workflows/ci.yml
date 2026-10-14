@@ -231,3 +231,80 @@ jobs:
             build/ms-real/
             build/ms-ours/
             build/ms-score*
+
+  # Real DIA consumers, run with the runner's msdia140.dll and with ours
+  # (registration-free COM, see tools/consumers.sh): Ghidra's PDB exporter
+  # (pdb.exe, Apache-2.0, built from Ghidra's sources) and the DIA SDK's
+  # Dia2Dump sample (built from the runner's Visual Studio; used as a black
+  # box, nothing of it is committed or uploaded). Their text outputs are
+  # compared line by line.
+  consumers:
+    needs: amd64
+    if: always()
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: CLANG64
+          update: false
+          install: >-
+            diffutils
+            mingw-w64-clang-x86_64-python
+      - uses: actions/download-artifact@v4
+        with:
+          name: openmsdia-amd64
+          path: build
+      - name: Locate the DIA SDK
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath
+          "MSDIA_DLL=" + (Join-Path $vs "DIA SDK\bin\amd64\msdia140.dll") | Out-File -FilePath $env:GITHUB_ENV -Append
+          "VS_PATH=$vs" | Out-File -FilePath $env:GITHUB_ENV -Append
+      - name: Fetch Ghidra's PDB exporter sources
+        run: |
+          git clone -q --depth 1 --filter=blob:none --sparse https://github.com/NationalSecurityAgency/ghidra ../ghidra
+          git -C ../ghidra sparse-checkout set Ghidra/Features/PDB/src/pdb
+          git -C ../ghidra log -1 --format='Ghidra %H %cs'
+      - name: Build the consumers
+        shell: pwsh
+        run: |
+          Import-Module (Join-Path $env:VS_PATH 'Common7\Tools\Microsoft.VisualStudio.DevShell.dll')
+          Enter-VsDevShell -VsInstallPath $env:VS_PATH -SkipAutomaticLocation -DevCmdArguments '-arch=x64 -host_arch=x64'
+          $dia = Join-Path $env:VS_PATH 'DIA SDK'
+          New-Item -ItemType Directory -Force build\consumers | Out-Null
+          $src = Resolve-Path ..\ghidra\Ghidra\Features\PDB\src\pdb
+          Push-Location build\consumers
+          cl /nologo /O2 /EHsc /std:c++17 /DUNICODE /D_UNICODE /I "$src\headers" /I "$dia\include" (Get-ChildItem "$src\cpp\*.cpp").FullName `
+             /Fe:pdb.exe /link /MANIFEST:NO "$dia\lib\amd64\diaguids.lib" ole32.lib oleaut32.lib
+          New-Item -ItemType Directory -Force d2d | Out-Null
+          Copy-Item "$dia\Samples\DIA2Dump\*" d2d -Recurse
+          cl /nologo /O2 /EHsc /DUNICODE /D_UNICODE /I d2d /I "$dia\include" (Get-ChildItem d2d\*.cpp).FullName `
+             /Fe:Dia2Dump.exe /link /MANIFEST:NO "$dia\lib\amd64\diaguids.lib" ole32.lib oleaut32.lib
+          Pop-Location
+          Get-ChildItem build\consumers\*.exe
+      - name: Fetch Microsoft PDBs
+        run: |
+          python3 tools/fetch_ms_pdbs.py build/mspdb /c/Windows/System32/{ntdll,kernel32,user32,ucrtbase}.dll /c/Windows/SysWOW64/kernel32.dll || true
+      - name: Run the consumers with the real DLL and with ours
+        run: |
+          pdbs=(build/corpus/c_basic.pdb build/corpus/cpp_classes.pdb build/corpus/cpp_more_O2.pdb build/corpus/cpp_more_x86.pdb
+                build/corpus/msvc_cpp_classes.pdb build/corpus/msvc_cpp_more_O2.pdb build/corpus/msvc_features.pdb
+                build/corpus/msvc_cpp_more_x86.pdb build/mspdb/*.pdb)
+          ls -la "${pdbs[@]}" || true
+          tools/consumers.sh "$(cygpath -u "$MSDIA_DLL")" build/msdia140.dll build/cons \
+            build/consumers/pdb.exe build/consumers/Dia2Dump.exe -- "${pdbs[@]}"
+          python3 tools/consumer_diff.py build/cons pdb Dia2Dump --markdown build/cons/score.md | tee build/cons/score.txt
+          { echo "### DIA consumers (real msdia140 vs OpenMSDIA)"; cat build/cons/score.md; } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: openmsdia-consumers
+          retention-days: 7
+          path: |
+            build/cons/pdb/
+            build/cons/Dia2Dump/
+            build/cons/score.*
