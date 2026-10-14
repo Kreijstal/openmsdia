@@ -71,6 +71,13 @@ jobs:
           Import-Module (Join-Path $env:VS_PATH 'Common7\Tools\Microsoft.VisualStudio.DevShell.dll')
           Enter-VsDevShell -VsInstallPath $env:VS_PATH -SkipAutomaticLocation -DevCmdArguments '-arch=x86 -host_arch=x64'
           & corpus\build_msvc.ps1 build\corpus -X86
+      - name: Build the PGO corpus (MSVC)
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          Import-Module (Join-Path $env:VS_PATH 'Common7\Tools\Microsoft.VisualStudio.DevShell.dll')
+          Enter-VsDevShell -VsInstallPath $env:VS_PATH -SkipAutomaticLocation -DevCmdArguments '-arch=x64 -host_arch=x64'
+          & corpus\pgo\build_pgo.ps1 build\pgo
       - name: Build the name corpus (clang-cl, lld)
         run: corpus/names/build.sh build/names
       - name: Build the MSVC name corpus
@@ -92,6 +99,16 @@ jobs:
           python3 tools/diff_walk.py --dirs build/real build/ours --top 40 \
             --json build/score.json --markdown build/score.md | tee build/score.txt
           cat build/score.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Walk the PGO corpus
+        continue-on-error: true
+        run: |
+          [ -f build/pgo/pgo.pdb ] || exit 0
+          llvm-pdbutil dump --symbols build/pgo/pgo.pdb | grep -o 'S_SEPCODE\|S_CALLERS\|S_CALLEES\|S_INLINEES\|S_POGODATA' | sort | uniq -c
+          real=$(cygpath -u "$MSDIA_DLL")
+          mkdir -p build/pgo/only && cp build/pgo/pgo.pdb build/pgo/only/
+          walker/run_corpus.sh "$real" build/pgo/only build/pgo-real
+          walker/run_corpus.sh "$(cygpath -m build/msdia140.dll)" build/pgo/only build/pgo-ours
+          python3 tools/diff_walk.py --dirs build/pgo-real build/pgo-ours --top 20 | tee build/pgo-score.txt
       - name: Undecorated names
         run: |
           real=$(cygpath -u "$MSDIA_DLL")
@@ -134,4 +151,6 @@ jobs:
             build/score.*
             build/names-*
             build/exeload-*
+            build/pgo-*
+            build/pgo/only/*.pdb
             build/names/*.pdb
