@@ -252,7 +252,7 @@ public:
     bool methodOverloaded(SymIndexId id);
     void bindStaticMember(class OmData *d);
     SymIndexId findMethodImpl(SymIndexId udt, llvm::StringRef name, llvm::codeview::TypeIndex type);
-    SymIndexId dataSym(uint16_t seg, uint32_t off, llvm::StringRef nm, std::function<SymIndexId()> mk);
+    SymIndexId dataSym(uint16_t seg, uint32_t off, llvm::StringRef nm, uint32_t type, std::function<SymIndexId()> mk);
     SymIndexId globalData(const llvm::codeview::DataSym &ds, llvm::codeview::SymbolKind k);
     void compilandChildren(uint16_t modi, SymIndexId c, std::vector<SymIndexId> &out);
     void udtChildren(SymIndexId udt, std::vector<SymIndexId> &out);
@@ -298,7 +298,7 @@ private:
     std::map<std::pair<uint16_t, uint32_t>, SymIndexId> recordSyms;
     std::map<std::tuple<uint16_t, uint32_t, uint32_t>, SymIndexId> calleeSyms;
     std::map<uint32_t, SymIndexId> globalSyms;
-    std::map<std::tuple<uint16_t, uint32_t, std::string>, SymIndexId> dataByAddr;
+    std::map<std::tuple<uint16_t, uint32_t, std::string, uint32_t>, SymIndexId> dataByAddr;
     std::map<uint16_t, std::vector<SymIndexId>> envSyms;
     std::vector<SymIndexId> publicList;
     bool publicsLoaded = false;

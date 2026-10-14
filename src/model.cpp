@@ -1869,9 +1869,12 @@ SymIndexId Model::findMethodImpl(SymIndexId udt, StringRef name, TypeIndex type)
     return 0;
 }
 
-SymIndexId Model::dataSym(uint16_t seg, uint32_t off, StringRef nm, std::function<SymIndexId()> mk)
+// Globals-stream data are one symbol per address, name and type: the
+// same name at the same address with another type (as the C runtime has)
+// is another symbol.
+SymIndexId Model::dataSym(uint16_t seg, uint32_t off, StringRef nm, uint32_t type, std::function<SymIndexId()> mk)
 {
-    auto key = std::make_tuple(seg, off, nm.str());
+    auto key = std::make_tuple(seg, off, nm.str(), type);
     auto it = dataByAddr.find(key);
     if (it != dataByAddr.end()) return it->second;
     SymIndexId id = mk();
@@ -1881,7 +1884,7 @@ SymIndexId Model::dataSym(uint16_t seg, uint32_t off, StringRef nm, std::functio
 
 SymIndexId Model::globalData(const DataSym &ds, SymbolKind k)
 {
-    return dataSym(ds.Segment, ds.DataOffset, ds.Name, [&] {
+    return dataSym(ds.Segment, ds.DataOffset, ds.Name, ds.Type.getIndex(), [&] {
         SymIndexId id = make<OmData>(OmData::Global);
         auto *d = static_cast<OmData *>(ours(id));
         d->nm = ds.Name.str();
