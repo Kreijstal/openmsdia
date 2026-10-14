@@ -5,6 +5,7 @@
 #include <oleauto.h>
 
 #include <atomic>
+#include <typeinfo>
 #include <functional>
 #include <memory>
 #include <string>
@@ -38,6 +39,21 @@ std::string fromW(const wchar_t *w)
 
 // IUnknown for single-inheritance-chain COM classes. `Iids` lists the
 // interfaces answered with `this`.
+// OPENMSDIA_TRACE_QI=<file>: append "<class> <IID>" for every interface a
+// client asks one of our objects for and does not get (to observe which
+// interfaces tools use that the type library does not describe).
+static void traceQI(const char *cls, REFIID riid)
+{
+    static const char *path = getenv("OPENMSDIA_TRACE_QI");
+    if (!path || !*path) return;
+    if (FILE *f = fopen(path, "a")) {
+        fprintf(f, "%s {%08lX-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}\n", cls, (unsigned long)riid.Data1,
+                riid.Data2, riid.Data3, riid.Data4[0], riid.Data4[1], riid.Data4[2], riid.Data4[3], riid.Data4[4],
+                riid.Data4[5], riid.Data4[6], riid.Data4[7]);
+        fclose(f);
+    }
+}
+
 #define OM_IUNKNOWN(...)                                                                  \
     std::atomic<long> refs_{1};                                                           \
     ULONG STDMETHODCALLTYPE AddRef() override { return (ULONG)++refs_; }                  \
@@ -58,6 +74,7 @@ std::string fromW(const wchar_t *w)
                 return S_OK;                                                              \
             }                                                                             \
         *ppv = nullptr;                                                                   \
+        traceQI(typeid(*this).name(), riid);                                              \
         return E_NOINTERFACE;                                                             \
     }
 
@@ -387,6 +404,7 @@ public:
             // queried for it and used through it).
             return inner->QueryInterface(riid, ppv);
         } else {
+            traceQI(("DiaTable:" + name).c_str(), riid);
             return E_NOINTERFACE;
         }
         AddRef();
@@ -858,6 +876,31 @@ public:
     bool memberView = false;  // a method reached through its class: lexical parent is the exe
     SymIndexId viewClassParent = 0;  // class parent of this enumerated instance, see Model::viewsOf
 
+    // A getter that fails leaves its output as it was for these properties
+    // and zeroes it for all others (observed with sentinel outputs; tools
+    // such as Dia2Dump print outputs without checking the result).
+    static bool keptOnFailure(Prop p)
+    {
+        switch (p) {
+        case P_arrayIndexType: case P_arrayIndexTypeId: case P_baseSymbol: case P_baseSymbolId:
+        case P_classParent: case P_classParentId: case P_coffGroup: case P_compilerName: case P_container:
+        case P_dataExport: case P_exceptionHandlerRelativeVirtualAddress: case P_exceptionHandlerVirtualAddress:
+        case P_inlinee: case P_inlineeId: case P_lexicalParent: case P_lexicalParentId: case P_libraryName:
+        case P_lowerBound: case P_lowerBoundId: case P_name: case P_objectFileName: case P_objectPointerType:
+        case P_sourceFileName: case P_subType: case P_subTypeId: case P_symbolsFileName: case P_timeStamp:
+        case P_type: case P_typeId: case P_unmodifiedType: case P_unmodifiedTypeId: case P_unused:
+        case P_upperBound: case P_upperBoundId: case P_virtualBaseTableType: case P_virtualTableShape:
+        case P_virtualTableShapeId:
+            return true;
+        default:
+            return false;
+        }
+    }
+    template <class T> static HRESULT failed(Prop p, T *out, HRESULT hr)
+    {
+        if (!keptOnFailure(p)) *out = T();
+        return hr;
+    }
     HRESULT getLONG(Prop p, LONG *out)
     {
         if (!out) return E_POINTER;
@@ -868,8 +911,8 @@ public:
             return S_OK;
         }
         Val v;
-        if (!s->m->get(id, p, v)) return S_FALSE;
-        if (v.kind == Val::Err) return (HRESULT)v.u;
+        if (!s->m->get(id, p, v)) return failed(p, out, S_FALSE);
+        if (v.kind == Val::Err) return failed(p, out, (HRESULT)v.u);
         *out = v.kind == Val::I ? (LONG)v.i : (LONG)v.u;
         return S_OK;
     }
@@ -885,8 +928,8 @@ public:
             return S_OK;
         }
         Val v;
-        if (!s->m->get(id, p, v)) return S_FALSE;
-        if (v.kind == Val::Err) return (HRESULT)v.u;
+        if (!s->m->get(id, p, v)) return failed(p, out, S_FALSE);
+        if (v.kind == Val::Err) return failed(p, out, (HRESULT)v.u);
         *out = v.kind == Val::I ? (ULONG)v.i : (ULONG)v.u;
         return S_OK;
     }
@@ -894,15 +937,15 @@ public:
     {
         if (!out) return E_POINTER;
         Val v;
-        if (!s->m->get(id, p, v)) return S_FALSE;
+        if (!s->m->get(id, p, v)) return failed(p, out, S_FALSE);
         *out = v.kind == Val::I ? (ULONGLONG)v.i : v.u;
         return S_OK;
     }
     HRESULT getBSTR(Prop p, BSTR *out)
     {
         if (!out) return E_POINTER;
-        *out = nullptr;
         if (p == P_unused) return E_NOTIMPL;  // as observed
+        if (!keptOnFailure(p)) *out = nullptr;
         if (p == P_name && !firstNameUsed) {
             firstNameUsed = true;
             *out = toBSTR(firstName);
@@ -917,7 +960,7 @@ public:
     {
         if (!out) return E_POINTER;
         Val v;
-        if (!s->m->get(id, p, v) || v.kind != Val::Guid) return S_FALSE;
+        if (!s->m->get(id, p, v) || v.kind != Val::Guid) return failed(p, out, S_FALSE);
         memcpy(out, v.g, 16);
         return S_OK;
     }
@@ -952,7 +995,7 @@ public:
     HRESULT getSYM(Prop p, IDiaSymbol **out)
     {
         if (!out) return E_POINTER;
-        *out = nullptr;
+        if (!keptOnFailure(p)) *out = nullptr;
         if (memberView && p == P_lexicalParent) return newSymbol(s, s->m->exe, out);
         if (viewClassParent && p == P_classParent) return newSymbol(s, viewClassParent, out);
         Val v;
@@ -1396,6 +1439,10 @@ HRESULT DiaEnumTables::make(size_t i, IDiaTable **out)
 {
     Model &m = *s->m;
     std::vector<LineEntry> lines;
+    // The real DLL enumerates the Symbols table last (observed through
+    // Ghidra's PDB exporter): SourceFiles, LineNumbers, Sections,
+    // SegmentMap, InjectedSource, FrameData, InputAssemblyFiles, Symbols.
+    if (i < 8) i = (i + 1) % 8;
     switch (i) {
     case 0: {
         std::vector<SymIndexId> all = m.allSymbols();
