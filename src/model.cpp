@@ -629,8 +629,10 @@ public:
 // type are known.
 class OmCallee : public Sym {
 public:
-    OmCallee(std::string nm, TypeIndex type, SymIndexId fn, int index)
-        : Sym(SymTag::Callee), nm(std::move(nm)), type(type), fn(fn), index(index) {}
+    // S_CALLEES entries are Callee symbols, S_CALLERS entries Caller
+    // symbols (the latter not seen in any corpus PDB yet).
+    OmCallee(std::string nm, TypeIndex type, SymIndexId fn, int index, SymTag tag = SymTag::Callee)
+        : Sym(tag), nm(std::move(nm)), type(type), fn(fn), index(index) {}
     std::string nm;
     TypeIndex type;
     SymIndexId fn;
@@ -1407,8 +1409,8 @@ void Model::moduleChildren(uint16_t modi, SymIndexId parent, uint32_t begin, uin
             out.push_back(id);
             continue;
         }
-        if (func && k == S_CALLEES) {
-            CallerSym cs(SymbolRecordKind::CalleeSym);
+        if (func && (k == S_CALLEES || k == S_CALLERS)) {
+            CallerSym cs(k == S_CALLEES ? SymbolRecordKind::CalleeSym : SymbolRecordKind::CallerSym);
             if (!deser(*I, cs)) continue;
             for (size_t i = 0; i < cs.Indices.size(); i++) {
                 auto ckey = std::make_tuple(modi, off, (uint32_t)i);
@@ -1420,7 +1422,7 @@ void Model::moduleChildren(uint16_t modi, SymIndexId parent, uint32_t begin, uin
                     std::string nm;
                     TypeIndex type;
                     SymIndexId fn = funcIdTarget(cs.Indices[i], nm, type);
-                    id = make<OmCallee>(nm, type, fn, (int)i);
+                    id = make<OmCallee>(nm, type, fn, (int)i, k == S_CALLEES ? SymTag::Callee : SymTag::Caller);
                     ours(id)->lexParent = parent;
                     calleeSyms[ckey] = id;
                 }

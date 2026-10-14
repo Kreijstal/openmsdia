@@ -351,6 +351,7 @@ public:
     HRESULT STDMETHODCALLTYPE get_type(ULONG *p) override { return put(p, 4); }  // FrameTypeFrameData
     HRESULT STDMETHODCALLTYPE get_allocatesBasePointer(LONG *) override { return S_FALSE; }
     HRESULT STDMETHODCALLTYPE get_functionParent(IDiaFrameData **p) override;
+    HRESULT STDMETHODCALLTYPE execute(IDiaStackWalkFrame *frame) override;
 };
 
 IUnknown *newFrameData(DiaSession *s, size_t i);
@@ -1305,6 +1306,70 @@ HRESULT DiaFrameData::get_functionParent(IDiaFrameData **p)
     *p = nullptr;
     return E_UNEXPECTED;
 }
+// Unwinds one x86 frame the way the real DLL was observed to (with the
+// walker's fake frame): it reads the general registers and the 7 code
+// bytes before the instruction pointer, then
+//  - for a block that does not start a function: fails with E_UNEXPECTED;
+//  - at the first byte of a function: pops the return address off the
+//    stack (EIP = [ESP], ESP += 4) and sets the virtual frame and
+//    parameter base (an EBP-based frame, "$T0 $ebp = ...", counts the
+//    saved EBP to come);
+//  - elsewhere: unwinds through EBP (EIP = [EBP+4], EBP = [EBP],
+//    ESP = EBP+8, virtual frame = EBP).
+// The program string itself was not seen to be evaluated.
+HRESULT DiaFrameData::execute(IDiaStackWalkFrame *frame)
+{
+    if (!frame) return E_INVALIDARG;
+    enum { EAX = 17, ECX = 18, EDX = 19, EBX = 20, ESP = 21, EBP = 22, ESI = 23, EDI = 24, EIP = 33,
+           VFRAME = 30006, PARAMS = 30008 };
+    ULONGLONG eax = 0, ebx = 0, ecx = 0, edx = 0, esi = 0, edi = 0, ebp = 0, esp = 0, eip = 0;
+    struct { ULONG r; ULONGLONG *v; } gets[] = {{EAX, &eax}, {EBX, &ebx}, {ECX, &ecx}, {EDX, &edx},
+                                                {ESI, &esi}, {EDI, &edi}, {EBP, &ebp}, {ESP, &esp}, {EIP, &eip}};
+    for (auto &g : gets) {
+        HRESULT hr = frame->get_registerValue(g.r, g.v);
+        if (FAILED(hr)) return hr;
+    }
+    BYTE code[7];
+    ULONG got = 0;
+    frame->readMemory((enum MemoryTypeEnum)3, eip - 7, sizeof code, &got, code);
+    const FrameRow &row = r();
+    if (!(row.flags & 4)) return E_UNEXPECTED;
+    auto read32 = [&](enum MemoryTypeEnum t, ULONGLONG va, ULONGLONG &out) {
+        uint32_t v = 0;
+        ULONG n = 0;
+        HRESULT hr = frame->readMemory(t, va, 4, &n, (BYTE *)&v);
+        out = v;
+        return SUCCEEDED(hr) && n == 4;
+    };
+    ULONGLONG start = s->m->loadAddress + row.rva;
+    if (eip == start) {
+        ULONGLONG ret = 0;
+        if (!read32((enum MemoryTypeEnum)2, esp, ret)) return E_FAIL;
+        bool ebpFrame = s->m->frameProgram(row.frameFunc).rfind("$T0 $ebp ", 0) == 0;
+        ULONGLONG vframe = ebpFrame ? esp - 4 : esp;
+        frame->put_registerValue(EBX, ebx);
+        frame->put_registerValue(ESP, esp + 4);
+        frame->put_registerValue(EBP, ebp);
+        frame->put_registerValue(EIP, ret);
+        frame->put_registerValue(VFRAME, vframe);
+        frame->put_registerValue(PARAMS, vframe + (ebpFrame ? 8 : 4) + row.paramsSize);
+        return S_OK;
+    }
+    ULONGLONG ret = 0, savedEbp = 0;
+    if (!read32((enum MemoryTypeEnum)-1, ebp + 4, ret) || !read32((enum MemoryTypeEnum)-1, ebp, savedEbp))
+        return E_FAIL;
+    frame->put_registerValue(EAX, eax);
+    frame->put_registerValue(ECX, ecx);
+    frame->put_registerValue(EDX, edx);
+    frame->put_registerValue(ESP, ebp + 8);
+    frame->put_registerValue(EBP, savedEbp);
+    frame->put_registerValue(ESI, esi);
+    frame->put_registerValue(EDI, edi);
+    frame->put_registerValue(EIP, ret);
+    frame->put_registerValue(VFRAME, ebp);
+    return S_OK;
+}
+
 IUnknown *newFrameData(DiaSession *s, size_t i) { return static_cast<IDiaFrameData *>(new DiaFrameData(s, i)); }
 
 DiaEnumTables::DiaEnumTables(DiaSession *s) : s(s) { s->AddRef(); }
