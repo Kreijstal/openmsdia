@@ -488,7 +488,11 @@ public:
         case P_length: v = Val::u_(len); return true;
         case P_locationType: v = Val::u_((uint32_t)LocType::Static); return true;
         case P_lexicalParent: case P_lexicalParentId: v = Val::sym(lexParent); return true;
-        case P_code: v = Val::b_(code); return true;
+        // A public without the code flag in a code section contribution is
+        // code too (Windows' public PDBs: assembler routines, delay-load
+        // helpers; not string literals merged into .text), but stays a data
+        // export (observed).
+        case P_code: v = Val::b_(code || M->codeContribution(ps.Segment, ps.Offset)); return true;
         case P_function: v = Val::b_(has(ps.Flags, PublicSymFlags::Function)); return true;
         case P_managed: v = Val::b_(has(ps.Flags, PublicSymFlags::Managed)); return true;
         case P_msil: v = Val::b_(has(ps.Flags, PublicSymFlags::MSIL)); return true;
@@ -786,6 +790,83 @@ public:
     }
 };
 
+// S_SEPCODE: code of a function separated from its body (PGO, cold
+// code), an unnamed Block whose lexical parent is that function; listed
+// under its compiland and under the function (as observed). The record
+// has no LLVM class: pParent, pEnd, length, flags, offset, parent offset,
+// section, parent section.
+class OmSepCode : public Sym {
+public:
+    OmSepCode(uint16_t modi, uint32_t off) : Sym(SymTag::Block), modi(modi), off(off) {}
+    uint16_t modi;
+    uint32_t off;
+    uint32_t end = 0, len = 0, flags = 0, codeOff = 0, parentOff = 0;
+    uint16_t sect = 0, parentSect = 0;
+    SymIndexId func = 0;  // the function it was separated from
+    bool prop(Prop p, Val &v) const override
+    {
+        uint32_t rva = M->rva(sect, codeOff);
+        switch (p) {
+        case P_addressSection: v = Val::u_(sect); return true;
+        case P_addressOffset: v = Val::u_(codeOff); return true;
+        case P_relativeVirtualAddress: v = Val::u_(rva); return true;
+        case P_virtualAddress: v = Val::u_(rva + M->loadAddress); return true;
+        case P_length: v = Val::u_(len); return true;
+        case P_locationType: v = Val::u_((uint32_t)LocType::Static); return true;
+        case P_lexicalParent: case P_lexicalParentId:
+            if (!lexParent) return false;
+            v = Val::sym(lexParent);
+            return true;
+        default: return false;
+        }
+    }
+    void children(std::vector<SymIndexId> &out) const override;
+};
+
+// S_ANNOTATION: an address with strings (__annotation), a child of the exe
+// and of its compiland; each string is an unnamed constant Data child.
+class OmAnnotation : public Sym {
+public:
+    OmAnnotation(uint16_t modi, AnnotationSym a) : Sym(SymTag::Annotation), modi(modi), a(std::move(a)) {}
+    uint16_t modi;
+    AnnotationSym a;
+    mutable std::vector<SymIndexId> strings;
+    bool prop(Prop p, Val &v) const override
+    {
+        uint32_t rva = M->rva(a.Segment, a.CodeOffset);
+        switch (p) {
+        case P_addressSection: v = Val::u_(a.Segment); return true;
+        case P_addressOffset: v = Val::u_(a.CodeOffset); return true;
+        case P_relativeVirtualAddress: v = Val::u_(rva); return true;
+        case P_virtualAddress: v = Val::u_(rva + M->loadAddress); return true;
+        case P_locationType: v = Val::u_((uint32_t)LocType::Static); return true;
+        case P_lexicalParent: case P_lexicalParentId: v = Val::sym(lexParent); return true;
+        default: return false;
+        }
+    }
+    void children(std::vector<SymIndexId> &out) const override;
+};
+
+// One string of an annotation: findChildren reports the annotation's
+// compiland's child count and enumerates nothing (as observed).
+class OmAnnotationString : public Sym {
+public:
+    OmAnnotationString(std::string s, SymIndexId compiland)
+        : Sym(SymTag::Data), s(std::move(s)), compiland(compiland) {}
+    std::string s;
+    SymIndexId compiland;
+    bool prop(Prop p, Val &v) const override
+    {
+        switch (p) {
+        case P_dataKind: v = Val::u_((uint32_t)DataKind::Constant); return true;
+        case P_locationType: v = Val::u_((uint32_t)LocType::Constant); return true;
+        case P_lexicalParent: case P_lexicalParentId: v = Val::sym(lexParent); return true;
+        case P_value: v = Val::str(s); v.kind = Val::Var; v.strVar = true; return true;
+        default: return false;
+        }
+    }
+};
+
 // S_HEAPALLOCSITE: a call that allocates memory, with the allocated type.
 // No name and no virtual address (as observed).
 class OmHeapAllocSite : public Sym {
@@ -974,7 +1055,10 @@ bool Model::identity(GUID70 &guid, uint32_t &sig, uint32_t &age)
     auto g = info->getGuid();
     memcpy(guid.b, &g, 16);
     sig = info->getSignature();
-    age = info->getAge();
+    // The age the executable records is the DBI stream's; the info
+    // stream's is bumped on every write of the PDB (Windows' public PDBs:
+    // 1 and 4) and is not the one DIA reports or validates against.
+    age = pdb->dbi() ? pdb->dbi()->getAge() : info->getAge();
     return true;
 }
 
@@ -1426,6 +1510,22 @@ void Model::moduleChildren(uint16_t modi, SymIndexId parent, uint32_t begin, uin
             out.push_back(id);
             continue;
         }
+        if (k == S_SEPCODE && !func) {
+            sepCodes(modi);
+            auto it = recordSyms.find(key);
+            if (it != recordSyms.end()) out.push_back(it->second);
+            uint32_t e = scopeEnd(*I);
+            if (e > off) {
+                I = syms.at(e);
+                if (I == syms.end()) break;
+            }
+            continue;
+        }
+        if (k == S_ANNOTATION) {
+            // Also listed under the function or block holding it.
+            if (SymIndexId a = annotationSym(modi, off)) out.push_back(a);
+            continue;
+        }
         if (opensScope(k)) {
             // Skip other scopes (separated code) for now.
             uint32_t e = scopeEnd(*I);
@@ -1601,6 +1701,97 @@ void OmFunction::children(std::vector<SymIndexId> &out) const
     auto I = syms.at(off);
     uint32_t begin = std::next(I).offset();
     m.moduleChildren(modi, getSymIndexId(), begin, ps.End, out, getSymIndexId());
+    // Its separated code (S_SEPCODE), listed under the compiland too.
+    m.sepCodes(modi);
+    auto sc = m.sepByFunc.find(getSymIndexId());
+    if (sc != m.sepByFunc.end()) out.insert(out.end(), sc->second.begin(), sc->second.end());
+}
+
+void OmSepCode::children(std::vector<SymIndexId> &out) const
+{
+    auto *ms = M->pdb->module(modi);
+    if (!ms) return;
+    CVSymbolArray syms = ms->getSymbolArray();
+    auto I = syms.at(off);
+    if (I == syms.end()) return;
+    M->moduleChildren(modi, getSymIndexId(), std::next(I).offset(), end, out, func ? func : getSymIndexId());
+}
+
+void OmAnnotation::children(std::vector<SymIndexId> &out) const
+{
+    if (strings.empty())
+        for (auto &str : a.Strings) {
+            SymIndexId d = M->make<OmAnnotationString>(str.str(), M->compiland(modi));
+            M->ours(d)->lexParent = getSymIndexId();
+            strings.push_back(d);
+        }
+    out.insert(out.end(), strings.begin(), strings.end());
+}
+
+// The S_SEPCODE records of a module, each bound to the function at its
+// parent address.
+void Model::sepCodes(uint16_t modi)
+{
+    if (!sepScanned.insert(modi).second) return;
+    auto *ms = pdb->module(modi);
+    if (!ms) return;
+    CVSymbolArray syms = ms->getSymbolArray();
+    std::map<std::pair<uint16_t, uint32_t>, uint32_t> procAt;
+    std::vector<std::pair<uint32_t, CVSymbol>> seps;
+    for (auto I = syms.begin(); I != syms.end(); ++I) {
+        if (isProc(I->kind())) {
+            ProcSym ps(SymbolRecordKind::ProcSym);
+            if (deser(*I, ps)) procAt.emplace(std::make_pair(ps.Segment, ps.CodeOffset), I.offset());
+        } else if (I->kind() == S_SEPCODE) {
+            seps.push_back({I.offset(), *I});
+        }
+    }
+    for (auto &[off, rec] : seps) {
+        auto c = rec.content();
+        if (c.size() < 28) continue;
+        auto u32 = [&](size_t o) { return llvm::support::endian::read32le(c.data() + o); };
+        auto u16 = [&](size_t o) { return llvm::support::endian::read16le(c.data() + o); };
+        SymIndexId id = make<OmSepCode>(modi, off);
+        auto *sc = static_cast<OmSepCode *>(ours(id));
+        sc->end = u32(4);
+        sc->len = u32(8);
+        sc->flags = u32(12);
+        sc->codeOff = u32(16);
+        sc->parentOff = u32(20);
+        sc->sect = u16(24);
+        sc->parentSect = u16(26);
+        auto p = procAt.find({sc->parentSect, sc->parentOff});
+        if (p != procAt.end()) sc->func = procSym(modi, p->second);
+        sc->lexParent = sc->func;
+        if (sc->func) sepByFunc[sc->func].push_back(id);
+        recordSyms[{modi, off}] = id;
+    }
+}
+
+SymIndexId Model::annotationSym(uint16_t modi, uint32_t off)
+{
+    auto key = std::make_pair(modi, off);
+    auto it = recordSyms.find(key);
+    if (it != recordSyms.end()) return it->second;
+    CVSymbol rec = moduleRecord(modi, off);
+    if (rec.kind() != S_ANNOTATION) return 0;
+    AnnotationSym a(SymbolRecordKind::AnnotationSym);
+    if (!deser(rec, a)) return 0;
+    SymIndexId id = make<OmAnnotation>(modi, std::move(a));
+    ours(id)->lexParent = exe;
+    recordSyms[key] = id;
+    return id;
+}
+
+SymIndexId Model::annotationCompiland(SymIndexId id)
+{
+    auto *s = dynamic_cast<OmAnnotationString *>(ours(id));
+    return s ? s->compiland : 0;
+}
+
+bool Model::isSepCode(SymIndexId id)
+{
+    return dynamic_cast<OmSepCode *>(ours(id)) != nullptr;
 }
 
 void OmInlineSite::children(std::vector<SymIndexId> &out) const
@@ -2102,6 +2293,16 @@ void Model::buildGlobalChildren(std::vector<SymIndexId> &out)
                 if (deser(s, ds)) out.push_back(globalData(ds, s.kind()));
                 break;
             }
+            case S_ANNOTATIONREF: {
+                // Laid out like S_PROCREF: sum name, symbol offset, module.
+                auto c = s.content();
+                if (c.size() < 10) break;
+                uint32_t symOff = llvm::support::endian::read32le(c.data() + 4);
+                uint16_t mod = llvm::support::endian::read16le(c.data() + 8);
+                if (mod)
+                    if (SymIndexId a = annotationSym(mod - 1, symOff)) out.push_back(a);
+                break;
+            }
             case S_CONSTANT: {
                 ConstantSym cs(SymbolRecordKind::ConstantSym);
                 if (!deser(s, cs)) break;
@@ -2502,6 +2703,23 @@ const std::vector<SectionContrib> &Model::sectionContribs()
     return contribs;
 }
 
+bool Model::codeContribution(uint32_t sect, uint32_t off)
+{
+    if (sortedContribs.empty()) {
+        for (auto &c : sectionContribs()) sortedContribs.push_back(&c);
+        std::sort(sortedContribs.begin(), sortedContribs.end(), [](const SectionContrib *a, const SectionContrib *b) {
+            return a->sect != b->sect ? a->sect < b->sect : a->off < b->off;
+        });
+    }
+    auto it = std::upper_bound(sortedContribs.begin(), sortedContribs.end(), std::make_pair(sect, off),
+                               [](const std::pair<uint32_t, uint32_t> &k, const SectionContrib *c) {
+                                   return k.first != c->sect ? k.first < c->sect : k.second < c->off;
+                               });
+    if (it == sortedContribs.begin()) return false;
+    const SectionContrib *c = *--it;
+    return c->sect == sect && off < c->off + c->size && (c->characteristics & 0x20);  // IMAGE_SCN_CNT_CODE
+}
+
 uint32_t Model::segmentCount()
 {
     DbiStream *dbi = pdb->dbi();
@@ -2619,6 +2837,18 @@ std::vector<DebugStream> Model::debugStreams()
             continue;
         }
         memcpy(d.data.data(), bytes.data(), size);
+        // XDATA and PDATA written by newer linkers start with a 32-byte
+        // header (version 1, header size 32, data size, ...): the real DLL
+        // serves the bytes after it, one byte per element (observed).
+        if ((k.t == DbgHeaderType::Xdata || k.t == DbgHeaderType::Pdata) && size >= 32) {
+            uint32_t h[3];
+            memcpy(h, d.data.data(), sizeof h);
+            if (h[0] == 1 && h[1] == 32 && h[2] <= size - 32) {
+                d.data.erase(d.data.begin(), d.data.begin() + 32);
+                d.data.resize(h[2]);
+                d.recordSize = 1;
+            }
+        }
         out.push_back(std::move(d));
     }
     return out;
@@ -2675,6 +2905,12 @@ void Model::buildAddressMap()
                 if (!entry(k, e)) continue;
                 funcMap.push_back(e);
                 scope(k, k);
+            } else if (kt == SymTag::Block && isSepCode(k)) {
+                // Separated code: found by address through its compiland
+                // only, with the blocks inside it.
+                if (func || !entry(k, e)) continue;
+                sepMap.push_back(e);
+                scope(k, k);
             } else if (kt == SymTag::Block) {
                 if (!entry(k, e)) continue;
                 e.parent = func;
@@ -2707,8 +2943,9 @@ void Model::buildAddressMap()
         if (a.rva != b.rva) return a.rva < b.rva;
         return a.name < b.name;
     };
-    for (auto *m : {&funcMap, &blockMap, &dataMap, &publicMap, &thunkMap})
+    for (auto *m : {&funcMap, &blockMap, &dataMap, &publicMap, &thunkMap, &sepMap})
         std::stable_sort(m->begin(), m->end(), byAddr);
+    for (auto &e : blockMap) blocksOf[e.parent].push_back(&e);
     // Symbols by address: one per address, data before functions before
     // thunks, publics where none of them is (as observed).
     std::set<uint32_t> covered;
@@ -2749,35 +2986,61 @@ void Model::buildAddressMap()
         if (absCovered.insert(a.first.first).second) addrMap.push_back(a.second);
 }
 
+uint32_t Model::maxLenOf(const std::vector<AddrEntry> &m)
+{
+    auto it = maxLens.find(&m);
+    if (it != maxLens.end()) return it->second;
+    uint32_t n = 0;
+    for (auto &e : m) n = std::max(n, e.len);
+    return maxLens[&m] = n;
+}
+
 SymIndexId Model::findByRVA(uint32_t r, SymTag want, int32_t *disp)
 {
     buildAddressMap();
     uint32_t sect = 0, off = 0;
     if (!sectOff(r, sect, off)) return 0;
+    // The maps are sorted by start address. Of the entries holding the
+    // address, the one starting last (the last of equal starts).
     auto containing = [&](const std::vector<AddrEntry> &m) -> const AddrEntry * {
-        const AddrEntry *best = nullptr;
-        for (auto &e : m)
-            if (r >= e.rva && r < e.rva + e.len && (!best || e.rva >= best->rva)) best = &e;
-        return best;
+        auto it = std::upper_bound(m.begin(), m.end(), r, [](uint32_t a, const AddrEntry &e) { return a < e.rva; });
+        uint32_t maxLen = maxLenOf(m);
+        while (it != m.begin()) {
+            --it;
+            if (r < it->rva + it->len) return &*it;
+            if ((uint64_t)it->rva + maxLen <= r) break;
+        }
+        return nullptr;
     };
-    // Nearest symbol at or before the address, in any section (as observed).
+    // Nearest symbol at or before the address, in any section (as observed):
+    // the first of equal starts.
     auto preceding = [&](const std::vector<AddrEntry> &m) -> const AddrEntry * {
-        const AddrEntry *best = nullptr;
-        for (auto &e : m)
-            if (e.rva <= r && (!best || e.rva > best->rva)) best = &e;
-        return best;
+        auto it = std::upper_bound(m.begin(), m.end(), r, [](uint32_t a, const AddrEntry &e) { return a < e.rva; });
+        if (it == m.begin()) return nullptr;
+        uint32_t start = std::prev(it)->rva;
+        return &*std::lower_bound(m.begin(), it, start, [](const AddrEntry &e, uint32_t a) { return e.rva < a; });
     };
+    // The smallest block of the function holding the address (the last of
+    // equal lengths).
     auto innermostBlock = [&](SymIndexId func) -> const AddrEntry * {
         const AddrEntry *best = nullptr;
-        for (auto &e : blockMap)
-            if (e.parent == func && r >= e.rva && r < e.rva + e.len && (!best || e.len <= best->len)) best = &e;
+        auto bp = blocksOf.find(func);
+        if (bp == blocksOf.end()) return nullptr;
+        for (const AddrEntry *e : bp->second)
+            if (r >= e->rva && r < e->rva + e->len && (!best || e->len <= best->len)) best = e;
         return best;
     };
     const AddrEntry *hit = nullptr;
     switch (want) {
     case SymTag::Function: hit = containing(funcMap); break;
     case SymTag::Block:
-        if (auto *f = containing(funcMap)) hit = innermostBlock(f->id);
+        if (auto *f = containing(funcMap)) {
+            hit = innermostBlock(f->id);
+        } else if (auto *sc = containing(sepMap)) {
+            // In separated code: its innermost block, else itself.
+            hit = innermostBlock(sc->id);
+            if (!hit) hit = sc;
+        }
         break;
     case SymTag::Data: hit = preceding(dataMap); break;
     case SymTag::PublicSymbol: hit = preceding(publicMap); break;
@@ -2791,19 +3054,19 @@ SymIndexId Model::findByRVA(uint32_t r, SymTag want, int32_t *disp)
         const AddrEntry *pub = containing(publicMap);
         // A data symbol starting at the function's address counts whatever
         // its length.
-        if (f && (!d || d->rva < f->rva))
-            for (auto &e : dataMap)
-                if (e.rva == f->rva) {
-                    d = &e;
-                    break;
-                }
+        if (f && (!d || d->rva < f->rva)) {
+            auto it = std::lower_bound(dataMap.begin(), dataMap.end(), f->rva,
+                                       [](const AddrEntry &e, uint32_t a) { return e.rva < a; });
+            if (it != dataMap.end() && it->rva == f->rva) d = &*it;
+        }
+        const AddrEntry *sc = containing(sepMap);
         const AddrEntry *best = nullptr;
-        for (const AddrEntry *e : {d, f, t, pub})
+        for (const AddrEntry *e : {d, f, sc, t, pub})
             if (e && (!best || e->rva > best->rva)) best = e;
-        if (best && best == f) {
-            hit = innermostBlock(f->id);
-            if (!hit) hit = f;
-        } else if (best && (best != pub || f || t || d)) {
+        if (best && (best == f || best == sc)) {
+            hit = innermostBlock(best->id);
+            if (!hit) hit = best;
+        } else if (best && (best != pub || f || t || d || sc)) {
             hit = best;
         } else {
             // The nearest preceding data, function, thunk or public symbol,

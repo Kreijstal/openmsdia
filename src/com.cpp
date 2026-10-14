@@ -1018,6 +1018,8 @@ public:
                 reported = (t == SymTag::CompilandEnv && (n == "cwd" || n == "obj"))
                                ? 0 : (LONG)s->m->children(c).size();
         }
+        if (!name && tag == 0 && t == SymTag::Data)
+            if (SymIndexId c = s->m->annotationCompiland(id)) reported = (LONG)s->m->children(c).size();
         auto *e = new DiaEnumSymbols(s, pick, reported);
         e->memberFlags = pickFlags;
         e->views = pickViews;

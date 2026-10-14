@@ -15,6 +15,7 @@
 #include <cstdint>
 #include <functional>
 #include <map>
+#include <set>
 #include <memory>
 #include <string>
 #include <tuple>
@@ -194,6 +195,9 @@ public:
     SymIndexId compiland(uint16_t modi);
     int moduleOf(SymIndexId compilandId) const;
     const std::vector<SectionContrib> &sectionContribs();
+    // The section contribution holding sect:off has IMAGE_SCN_CNT_CODE.
+    bool codeContribution(uint32_t sect, uint32_t off);
+    std::vector<const SectionContrib *> sortedContribs;
     std::vector<DebugStream> debugStreams();
     uint32_t frameDataCount();
     const std::vector<FrameRow> &frameRows();
@@ -266,6 +270,15 @@ public:
 
     void moduleChildren(uint16_t modi, SymIndexId parent, uint32_t begin, uint32_t end,
                         std::vector<SymIndexId> &out, SymIndexId func);
+    // S_SEPCODE blocks of a module, per function they were separated from.
+    void sepCodes(uint16_t modi);
+    std::set<uint16_t> sepScanned;
+    std::unordered_map<SymIndexId, std::vector<SymIndexId>> sepByFunc;
+    bool isSepCode(SymIndexId id);
+    // S_ANNOTATION (module, record offset); the compiland of an annotation
+    // string (0 for other symbols).
+    SymIndexId annotationSym(uint16_t modi, uint32_t off);
+    SymIndexId annotationCompiland(SymIndexId id);
 
     template <class T, class... A> SymIndexId make(A &&...args)
     {
@@ -315,8 +328,11 @@ private:
         SymTag tag = SymTag::None;
         std::string name;
     };
-    std::vector<AddrEntry> addrMap, funcMap, blockMap, dataMap, publicMap, thunkMap;
+    std::vector<AddrEntry> addrMap, funcMap, blockMap, dataMap, publicMap, thunkMap, sepMap;
     bool addrBuilt = false;
+    std::unordered_map<SymIndexId, std::vector<const AddrEntry *>> blocksOf;
+    std::map<const std::vector<AddrEntry> *, uint32_t> maxLens;
+    uint32_t maxLenOf(const std::vector<AddrEntry> &m);
     SymIndexId noTypeId = 0;
 };
 

@@ -57,7 +57,12 @@ public:
             v = Val::str(n);
             return true;
         }
-        case P_age: v = Val::u_(f.info() ? f.info()->getAge() : 0); return true;
+        case P_age: {
+            Model::GUID70 g;
+            uint32_t sig = 0, age = 0;
+            v = Val::u_(M->identity(g, sig, age) ? age : 0);
+            return true;
+        }
         case P_signature: v = Val::u_(f.info() ? f.info()->getSignature() : 0); return true;
         case P_guid: {
             codeview::GUID g{};
