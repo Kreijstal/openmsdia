@@ -22,6 +22,8 @@
 //                             order): every slot of each IDiaSegment
 //   framedata                 the FrameData table as IDiaEnumFrameData
 //                             (9FC77A4B-...): count and rows' RVAs
+//   symtable                  the Symbols table's rows in enumeration
+//                             order ("tag:name", at most 5000)
 //   qi|<iid>                  a symbol queried for an interface Dia2Dump
 //                             asks for
 //   namesq|<class>|<getter>   get_name, <getter>, get_name on methods
@@ -184,6 +186,32 @@ static const struct { const char *name; IID iid; } kEnums[] = {
     {"IDiaEnumInputAssemblyFiles", IID_IDiaEnumInputAssemblyFiles},
     {"IEnumUnknown", IID_IEnumUnknown},
 };
+
+static void symbolTable(IDiaSession *session)
+{
+    IDiaEnumTables *et = nullptr;
+    if (session->getEnumTables(&et) != S_OK || !et) return;
+    for (;;) {
+        IDiaTable *t = nullptr;
+        ULONG got = 0;
+        if (et->Next(1, &t, &got) != S_OK || got != 1 || !t) break;
+        IDiaEnumSymbols *es = nullptr;
+        if (t->QueryInterface(IID_IDiaEnumSymbols, (void **)&es) == S_OK && es) {
+            std::vector<std::string> v;
+            for (;;) {
+                IDiaSymbol *x = nullptr;
+                ULONG g = 0;
+                if (v.size() >= 5000 || es->Next(1, &x, &g) != S_OK || g != 1 || !x) break;
+                v.push_back(std::to_string(tag(x)) + ":" + name(x));
+                x->Release();
+            }
+            out["symtable"] = list(v);
+            es->Release();
+        }
+        t->Release();
+    }
+    et->Release();
+}
 
 static void tables(IDiaSession *session)
 {
@@ -471,6 +499,7 @@ int wmain(int argc, wchar_t **argv)
     }
     release(comps);
     tables(session);
+    symbolTable(session);
     checksums(session);
     moduleChecksums(session, global);
     probeEnum(session, "SegmentMap", kIID_EnumSegments, "segments", 9);

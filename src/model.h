@@ -187,6 +187,7 @@ public:
     std::vector<FrameRow> frameRowCache;
     bool frameRowsRead = false;
     uint32_t hiddenLocalCount();
+    bool tableLocals = false;  // moduleChildren also lists S_LOCAL/S_FILESTATIC (Symbols table)
 
     // Lines and files.
     const std::vector<LineEntry> &lines(uint16_t modi);

@@ -400,7 +400,7 @@ public:
 // Data: globals, statics, members, static members, constants, enumerators.
 class OmData : public Sym {
 public:
-    enum Kind { Global, Member, StaticMember, Constant, Enumerator, RegRel, Register };
+    enum Kind { Global, Member, StaticMember, Constant, Enumerator, RegRel, Register, Local };
     OmData(Kind k) : Sym(SymTag::Data), k(k) {}
     Kind k;
     DataKind dataKind = DataKind::Unknown;
@@ -449,6 +449,7 @@ public:
             else if (k == Member) v = Val::u_((uint32_t)(bitfield ? LocType::BitField : LocType::ThisRel));
             else if (k == RegRel) v = Val::u_((uint32_t)LocType::RegRel);
             else if (k == Register) v = Val::u_((uint32_t)LocType::Enregistered);
+            else if (k == Local) return false;  // S_LOCAL: location in its def-ranges
             else v = Val::u_((uint32_t)(tls ? LocType::TLS : LocType::Static));
             return true;
         case P_offset:
@@ -1611,6 +1612,34 @@ void Model::moduleChildren(uint16_t modi, SymIndexId parent, uint32_t begin, uin
             SymIndexId id = it != recordSyms.end() ? it->second : make<OmLocalTypedef>(u);
             ours(id)->lexParent = parent;
             recordSyms[key] = id;
+            out.push_back(id);
+            continue;
+        }
+        if (tableLocals && (k == S_LOCAL || k == S_FILESTATIC)) {
+            // Only the Symbols table lists these (no findChildren does).
+            auto it = recordSyms.find(key);
+            SymIndexId id;
+            if (it != recordSyms.end()) {
+                id = it->second;
+            } else {
+                id = make<OmData>(OmData::Local);
+                auto *d = static_cast<OmData *>(ours(id));
+                if (k == S_LOCAL) {
+                    LocalSym ls(SymbolRecordKind::LocalSym);
+                    if (!deser(*I, ls)) continue;
+                    d->nm = ls.Name.str();
+                    d->type = ls.Type;
+                    d->dataKind = has(ls.Flags, LocalSymFlags::IsParameter) ? DataKind::Param : DataKind::Local;
+                } else {
+                    FileStaticSym fs(SymbolRecordKind::FileStaticSym);
+                    if (!deser(*I, fs)) continue;
+                    d->nm = fs.Name.str();
+                    d->type = fs.Index;
+                    d->dataKind = DataKind::FileStatic;
+                }
+                d->lexParent = parent;
+                recordSyms[key] = id;
+            }
             out.push_back(id);
             continue;
         }
@@ -3468,22 +3497,48 @@ std::string Model::typeName(SymIndexId id)
 
 std::vector<SymIndexId> Model::allSymbols()
 {
-    // As the real DLL lists them: the exe, the compilands, each compiland's
-    // symbols (depth first), then the exe's other children (globals,
-    // publics, types in TPI order), each followed by its own children. A
-    // type's children are listed again for every type that has them (a
-    // modified class repeats its class's members, function types sharing
-    // an argument list repeat its arguments).
+    // As the real DLL lists them (14.51, through Ghidra's exporter): the
+    // exe, the compilands, the exe's global data, typedefs and constants
+    // and its publics, then each compiland's symbols depth first, with the
+    // S_LOCAL and S_FILESTATIC variables no findChildren lists, then the
+    // types in TPI order, each followed by its children. A type's children
+    // are listed again for every type that has them (a modified class
+    // repeats its class's members, function types sharing an argument
+    // list repeat its arguments).
     std::vector<SymIndexId> out{exe};
     std::set<SymIndexId> seen{exe};
     std::vector<SymIndexId> top = children(exe);
     auto add = [&](SymIndexId id) { return seen.insert(id).second ? (out.push_back(id), true) : false; };
     std::function<void(SymIndexId)> below = [&](SymIndexId id) {
-        for (SymIndexId c : std::vector<SymIndexId>(children(id)))
+        std::vector<SymIndexId> kids;
+        SymTag t = tag(id);
+        if (t == SymTag::Compiland || t == SymTag::Function || t == SymTag::Block || t == SymTag::InlineSite) {
+            tableLocals = true;
+            if (t == SymTag::Compiland) {
+                int modi = moduleOf(id);
+                if (modi >= 0) compilandChildren((uint16_t)modi, id, kids);
+            } else {
+                ours(id)->children(kids);
+            }
+            tableLocals = false;
+        } else {
+            kids = children(id);
+        }
+        for (SymIndexId c : kids)
             if (add(c)) below(c);
     };
+    auto isType = [&](SymTag t) {
+        return t == SymTag::UDT || t == SymTag::Enum || t == SymTag::FunctionSig || t == SymTag::PointerType ||
+               t == SymTag::ArrayType || t == SymTag::BuiltinType;
+    };
+    std::vector<uint8_t> fl = flagsOf(exe);
     for (SymIndexId c : top)
         if (tag(c) == SymTag::Compiland) add(c);
+    for (size_t i = 0; i < top.size(); i++) {
+        SymTag t = tag(top[i]);
+        if (t == SymTag::Compiland || t == SymTag::Function || isType(t) || (i < fl.size() && fl[i])) continue;
+        if (add(top[i])) below(top[i]);
+    }
     for (SymIndexId c : top)
         if (tag(c) == SymTag::Compiland) below(c);
     for (SymIndexId c : top) {

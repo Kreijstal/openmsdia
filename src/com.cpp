@@ -1622,8 +1622,7 @@ HRESULT DiaEnumTables::make(size_t i, IDiaTable **out)
     case 0: {
         std::vector<SymIndexId> all = m.allSymbols();
         auto *e = new DiaEnumSymbols(s, all);
-        // The count includes the S_LOCAL symbols, which are not enumerated.
-        *out = new DiaTable(s, "Symbols", (LONG)(all.size() + m.hiddenLocalCount()), e, IID_IDiaEnumSymbols);
+        *out = new DiaTable(s, "Symbols", (LONG)all.size(), e, IID_IDiaEnumSymbols);
         return S_OK;
     }
     case 1: {
