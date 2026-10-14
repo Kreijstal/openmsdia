@@ -373,6 +373,35 @@ static void collect_props(IUnknown *obj, const char *iface, JObj &out)
 }
 
 // ---------------------------------------------------------------- frames
+// The executable next to the PDB, mapped by RVA (for code reads).
+static std::vector<uint8_t> g_image;
+static void load_image(const wchar_t *pdb)
+{
+    std::wstring p = pdb;
+    size_t dot = p.find_last_of(L'.');
+    if (dot == std::wstring::npos) return;
+    p = p.substr(0, dot) + L".exe";
+    FILE *f = _wfopen(p.c_str(), L"rb");
+    if (!f) return;
+    std::vector<uint8_t> d;
+    uint8_t buf[65536];
+    size_t n;
+    while ((n = fread(buf, 1, sizeof buf, f)) > 0) d.insert(d.end(), buf, buf + n);
+    fclose(f);
+    if (d.size() < 0x40 || d[0] != 'M' || d[1] != 'Z') return;
+    uint32_t pe = *(uint32_t *)&d[0x3c];
+    uint16_t nsec = *(uint16_t *)&d[pe + 6], opt = *(uint16_t *)&d[pe + 20];
+    uint32_t sizeImage = *(uint32_t *)&d[pe + 24 + 56], sizeHdr = *(uint32_t *)&d[pe + 24 + 60];
+    if (sizeImage > (64u << 20)) return;
+    g_image.assign(sizeImage, 0);
+    memcpy(g_image.data(), d.data(), std::min<size_t>(sizeHdr, d.size()));
+    for (int i = 0; i < nsec; i++) {
+        const uint8_t *sh = &d[pe + 24 + opt + i * 40];
+        uint32_t va = *(uint32_t *)(sh + 12), rs = *(uint32_t *)(sh + 16), raw = *(uint32_t *)(sh + 20);
+        if (raw + rs <= d.size() && va + rs <= sizeImage) memcpy(&g_image[va], &d[raw], rs);
+    }
+}
+
 // IDiaFrameData::execute against a fake x86 frame: registers start at fixed
 // values, memory reads return a value derived from the address, return
 // address searches answer fixed values. Every call is logged.
@@ -405,7 +434,10 @@ struct FakeFrame : IDiaStackWalkFrame {
     }
     HRESULT STDMETHODCALLTYPE readMemory(enum MemoryTypeEnum type, ULONGLONG va, ULONG cb, ULONG *got, BYTE *data) override
     {
-        for (ULONG i = 0; i < cb; i++) data[i] = (BYTE)((va + i) * 7 + 3);
+        // Code from the executable (load address 0), anything else derived
+        // from the address.
+        bool code = (type == 0 || type == 3) && va + cb <= g_image.size();
+        for (ULONG i = 0; i < cb; i++) data[i] = code ? g_image[va + i] : (BYTE)((va + i) * 7 + 3);
         if (got) *got = cb;
         log.push_back("read " + num((ULONG)type) + " " + num(va) + " " + num(cb));
         return S_OK;
@@ -607,6 +639,7 @@ int wmain(int argc, wchar_t **argv)
     std::sort(g_maps.begin(), g_maps.end(), [](auto &a, auto &b) { return a.first.size() > b.first.size(); });
 
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
+    load_image(argv[2]);
     HMODULE dll = LoadLibraryW(argv[1]);
     if (!dll) { fprintf(stderr, "LoadLibrary failed: %lu\n", GetLastError()); return 1; }
     auto gco = (PFN_DllGetClassObject)(void *)GetProcAddress(dll, "DllGetClassObject");
