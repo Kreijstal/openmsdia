@@ -2364,7 +2364,8 @@ std::vector<LineEntry> Model::linesByRVA(uint32_t r, uint32_t len)
             uint32_t a = rva(e.sect, e.off);
             if ((a + e.len > r && a < r + len) || (e.len == 0 && a == r)) out.push_back(e);
         }
-    std::sort(out.begin(), out.end(), [&](const LineEntry &a, const LineEntry &b) {
+    // Lines at one address stay in line-table order.
+    std::stable_sort(out.begin(), out.end(), [&](const LineEntry &a, const LineEntry &b) {
         return rva(a.sect, a.off) < rva(b.sect, b.off);
     });
     return out;
