@@ -1162,11 +1162,12 @@ SymIndexId Model::procSym(uint16_t modi, uint32_t off)
         if (!qual.empty() && nm.size() > qual.size() + 2 && nm.compare(0, qual.size(), qual) == 0 &&
             nm.compare(qual.size(), 2, "::") == 0) {
             shortName = nm.substr(qual.size() + 2);
-        } else {
+        } else if (qual.find("<lambda_") != std::string::npos) {
             // The function may be named after a different spelling of the
             // class (MSVC lambdas: `<lambda_...>::operator()` of the class
             // `start::__l2::<lambda_...>`): the last component, outside
-            // template arguments.
+            // template arguments. Other classes spelled differently (local
+            // classes, `anonymous-namespace') stay unbound (as observed).
             int depth = 0;
             for (size_t i = nm.size(); i-- > 1;) {
                 if (nm[i] == '>') depth++;
