@@ -349,6 +349,7 @@ public:
     HRESULT STDMETHODCALLTYPE get_cplusplusExceptionHandling(LONG *p) override { return putB(p, r().flags & 2); }
     HRESULT STDMETHODCALLTYPE get_functionStart(LONG *p) override { return putB(p, r().flags & 4); }
     HRESULT STDMETHODCALLTYPE get_type(ULONG *p) override { return put(p, 4); }  // FrameTypeFrameData
+    HRESULT STDMETHODCALLTYPE get_allocatesBasePointer(LONG *) override { return S_FALSE; }
     HRESULT STDMETHODCALLTYPE get_functionParent(IDiaFrameData **p) override;
 };
 
@@ -1297,23 +1298,12 @@ HRESULT DiaFrameData::get_program(BSTR *p)
     *p = toBSTR(s->m->frameProgram(r().frameFunc));
     return S_OK;
 }
-// The frame data of the function this block belongs to: the function-start
-// row whose range holds it.
+// As observed: E_UNEXPECTED for every row.
 HRESULT DiaFrameData::get_functionParent(IDiaFrameData **p)
 {
     if (!p) return E_POINTER;
     *p = nullptr;
-    const auto &rows = s->m->frameRows();
-    const FrameRow &me = r();
-    if (me.flags & 4) return S_FALSE;
-    for (size_t k = 0; k < rows.size(); k++) {
-        const FrameRow &f = rows[k];
-        if ((f.flags & 4) && me.rva >= f.rva && me.rva < f.rva + f.codeSize) {
-            *p = new DiaFrameData(s, k);
-            return S_OK;
-        }
-    }
-    return S_FALSE;
+    return E_UNEXPECTED;
 }
 IUnknown *newFrameData(DiaSession *s, size_t i) { return static_cast<IDiaFrameData *>(new DiaFrameData(s, i)); }
 

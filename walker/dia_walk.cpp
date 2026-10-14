@@ -372,6 +372,72 @@ static void collect_props(IUnknown *obj, const char *iface, JObj &out)
     }
 }
 
+// ---------------------------------------------------------------- frames
+// IDiaFrameData::execute against a fake x86 frame: registers start at fixed
+// values, memory reads return a value derived from the address, return
+// address searches answer fixed values. Every call is logged.
+struct FakeFrame : IDiaStackWalkFrame {
+    std::vector<std::string> log;
+    std::map<ULONG, ULONGLONG> regs;
+    HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void **ppv) override
+    {
+        if (IsEqualIID(riid, IID_IUnknown) || IsEqualIID(riid, IID_IDiaStackWalkFrame)) {
+            *ppv = this;
+            return S_OK;
+        }
+        *ppv = nullptr;
+        return E_NOINTERFACE;
+    }
+    ULONG STDMETHODCALLTYPE AddRef() override { return 2; }
+    ULONG STDMETHODCALLTYPE Release() override { return 1; }
+    HRESULT STDMETHODCALLTYPE get_registerValue(ULONG index, ULONGLONG *v) override
+    {
+        auto it = regs.find(index);
+        *v = it == regs.end() ? 0 : it->second;
+        log.push_back("get " + num(index) + " = " + num(*v));
+        return it == regs.end() ? E_FAIL : S_OK;
+    }
+    HRESULT STDMETHODCALLTYPE put_registerValue(ULONG index, ULONGLONG v) override
+    {
+        regs[index] = v;
+        log.push_back("put " + num(index) + " = " + num(v));
+        return S_OK;
+    }
+    HRESULT STDMETHODCALLTYPE readMemory(enum MemoryTypeEnum type, ULONGLONG va, ULONG cb, ULONG *got, BYTE *data) override
+    {
+        for (ULONG i = 0; i < cb; i++) data[i] = (BYTE)((va + i) * 7 + 3);
+        if (got) *got = cb;
+        log.push_back("read " + num((ULONG)type) + " " + num(va) + " " + num(cb));
+        return S_OK;
+    }
+    HRESULT STDMETHODCALLTYPE searchForReturnAddress(IDiaFrameData *, ULONGLONG *ret) override
+    {
+        *ret = 0x200000;
+        log.push_back("search");
+        return S_OK;
+    }
+    HRESULT STDMETHODCALLTYPE searchForReturnAddressStart(IDiaFrameData *, ULONGLONG start, ULONGLONG *ret) override
+    {
+        *ret = start + 0x40;
+        log.push_back("searchStart " + num(start));
+        return S_OK;
+    }
+};
+
+static std::string execute_log(IDiaFrameData *fd)
+{
+    FakeFrame f;
+    ULONGLONG va = 0;
+    fd->get_virtualAddress(&va);
+    // CV_REG_EAX.. EDI (17-24), EIP (33).
+    f.regs = {{17, 0x11}, {18, 0x12}, {19, 0x13}, {20, 0x14}, {21, 0x100000}, {22, 0x100100}, {23, 0x15}, {24, 0x16}, {33, va}};
+    HRESULT hr = fd->execute(&f);
+    std::vector<std::string> v;
+    for (auto &l : f.log) v.push_back(jstr(l));
+    v.push_back(jstr("-> " + hrstr(hr)));
+    return jarr_inline(v);
+}
+
 // ---------------------------------------------------------------- walk
 struct Walker {
     IDiaSession *session = nullptr;
@@ -799,6 +865,7 @@ int wmain(int argc, wchar_t **argv)
                         if (u->QueryInterface(IID_IDiaFrameData, (void **)&fd) == S_OK && fd) {
                             JObj o;
                             collect_props(fd, "IDiaFrameData", o);
+                            o["execute"] = execute_log(fd);
                             items.push_back(jobj_inline(o));
                             fd->Release();
                         }
