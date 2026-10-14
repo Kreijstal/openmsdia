@@ -518,6 +518,15 @@ std::string Undecorator::scopePiece()
                 if (err) return "";
                 return "`" + inner + "'";
     }
+    if (c == 'Q') {
+        // An interface qualifier (a method implementing an interface of a
+        // class, MSVC COM classes): `?QIClosable@Foundation@Windows@@`
+        // prints as `[Windows::Foundation::IClosable]`.
+        i++;
+        Name q = qualifiedName(false);
+        if (err) return "";
+        return "[" + q.str() + "]";
+    }
     if (c == 'A') {
         identifier();
         std::string n = "`anonymous namespace'";
