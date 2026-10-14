@@ -151,9 +151,11 @@ static HRESULT STDMETHODCALLTYPE cbSlot(Callback *self, uintptr_t a, uintptr_t b
     }
     if (g_log) {
         // NotifyOpenDBG/NotifyOpenPDB (slots 4, 5) pass an HRESULT second.
-        std::string bt = (N == 4 || N == 5) ? hrstr((HRESULT)b) : argText(b);
-        std::string s = "slot " + std::to_string(N) + "(" + argText(a) + "," + bt;
-        if (N == 3) s += "," + argText(c);  // NotifyDebugDir(fExecutable, cbData, pbData)
+        // NotifyDebugDir(fExecutable, cbData, pbData), NotifyOpenDBG/PDB(path,
+        // HRESULT); the other slots (Restrict*) take no arguments.
+        std::string s = "slot " + std::to_string(N) + "(";
+        if (N == 3) s += argText(a) + "," + argText(b) + "," + argText(c);
+        else if (N == 4 || N == 5) s += argText(a) + "," + hrstr((HRESULT)b);
         g_log->push_back(jstr(s + ")"));
     }
     return self->ret;
@@ -387,8 +389,9 @@ int wmain(int argc, wchar_t **argv)
         out["read at offset callback, no file"] = run(d, L"nofile.exe", nullptr, 3, S_OK, "exe", kReadOff, 1, &exeMissing);
     }
     // The callback interfaces one at a time (IIDs as queried by the real DLL).
-    for (const char *iid : {"C32ADB82-73F4-421B-95D5-A4706EDF5DBE", "4688A074-5A4D-4486-AEA8-7B90711D9F7C",
-                            "587A461C-B80B-4F54-9194-5032589A6319", "8E3F80CA-7517-432A-BA07-285134AAEA8E"}) {
+    // (The read callbacks only with real data, see below: without it the
+    // real DLL parses whatever its buffers held before.)
+    for (const char *iid : {"C32ADB82-73F4-421B-95D5-A4706EDF5DBE", "4688A074-5A4D-4486-AEA8-7B90711D9F7C"}) {
         std::wstring d = g_work + L"\\beside";
         out[std::string("beside, callback ") + iid] = run(d, L"app.exe", nullptr, 3, S_OK, "exe", iid);
         out[std::string("beside, callback ") + iid + " (S_FALSE)"] = run(d, L"app.exe", nullptr, 3, S_FALSE, "exe", iid);

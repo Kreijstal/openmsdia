@@ -32,9 +32,10 @@ struct Reader {
     bool read(uint64_t off, uint32_t rva, void *buf, DWORD n, bool byRva)
     {
         DWORD got = 0;
-        if (atOffset && !byRva) return atOffset->ReadExecutableAt(off, n, &got, (BYTE *)buf) == S_OK && got == n;
-        if (atRva && byRva) return atRva->ReadExecutableAtRVA(rva, n, &got, (BYTE *)buf) == S_OK && got == n;
-        if (atRva) return atRva->ReadExecutableAtRVA((DWORD)off, n, &got, (BYTE *)buf) == S_OK && got == n;
+        if (atOffset) return atOffset->ReadExecutableAt(off, n, &got, (BYTE *)buf) == S_OK && got == n;
+        // Through RVAs, the headers are read at their file offsets (equal
+        // to their RVAs).
+        if (atRva) return atRva->ReadExecutableAtRVA(byRva ? rva : (DWORD)off, n, &got, (BYTE *)buf) == S_OK && got == n;
         if (file == INVALID_HANDLE_VALUE) return false;
         LARGE_INTEGER li;
         li.QuadPart = (LONGLONG)off;
@@ -79,8 +80,10 @@ HRESULT readDebugInfo(Reader &r, std::vector<uint8_t> &dir, std::vector<uint8_t>
         }
         if (!found) return E_PDB_NO_DEBUG_INFO;
     }
+    // The directory, one entry at a time.
     dir.resize(dbgSize - dbgSize % 28);
-    if (!r.read(dbgOff, dbgRva, dir.data(), (DWORD)dir.size(), true)) return E_PDB_INVALID_EXECUTABLE;
+    for (size_t k = 0; k + 28 <= dir.size(); k += 28)
+        if (!r.read(dbgOff + k, dbgRva + (uint32_t)k, &dir[k], 28, true)) return E_PDB_INVALID_EXECUTABLE;
     for (size_t k = 0; k + 28 <= dir.size(); k += 28) {
         const uint8_t *e = &dir[k];
         if (rd<uint32_t>(e + 12) != 2) continue;  // IMAGE_DEBUG_TYPE_CODEVIEW
@@ -110,6 +113,19 @@ bool parseCv(const uint8_t *p, size_t n, CvInfo &out)
         return true;
     }
     return false;
+}
+
+// A symbol store's directory name for a PDB: GUID (or signature) and age.
+std::wstring storeKey(const CvInfo &c)
+{
+    wchar_t b[64];
+    if (c.rsds)
+        swprintf(b, 64, L"%08X%04X%04X%02X%02X%02X%02X%02X%02X%02X%02X%X", (unsigned)c.guid.Data1, c.guid.Data2,
+                 c.guid.Data3, c.guid.Data4[0], c.guid.Data4[1], c.guid.Data4[2], c.guid.Data4[3], c.guid.Data4[4],
+                 c.guid.Data4[5], c.guid.Data4[6], c.guid.Data4[7], (unsigned)c.age);
+    else
+        swprintf(b, 64, L"%08X%X", (unsigned)c.sig, (unsigned)c.age);
+    return b;
 }
 
 std::wstring widen(const std::string &s)
@@ -171,7 +187,8 @@ HRESULT findPdb(const wchar_t *exe, const wchar_t *searchPath, IUnknown *callbac
             lastError = exePath;
             return E_PDB_NO_DEBUG_INFO;
         }
-        if (cb1) cb1->NotifyDebugDir(TRUE, (DWORD)dir.size(), dir.data());
+        if (cb1)
+            for (size_t k = 0; k + 28 <= dir.size(); k += 28) cb1->NotifyDebugDir(TRUE, 28, &dir[k]);
     }
     std::wstring recorded = widen(info.path);
     size_t slash = recorded.find_last_of(L"\\/");
@@ -220,10 +237,27 @@ HRESULT findPdb(const wchar_t *exe, const wchar_t *searchPath, IUnknown *callbac
             at = semi + 1;
             if (e.empty()) continue;
             if (e.find(L'*') != std::wstring::npos) {
-                // srv*... and symsrv*... need a symbol server, which is not
-                // used; cache*... entries are skipped as well.
-                if (!_wcsnicmp(e.c_str(), L"srv*", 4) || !_wcsnicmp(e.c_str(), L"symsrv*", 7))
-                    if (notify) notify->RestrictSymbolServerAccess();
+                // srv*store*... : local symbol stores (<store>\<pdb>\<key>\<pdb>)
+                // are looked into, nothing is downloaded. cache*... entries
+                // are skipped.
+                bool srv = !_wcsnicmp(e.c_str(), L"srv*", 4);
+                bool symsrv = !_wcsnicmp(e.c_str(), L"symsrv*", 7);
+                if (!srv && !symsrv) continue;
+                if (notify && notify->RestrictSymbolServerAccess() != S_OK) continue;
+                std::vector<std::wstring> parts;
+                for (size_t a = 0, star; a <= e.size(); a = star + 1) {
+                    star = e.find(L'*', a);
+                    if (star == std::wstring::npos) star = e.size();
+                    parts.push_back(e.substr(a, star - a));
+                }
+                size_t first = symsrv ? 2 : 1;  // symsrv*<dll>*store*...
+                for (size_t k = first; k < parts.size(); k++) {
+                    std::wstring store = parts[k];
+                    if (store.empty() || store.find(L"://") != std::wstring::npos) continue;
+                    while (!store.empty() && (store.back() == L'\\' || store.back() == L'/')) store.pop_back();
+                    std::wstring cand = store + L"\\" + pdbName + L"\\" + storeKey(info) + L"\\" + pdbName;
+                    if (GetFileAttributesW(cand.c_str()) != INVALID_FILE_ATTRIBUTES && attempt(cand)) return S_OK;
+                }
                 continue;
             }
             if (inDir(e)) return S_OK;
