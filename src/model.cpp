@@ -2060,6 +2060,9 @@ std::vector<uint8_t> Model::flagsOf(SymIndexId id)
     const auto &c = children(id);
     SymTag t = tag(id);
     if (t == SymTag::UDT || t == SymTag::BaseClass) return std::vector<uint8_t>(c.size(), 1);
+    // A member typedef naming a class: its members as reached through the class.
+    if (auto *n = dynamic_cast<OmNested *>(ours(id)))
+        if (t == SymTag::Typedef && tag(n->target) == SymTag::UDT) return std::vector<uint8_t>(c.size(), 1);
     auto it = childFlags.find(id);
     if (it != childFlags.end() && it->second.size() == c.size()) return it->second;
     return std::vector<uint8_t>(c.size(), 0);
