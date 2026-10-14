@@ -179,9 +179,11 @@ public:
             v = Val::b_(hfa == (p == P_hfaFloat ? 1u : 2u));
             return true;
         }
-        case P_isInterfaceUdt: case P_isRefUdt: case P_isValueUdt: case P_exportIsForwarder:
+        case P_isInterfaceUdt: case P_isRefUdt: case P_isValueUdt:
             v = Val::b_(false);
             return true;
+        // A forward declaration without a definition in the PDB (as observed).
+        case P_exportIsForwarder: v = Val::b_(opt(ClassOptions::ForwardReference)); return true;
         case P_unmodifiedType: case P_unmodifiedTypeId:
             if (!base) return false;
             v = Val::sym(base->id);
@@ -233,9 +235,9 @@ public:
         case P_scoped: v = Val::b_(opt(ClassOptions::Scoped)); return true;
         case P_sealed: v = Val::b_(opt(ClassOptions::Sealed)); return true;
         case P_hfaFloat: case P_hfaDouble: case P_isInterfaceUdt: case P_isRefUdt: case P_isValueUdt:
-        case P_exportIsForwarder:
             v = Val::b_(false);
             return true;
+        case P_exportIsForwarder: v = Val::b_(opt(ClassOptions::ForwardReference)); return true;
         case P_unmodifiedType: case P_unmodifiedTypeId:
             if (!base) return false;
             v = Val::sym(base->id);
@@ -564,7 +566,8 @@ std::vector<SymIndexId> Model::typesOfKind(std::initializer_list<TypeLeafKind> k
         CVType t = types->getType(*ti);
         bool want = false;
         if (match(t.kind())) {
-            want = !isUdtForwardRef(t);
+            // Forward declarations are listed only when nothing defines them.
+            want = !isUdtForwardRef(t) || fullDecl(*ti) == *ti;
         } else if (t.kind() == LF_MODIFIER) {
             ModifierRecord mr(TypeRecordKind::Modifier);
             if (deserType(t, mr) && !mr.getModifiedType().isSimple())
