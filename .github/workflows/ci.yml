@@ -253,6 +253,7 @@ jobs:
           update: false
           install: >-
             diffutils
+            git
             mingw-w64-clang-x86_64-python
       - uses: actions/download-artifact@v4
         with:
