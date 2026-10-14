@@ -9,12 +9,12 @@
    "children": {"BaseClass": 2, "Compiland": 2, "Data": 23, "Enum": 3, "Function": 43, "FunctionArgType": 9, "FunctionType": 21, "PointerType": 18, "PublicSymbol": 41, "Typedef": 8, "UDT": 11, "VTable": 2},
    "findChildren().count": 183,
    "findChildren().fetched": 183,
-   "guid": "AC88ED99-0099-9036-4C4C-44205044422E",
+   "guid": "DC8C4AD2-2846-BD89-4C4C-44205044422E",
    "isCTypes": 0,
    "isStripped": 0,
    "machineType": 332,
    "name": "cpp_more_x86",
-   "signature": 2894654873,
+   "signature": 3700181714,
    "symIndexId": 1,
    "symTag": 1,
    "symbolsFileName": "<ROOT>\\<CORPUS>\\cpp_more_x86.pdb",
@@ -160,6 +160,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "int Left::left()",
    "undecoratedNameEx(0)": "int Left::left()",
+   "undecoratedNameEx(0x1000)": "int Left::left()",
+   "undecoratedNameEx(0x87FE)": "int Left::left()",
    "virtual": 1,
    "virtualAddress": 5216,
    "virtualBaseOffset": 0,
@@ -284,6 +286,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "void Left::~Left()",
    "undecoratedNameEx(0)": "void Left::~Left()",
+   "undecoratedNameEx(0x1000)": "void Left::~Left()",
+   "undecoratedNameEx(0x87FE)": "void Left::~Left()",
    "virtual": 1,
    "virtualAddress": 5488,
    "virtualBaseOffset": 0,
@@ -502,6 +506,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "int Right::both()",
    "undecoratedNameEx(0)": "int Right::both()",
+   "undecoratedNameEx(0x1000)": "int Right::both()",
+   "undecoratedNameEx(0x87FE)": "int Right::both()",
    "virtual": 1,
    "virtualAddress": 5584,
    "virtualBaseOffset": 0,
@@ -626,6 +632,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "int Right::right()",
    "undecoratedNameEx(0)": "int Right::right()",
+   "undecoratedNameEx(0x1000)": "int Right::right()",
+   "undecoratedNameEx(0x87FE)": "int Right::right()",
    "virtual": 1,
    "virtualAddress": 5552,
    "virtualBaseOffset": 0,
@@ -750,6 +758,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "void Right::~Right()",
    "undecoratedNameEx(0)": "void Right::~Right()",
+   "undecoratedNameEx(0x1000)": "void Right::~Right()",
+   "undecoratedNameEx(0x87FE)": "void Right::~Right()",
    "virtual": 1,
    "virtualAddress": 5616,
    "virtualBaseOffset": 0,
@@ -893,7 +903,7 @@
    "symTag": 4,
    "types()": "!S_FALSE",
    "undecoratedNameEx(0)": "!S_FALSE",
-   "value": {"vt": 8, "v": "-lldmingw -entry:start -subsystem:console -out:cpp_more_x86.exe -debug -pdb:cpp_more_x86.pdb -build-id -WX:no -timestamp:0 -opt:noref -demangle -auto-import -runtime-pseudo-reloc -opt:noicf -machine:x86 -fat-lto-objects:no -pdbsourcepath:C:\\corpus -alternatename:__image_base__=___ImageBase -libpath:<CLANG64>/i686-w64-mingw32/lib -libpath:<CLANG64>/i686-w64-mingw32/mingw/lib -libpath:<CLANG64>/lib/clang/22/lib/windows"}
+   "value": {"vt": 8, "v": "-lldmingw -entry:start -subsystem:console -out:cpp_more_x86.exe -debug -pdb:cpp_more_x86.pdb -build-id -WX:no -timestamp:0 -opt:noref -demangle -auto-import -runtime-pseudo-reloc -opt:noicf -machine:x86 -fat-lto-objects:no -pdbsourcepath:C:\\corpus -alternatename:__image_base__=___ImageBase -libpath:<CLANG64>/i686-w64-mingw32/lib -libpath:<CLANG64>/i686-w64-mingw32/mingw/lib -libpath:<CLANG64>/lib/clang/23/lib/windows"}
   },
   "Exe/Compiland:* Linker */CompilandEnv:cwd": {
    "!E_NOINTERFACE": ["<IDiaSymbol10>", "<IDiaSymbol11>"],
@@ -975,16 +985,16 @@
    "!E_NOINTERFACE": ["<IDiaSymbol10>", "<IDiaSymbol11>"],
    "!E_NOTIMPL": ["unused"],
    "backEndBuild": 0,
-   "backEndMajor": 22018,
+   "backEndMajor": 23013,
    "backEndMinor": 0,
    "backEndQFE": 0,
    "children": {},
-   "compilerName": "clang version 22.1.8 (https://github.com/msys2/MINGW-packages d34feaaa1d0aff624c870910b6f2589aa40d20de)",
+   "compilerName": "clang version 23.1.3 (https://github.com/msys2/MINGW-packages 067886dba977a6b4c97dfedfb25286b5eda55620)",
    "editAndContinueEnabled": 0,
    "findChildren().count": 0,
    "findChildren().fetched": 0,
-   "frontEndBuild": 8,
-   "frontEndMajor": 22,
+   "frontEndBuild": 3,
+   "frontEndMajor": 23,
    "frontEndMinor": 1,
    "frontEndQFE": 0,
    "hasDebugInfo": 1,
@@ -1034,7 +1044,7 @@
    "symTag": 4,
    "types()": "!S_FALSE",
    "undecoratedNameEx(0)": "!S_FALSE",
-   "value": {"vt": 8, "v": "\"-cc1\" \"-triple\" \"i686-w64-windows-gnu\" \"-O0\" \"-emit-obj\" \"-disable-free\" \"-clear-ast-before-backend\" \"-disable-llvm-verifier\" \"-discard-value-names\" \"-mrelocation-model\" \"static\" \"-mframe-pointer=all\" \"-fmath-errno\" \"-ffp-contract=on\" \"-fno-rounding-math\" \"-mconstructor-aliases\" \"-ffreestanding\" \"-fno-sized-deallocation\" \"-fno-use-init-array\" \"-target-cpu\" \"pentium4\" \"-tune-cpu\" \"generic\" \"-gno-column-info\" \"-gcodeview\" \"-debug-info-kind=constructor\" \"-debugger-tuning=gdb\" \"-fdebug-compilation-dir=.\" \"-fcoverage-compilation-dir=<ROOT>/corpus\" \"-resource-dir\" \"<CLANG64>/lib/clang/22\" \"-internal-isystem\" \"<CLANG64>/i686-w64-mingw32/include/c++/v1\" \"-internal-isystem\" \"<CLANG64>/include/c++/v1\" \"-internal-isystem\" \"<CLANG64>/lib/clang/22/include\" \"-internal-isystem\" \"<CLANG64>/i686-w64-mingw32/include\" \"-internal-isystem\" \"<CLANG64>/i686-w64-mingw32/usr/include\" \"-internal-isystem\" \"<CLANG64>/include\" \"-std=c++17\" \"-fdeprecated-macro\" \"-ferror-limit\" \"19\" \"-mno-stack-arg-probe\" \"-fno-builtin\" \"-fno-rtti\" \"-fno-use-cxa-atexit\" \"-fgnuc-version=4.2.1\" \"-fno-threadsafe-statics\" \"-fskip-odr-check-in-gmf\" \"-exception-model=dwarf\" \"-faddrsig\" \"-x\" \"c++\""}
+   "value": {"vt": 8, "v": "\"-cc1\" \"-triple\" \"i686-w64-windows-gnu\" \"-O0\" \"-emit-obj\" \"-disable-free\" \"-clear-ast-before-backend\" \"-disable-llvm-verifier\" \"-discard-value-names\" \"-mrelocation-model\" \"static\" \"-mframe-pointer=all\" \"-fmath-errno\" \"-ffp-contract=on\" \"-fno-rounding-math\" \"-mconstructor-aliases\" \"-ffreestanding\" \"-fno-sized-deallocation\" \"-fno-use-init-array\" \"-target-cpu\" \"pentium4\" \"-tune-cpu\" \"generic\" \"-gno-column-info\" \"-gcodeview\" \"-debug-info-kind=constructor\" \"-debugger-tuning=gdb\" \"-fdebug-compilation-dir=.\" \"-fcoverage-compilation-dir=<ROOT>/corpus\" \"-resource-dir\" \"<CLANG64>/lib/clang/23\" \"-internal-isystem\" \"<CLANG64>/i686-w64-mingw32/include/c++/v1\" \"-internal-isystem\" \"<CLANG64>/include/c++/v1\" \"-internal-isystem\" \"<CLANG64>/lib/clang/23/include\" \"-internal-isystem\" \"<CLANG64>/i686-w64-mingw32/include\" \"-internal-isystem\" \"<CLANG64>/i686-w64-mingw32/usr/include\" \"-internal-isystem\" \"<CLANG64>/include\" \"-std=c++17\" \"-fdeprecated-macro\" \"-ferror-limit\" \"19\" \"-mno-stack-arg-probe\" \"-fno-builtin\" \"-fno-rtti\" \"-fno-use-cxa-atexit\" \"-fgnuc-version=4.2.1\" \"-fno-threadsafe-statics\" \"-fskip-odr-check-in-gmf\" \"-exception-model=dwarf\" \"-faddrsig\" \"-x\" \"c++\""}
   },
   "Exe/Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o/CompilandEnv:cwd": {
    "!E_NOINTERFACE": ["<IDiaSymbol10>", "<IDiaSymbol11>"],
@@ -1064,7 +1074,7 @@
    "symTag": 4,
    "types()": "!S_FALSE",
    "undecoratedNameEx(0)": "!S_FALSE",
-   "value": {"vt": 8, "v": "<ROOT>/build/corpus_new/cpp_more_x86.obj/more.cpp.o"}
+   "value": {"vt": 8, "v": "<ROOT>/<CORPUS>/cpp_more_x86.obj/more.cpp.o"}
   },
   "Exe/Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o/CompilandEnv:pdb": {
    "!E_NOINTERFACE": ["<IDiaSymbol10>", "<IDiaSymbol11>"],
@@ -1157,6 +1167,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "void Both::Both()",
    "undecoratedNameEx(0)": "void Both::Both()",
+   "undecoratedNameEx(0x1000)": "void Both::Both()",
+   "undecoratedNameEx(0x87FE)": "void Both::Both()",
    "virtualAddress": 4816,
    "wasInlined": 0
   },
@@ -1279,6 +1291,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "int Both::both()",
    "undecoratedNameEx(0)": "int Both::both()",
+   "undecoratedNameEx(0x1000)": "int Both::both()",
+   "undecoratedNameEx(0x87FE)": "int Both::both()",
    "virtual": 1,
    "virtualAddress": 5328,
    "virtualBaseOffset": 0,
@@ -1403,6 +1417,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "int Both::right()",
    "undecoratedNameEx(0)": "int Both::right()",
+   "undecoratedNameEx(0x1000)": "int Both::right()",
+   "undecoratedNameEx(0x87FE)": "int Both::right()",
    "virtual": 1,
    "virtualAddress": 5296,
    "virtualBaseOffset": 0,
@@ -1521,6 +1537,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "void Both::~Both()",
    "undecoratedNameEx(0)": "void Both::~Both()",
+   "undecoratedNameEx(0x1000)": "void Both::~Both()",
+   "undecoratedNameEx(0x87FE)": "void Both::~Both()",
    "virtualAddress": 5072,
    "wasInlined": 0
   },
@@ -1637,6 +1655,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "void Both::~Both()",
    "undecoratedNameEx(0)": "void Both::~Both()",
+   "undecoratedNameEx(0x1000)": "void Both::~Both()",
+   "undecoratedNameEx(0x87FE)": "void Both::~Both()",
    "virtualAddress": 5248,
    "wasInlined": 0
   },
@@ -1753,6 +1773,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "void Left::Left()",
    "undecoratedNameEx(0)": "void Left::Left()",
+   "undecoratedNameEx(0x1000)": "void Left::Left()",
+   "undecoratedNameEx(0x87FE)": "void Left::Left()",
    "virtualAddress": 5120,
    "wasInlined": 0
   },
@@ -1881,6 +1903,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "void Left::~Left()",
    "undecoratedNameEx(0)": "void Left::~Left()",
+   "undecoratedNameEx(0x1000)": "void Left::~Left()",
+   "undecoratedNameEx(0x87FE)": "void Left::~Left()",
    "virtual": 1,
    "virtualAddress": 5504,
    "virtualBaseOffset": 0,
@@ -1999,6 +2023,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "void Right::Right()",
    "undecoratedNameEx(0)": "void Right::Right()",
+   "undecoratedNameEx(0x1000)": "void Right::Right()",
+   "undecoratedNameEx(0x87FE)": "void Right::Right()",
    "virtualAddress": 5168,
    "wasInlined": 0
   },
@@ -2130,6 +2156,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "void Right::~Right()",
    "undecoratedNameEx(0)": "void Right::~Right()",
+   "undecoratedNameEx(0x1000)": "void Right::~Right()",
+   "undecoratedNameEx(0x87FE)": "void Right::~Right()",
    "virtual": 1,
    "virtualAddress": 5632,
    "virtualBaseOffset": 0,
@@ -2246,6 +2274,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "___cxa_pure_virtual",
    "undecoratedNameEx(0)": "___cxa_pure_virtual",
+   "undecoratedNameEx(0x1000)": "___cxa_pure_virtual",
+   "undecoratedNameEx(0x87FE)": "___cxa_pure_virtual",
    "virtualAddress": 4096,
    "wasInlined": 0
   },
@@ -2368,6 +2398,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "void ns::Counter::Counter()",
    "undecoratedNameEx(0)": "void ns::Counter::Counter()",
+   "undecoratedNameEx(0x1000)": "void ns::Counter::Counter()",
+   "undecoratedNameEx(0x87FE)": "void ns::Counter::Counter()",
    "virtual": 0,
    "virtualAddress": 4896,
    "virtualBaseOffset": 0,
@@ -2492,6 +2524,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "int ns::Counter::Nested::get()",
    "undecoratedNameEx(0)": "int ns::Counter::Nested::get()",
+   "undecoratedNameEx(0x1000)": "int ns::Counter::Nested::get()",
+   "undecoratedNameEx(0x87FE)": "int ns::Counter::Nested::get()",
    "virtual": 0,
    "virtualAddress": 4976,
    "virtualBaseOffset": 0,
@@ -2616,6 +2650,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "int ns::Counter::add(int)",
    "undecoratedNameEx(0)": "int ns::Counter::add(int)",
+   "undecoratedNameEx(0x1000)": "int ns::Counter::add(int)",
+   "undecoratedNameEx(0x87FE)": "int ns::Counter::add(int)",
    "virtual": 0,
    "virtualAddress": 4752,
    "virtualBaseOffset": 0,
@@ -2740,6 +2776,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "int ns::Counter::bump(ns::Counter::Step)",
    "undecoratedNameEx(0)": "int ns::Counter::bump(ns::Counter::Step)",
+   "undecoratedNameEx(0x1000)": "int ns::Counter::bump(ns::Counter::Step)",
+   "undecoratedNameEx(0x87FE)": "int ns::Counter::bump(ns::Counter::Step)",
    "virtual": 0,
    "virtualAddress": 5008,
    "virtualBaseOffset": 0,
@@ -2864,6 +2902,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "int ns::Counter::count()",
    "undecoratedNameEx(0)": "int ns::Counter::count()",
+   "undecoratedNameEx(0x1000)": "int ns::Counter::count()",
+   "undecoratedNameEx(0x87FE)": "int ns::Counter::count()",
    "virtual": 0,
    "virtualAddress": 5056,
    "virtualBaseOffset": 0,
@@ -2980,6 +3020,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "void operator delete(void *)",
    "undecoratedNameEx(0)": "void operator delete(void *)",
+   "undecoratedNameEx(0x1000)": "void operator delete(void *)",
+   "undecoratedNameEx(0x87FE)": "void operator delete(void *)",
    "virtualAddress": 4112,
    "wasInlined": 0
   },
@@ -3094,6 +3136,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "void operator delete(void *, unsigned int)",
    "undecoratedNameEx(0)": "void operator delete(void *, unsigned int)",
+   "undecoratedNameEx(0x1000)": "void operator delete(void *, unsigned int)",
+   "undecoratedNameEx(0x87FE)": "void operator delete(void *, unsigned int)",
    "virtualAddress": 4128,
    "wasInlined": 0
   },
@@ -3208,6 +3252,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_start",
    "undecoratedNameEx(0)": "_start",
+   "undecoratedNameEx(0x1000)": "_start",
+   "undecoratedNameEx(0x87FE)": "_start",
    "virtualAddress": 4224,
    "wasInlined": 0
   },
@@ -3341,6 +3387,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "static int start::<lambda0>::operator()(int)",
    "undecoratedNameEx(0)": "static int start::<lambda0>::operator()(int)",
+   "undecoratedNameEx(0x1000)": "static int start::<lambda0>::operator()(int)",
+   "undecoratedNameEx(0x87FE)": "static int start::<lambda0>::operator()(int)",
    "virtualAddress": 4720,
    "wasInlined": 0
   },
@@ -3458,6 +3506,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "static int sum_ints(int, <NoType>)",
    "undecoratedNameEx(0)": "static int sum_ints(int, <NoType>)",
+   "undecoratedNameEx(0x1000)": "static int sum_ints(int, <NoType>)",
+   "undecoratedNameEx(0x87FE)": "static int sum_ints(int, <NoType>)",
    "virtualAddress": 4144,
    "wasInlined": 0
   },
@@ -3595,6 +3645,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "static int with_labels(int)",
    "undecoratedNameEx(0)": "static int with_labels(int)",
+   "undecoratedNameEx(0x1000)": "static int with_labels(int)",
+   "undecoratedNameEx(0x87FE)": "static int with_labels(int)",
    "virtualAddress": 4656,
    "wasInlined": 0
   },
@@ -3736,7 +3788,7 @@
    "undecoratedNameEx(0)": "!S_FALSE",
    "virtualAddress": 5424
   },
-  "Exe/Data:Both::_vtable$": {
+  "Exe/Data:Both::__clang_vtable": {
    "!E_NOINTERFACE": ["<IDiaSymbol10>", "<IDiaSymbol11>"],
    "!E_NOTIMPL": ["unused"],
    "addressOffset": 8,
@@ -3746,7 +3798,7 @@
    "lexicalParent": "Exe:cpp_more_x86",
    "lexicalParentId": 1,
    "locationType": 1,
-   "name": "Both::_vtable$",
+   "name": "Both::__clang_vtable",
    "relativeVirtualAddress": 8200,
    "symIndexId": 137,
    "symTag": 7,
@@ -3756,7 +3808,7 @@
    "undecoratedNameEx(0)": "!S_FALSE",
    "virtualAddress": 8200
   },
-  "Exe/Data:Left::_vtable$": {
+  "Exe/Data:Left::__clang_vtable": {
    "!E_NOINTERFACE": ["<IDiaSymbol10>", "<IDiaSymbol11>"],
    "!E_NOTIMPL": ["unused"],
    "addressOffset": 60,
@@ -3766,7 +3818,7 @@
    "lexicalParent": "Exe:cpp_more_x86",
    "lexicalParentId": 1,
    "locationType": 1,
-   "name": "Left::_vtable$",
+   "name": "Left::__clang_vtable",
    "relativeVirtualAddress": 8252,
    "symIndexId": 139,
    "symTag": 7,
@@ -3801,7 +3853,7 @@
    "value": {"vt": 2, "v": 1},
    "volatileType": 0
   },
-  "Exe/Data:Right::_vtable$": {
+  "Exe/Data:Right::__clang_vtable": {
    "!E_NOINTERFACE": ["<IDiaSymbol10>", "<IDiaSymbol11>"],
    "!E_NOTIMPL": ["unused"],
    "addressOffset": 80,
@@ -3811,7 +3863,7 @@
    "lexicalParent": "Exe:cpp_more_x86",
    "lexicalParentId": 1,
    "locationType": 1,
-   "name": "Right::_vtable$",
+   "name": "Right::__clang_vtable",
    "relativeVirtualAddress": 8272,
    "symIndexId": 142,
    "symTag": 7,
@@ -5556,6 +5608,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__ZN2ns7Counter3addEi",
    "undecoratedNameEx(0)": "__ZN2ns7Counter3addEi",
+   "undecoratedNameEx(0x1000)": "__ZN2ns7Counter3addEi",
+   "undecoratedNameEx(0x87FE)": "__ZN2ns7Counter3addEi",
    "virtualAddress": 4752
   },
   "Exe/PublicSymbol:__ZN2ns7Counter5countEv": {
@@ -5580,6 +5634,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__ZN2ns7Counter5countEv",
    "undecoratedNameEx(0)": "__ZN2ns7Counter5countEv",
+   "undecoratedNameEx(0x1000)": "__ZN2ns7Counter5countEv",
+   "undecoratedNameEx(0x87FE)": "__ZN2ns7Counter5countEv",
    "virtualAddress": 5056
   },
   "Exe/PublicSymbol:__ZN2ns7Counter9instancesE": {
@@ -5604,6 +5660,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__ZN2ns7Counter9instancesE",
    "undecoratedNameEx(0)": "__ZN2ns7Counter9instancesE",
+   "undecoratedNameEx(0x1000)": "__ZN2ns7Counter9instancesE",
+   "undecoratedNameEx(0x87FE)": "__ZN2ns7Counter9instancesE",
    "virtualAddress": 16396
   },
   "Exe/PublicSymbol:__ZN2ns7CounterC2Ev": {
@@ -5628,6 +5686,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__ZN2ns7CounterC2Ev",
    "undecoratedNameEx(0)": "__ZN2ns7CounterC2Ev",
+   "undecoratedNameEx(0x1000)": "__ZN2ns7CounterC2Ev",
+   "undecoratedNameEx(0x87FE)": "__ZN2ns7CounterC2Ev",
    "virtualAddress": 4896
   },
   "Exe/PublicSymbol:__ZN4Both4bothEv": {
@@ -5652,6 +5712,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__ZN4Both4bothEv",
    "undecoratedNameEx(0)": "__ZN4Both4bothEv",
+   "undecoratedNameEx(0x1000)": "__ZN4Both4bothEv",
+   "undecoratedNameEx(0x87FE)": "__ZN4Both4bothEv",
    "virtualAddress": 5328
   },
   "Exe/PublicSymbol:__ZN4Both5rightEv": {
@@ -5676,6 +5738,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__ZN4Both5rightEv",
    "undecoratedNameEx(0)": "__ZN4Both5rightEv",
+   "undecoratedNameEx(0x1000)": "__ZN4Both5rightEv",
+   "undecoratedNameEx(0x87FE)": "__ZN4Both5rightEv",
    "virtualAddress": 5296
   },
   "Exe/PublicSymbol:__ZN4BothC2Ev": {
@@ -5700,6 +5764,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__ZN4BothC2Ev",
    "undecoratedNameEx(0)": "__ZN4BothC2Ev",
+   "undecoratedNameEx(0x1000)": "__ZN4BothC2Ev",
+   "undecoratedNameEx(0x87FE)": "__ZN4BothC2Ev",
    "virtualAddress": 4816
   },
   "Exe/PublicSymbol:__ZN4BothD0Ev": {
@@ -5724,6 +5790,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__ZN4BothD0Ev",
    "undecoratedNameEx(0)": "__ZN4BothD0Ev",
+   "undecoratedNameEx(0x1000)": "__ZN4BothD0Ev",
+   "undecoratedNameEx(0x87FE)": "__ZN4BothD0Ev",
    "virtualAddress": 5248
   },
   "Exe/PublicSymbol:__ZN4BothD2Ev": {
@@ -5748,6 +5816,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__ZN4BothD2Ev",
    "undecoratedNameEx(0)": "__ZN4BothD2Ev",
+   "undecoratedNameEx(0x1000)": "__ZN4BothD2Ev",
+   "undecoratedNameEx(0x87FE)": "__ZN4BothD2Ev",
    "virtualAddress": 5072
   },
   "Exe/PublicSymbol:__ZN4Left4leftEv": {
@@ -5772,6 +5842,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__ZN4Left4leftEv",
    "undecoratedNameEx(0)": "__ZN4Left4leftEv",
+   "undecoratedNameEx(0x1000)": "__ZN4Left4leftEv",
+   "undecoratedNameEx(0x87FE)": "__ZN4Left4leftEv",
    "virtualAddress": 5216
   },
   "Exe/PublicSymbol:__ZN4LeftC2Ev": {
@@ -5796,6 +5868,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__ZN4LeftC2Ev",
    "undecoratedNameEx(0)": "__ZN4LeftC2Ev",
+   "undecoratedNameEx(0x1000)": "__ZN4LeftC2Ev",
+   "undecoratedNameEx(0x87FE)": "__ZN4LeftC2Ev",
    "virtualAddress": 5120
   },
   "Exe/PublicSymbol:__ZN4LeftD0Ev": {
@@ -5820,6 +5894,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__ZN4LeftD0Ev",
    "undecoratedNameEx(0)": "__ZN4LeftD0Ev",
+   "undecoratedNameEx(0x1000)": "__ZN4LeftD0Ev",
+   "undecoratedNameEx(0x87FE)": "__ZN4LeftD0Ev",
    "virtualAddress": 5504
   },
   "Exe/PublicSymbol:__ZN4LeftD2Ev": {
@@ -5844,6 +5920,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__ZN4LeftD2Ev",
    "undecoratedNameEx(0)": "__ZN4LeftD2Ev",
+   "undecoratedNameEx(0x1000)": "__ZN4LeftD2Ev",
+   "undecoratedNameEx(0x87FE)": "__ZN4LeftD2Ev",
    "virtualAddress": 5488
   },
   "Exe/PublicSymbol:__ZN5Right4bothEv": {
@@ -5868,6 +5946,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__ZN5Right4bothEv",
    "undecoratedNameEx(0)": "__ZN5Right4bothEv",
+   "undecoratedNameEx(0x1000)": "__ZN5Right4bothEv",
+   "undecoratedNameEx(0x87FE)": "__ZN5Right4bothEv",
    "virtualAddress": 5584
   },
   "Exe/PublicSymbol:__ZN5Right5rightEv": {
@@ -5892,6 +5972,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__ZN5Right5rightEv",
    "undecoratedNameEx(0)": "__ZN5Right5rightEv",
+   "undecoratedNameEx(0x1000)": "__ZN5Right5rightEv",
+   "undecoratedNameEx(0x87FE)": "__ZN5Right5rightEv",
    "virtualAddress": 5552
   },
   "Exe/PublicSymbol:__ZN5RightC2Ev": {
@@ -5916,6 +5998,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__ZN5RightC2Ev",
    "undecoratedNameEx(0)": "__ZN5RightC2Ev",
+   "undecoratedNameEx(0x1000)": "__ZN5RightC2Ev",
+   "undecoratedNameEx(0x87FE)": "__ZN5RightC2Ev",
    "virtualAddress": 5168
   },
   "Exe/PublicSymbol:__ZN5RightD0Ev": {
@@ -5940,6 +6024,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__ZN5RightD0Ev",
    "undecoratedNameEx(0)": "__ZN5RightD0Ev",
+   "undecoratedNameEx(0x1000)": "__ZN5RightD0Ev",
+   "undecoratedNameEx(0x87FE)": "__ZN5RightD0Ev",
    "virtualAddress": 5632
   },
   "Exe/PublicSymbol:__ZN5RightD2Ev": {
@@ -5964,6 +6050,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__ZN5RightD2Ev",
    "undecoratedNameEx(0)": "__ZN5RightD2Ev",
+   "undecoratedNameEx(0x1000)": "__ZN5RightD2Ev",
+   "undecoratedNameEx(0x87FE)": "__ZN5RightD2Ev",
    "virtualAddress": 5616
   },
   "Exe/PublicSymbol:__ZNK2ns7Counter6Nested3getEv": {
@@ -5988,6 +6076,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__ZNK2ns7Counter6Nested3getEv",
    "undecoratedNameEx(0)": "__ZNK2ns7Counter6Nested3getEv",
+   "undecoratedNameEx(0x1000)": "__ZNK2ns7Counter6Nested3getEv",
+   "undecoratedNameEx(0x87FE)": "__ZNK2ns7Counter6Nested3getEv",
    "virtualAddress": 4976
   },
   "Exe/PublicSymbol:__ZNVK2ns7Counter4bumpENS0_4StepE": {
@@ -6012,6 +6102,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__ZNVK2ns7Counter4bumpENS0_4StepE",
    "undecoratedNameEx(0)": "__ZNVK2ns7Counter4bumpENS0_4StepE",
+   "undecoratedNameEx(0x1000)": "__ZNVK2ns7Counter4bumpENS0_4StepE",
+   "undecoratedNameEx(0x87FE)": "__ZNVK2ns7Counter4bumpENS0_4StepE",
    "virtualAddress": 5008
   },
   "Exe/PublicSymbol:__ZTV4Both": {
@@ -6036,6 +6128,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__ZTV4Both",
    "undecoratedNameEx(0)": "__ZTV4Both",
+   "undecoratedNameEx(0x1000)": "__ZTV4Both",
+   "undecoratedNameEx(0x87FE)": "__ZTV4Both",
    "virtualAddress": 8200
   },
   "Exe/PublicSymbol:__ZTV4Left": {
@@ -6060,6 +6154,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__ZTV4Left",
    "undecoratedNameEx(0)": "__ZTV4Left",
+   "undecoratedNameEx(0x1000)": "__ZTV4Left",
+   "undecoratedNameEx(0x87FE)": "__ZTV4Left",
    "virtualAddress": 8252
   },
   "Exe/PublicSymbol:__ZTV5Right": {
@@ -6084,6 +6180,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__ZTV5Right",
    "undecoratedNameEx(0)": "__ZTV5Right",
+   "undecoratedNameEx(0x1000)": "__ZTV5Right",
+   "undecoratedNameEx(0x87FE)": "__ZTV5Right",
    "virtualAddress": 8272
   },
   "Exe/PublicSymbol:__ZThn8_N4Both4bothEv": {
@@ -6108,6 +6206,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__ZThn8_N4Both4bothEv",
    "undecoratedNameEx(0)": "__ZThn8_N4Both4bothEv",
+   "undecoratedNameEx(0x1000)": "__ZThn8_N4Both4bothEv",
+   "undecoratedNameEx(0x87FE)": "__ZThn8_N4Both4bothEv",
    "virtualAddress": 5392
   },
   "Exe/PublicSymbol:__ZThn8_N4Both5rightEv": {
@@ -6132,6 +6232,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__ZThn8_N4Both5rightEv",
    "undecoratedNameEx(0)": "__ZThn8_N4Both5rightEv",
+   "undecoratedNameEx(0x1000)": "__ZThn8_N4Both5rightEv",
+   "undecoratedNameEx(0x87FE)": "__ZThn8_N4Both5rightEv",
    "virtualAddress": 5360
   },
   "Exe/PublicSymbol:__ZThn8_N4BothD0Ev": {
@@ -6156,6 +6258,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__ZThn8_N4BothD0Ev",
    "undecoratedNameEx(0)": "__ZThn8_N4BothD0Ev",
+   "undecoratedNameEx(0x1000)": "__ZThn8_N4BothD0Ev",
+   "undecoratedNameEx(0x87FE)": "__ZThn8_N4BothD0Ev",
    "virtualAddress": 5456
   },
   "Exe/PublicSymbol:__ZThn8_N4BothD1Ev": {
@@ -6180,6 +6284,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__ZThn8_N4BothD1Ev",
    "undecoratedNameEx(0)": "__ZThn8_N4BothD1Ev",
+   "undecoratedNameEx(0x1000)": "__ZThn8_N4BothD1Ev",
+   "undecoratedNameEx(0x87FE)": "__ZThn8_N4BothD1Ev",
    "virtualAddress": 5424
   },
   "Exe/PublicSymbol:__ZdlPv": {
@@ -6204,6 +6310,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__ZdlPv",
    "undecoratedNameEx(0)": "__ZdlPv",
+   "undecoratedNameEx(0x1000)": "__ZdlPv",
+   "undecoratedNameEx(0x87FE)": "__ZdlPv",
    "virtualAddress": 4112
   },
   "Exe/PublicSymbol:__ZdlPvj": {
@@ -6228,6 +6336,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__ZdlPvj",
    "undecoratedNameEx(0)": "__ZdlPvj",
+   "undecoratedNameEx(0x1000)": "__ZdlPvj",
+   "undecoratedNameEx(0x87FE)": "__ZdlPvj",
    "virtualAddress": 4128
   },
   "Exe/PublicSymbol:___CTOR_LIST__": {
@@ -6252,6 +6362,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "___CTOR_LIST__",
    "undecoratedNameEx(0)": "___CTOR_LIST__",
+   "undecoratedNameEx(0x1000)": "___CTOR_LIST__",
+   "undecoratedNameEx(0x87FE)": "___CTOR_LIST__",
    "virtualAddress": 8296
   },
   "Exe/PublicSymbol:___DTOR_LIST__": {
@@ -6276,6 +6388,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "___DTOR_LIST__",
    "undecoratedNameEx(0)": "___DTOR_LIST__",
+   "undecoratedNameEx(0x1000)": "___DTOR_LIST__",
+   "undecoratedNameEx(0x87FE)": "___DTOR_LIST__",
    "virtualAddress": 8304
   },
   "Exe/PublicSymbol:___RUNTIME_PSEUDO_RELOC_LIST_END__": {
@@ -6300,6 +6414,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "___RUNTIME_PSEUDO_RELOC_LIST_END__",
    "undecoratedNameEx(0)": "___RUNTIME_PSEUDO_RELOC_LIST_END__",
+   "undecoratedNameEx(0x1000)": "___RUNTIME_PSEUDO_RELOC_LIST_END__",
+   "undecoratedNameEx(0x87FE)": "___RUNTIME_PSEUDO_RELOC_LIST_END__",
    "virtualAddress": 8296
   },
   "Exe/PublicSymbol:___RUNTIME_PSEUDO_RELOC_LIST__": {
@@ -6324,6 +6440,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "___RUNTIME_PSEUDO_RELOC_LIST__",
    "undecoratedNameEx(0)": "___RUNTIME_PSEUDO_RELOC_LIST__",
+   "undecoratedNameEx(0x1000)": "___RUNTIME_PSEUDO_RELOC_LIST__",
+   "undecoratedNameEx(0x87FE)": "___RUNTIME_PSEUDO_RELOC_LIST__",
    "virtualAddress": 8296
   },
   "Exe/PublicSymbol:___cxa_pure_virtual": {
@@ -6348,6 +6466,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "___cxa_pure_virtual",
    "undecoratedNameEx(0)": "___cxa_pure_virtual",
+   "undecoratedNameEx(0x1000)": "___cxa_pure_virtual",
+   "undecoratedNameEx(0x87FE)": "___cxa_pure_virtual",
    "virtualAddress": 4096
   },
   "Exe/PublicSymbol:__bss_end__": {
@@ -6372,6 +6492,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__bss_end__",
    "undecoratedNameEx(0)": "__bss_end__",
+   "undecoratedNameEx(0x1000)": "__bss_end__",
+   "undecoratedNameEx(0x87FE)": "__bss_end__",
    "virtualAddress": 16400
   },
   "Exe/PublicSymbol:__bss_start__": {
@@ -6396,6 +6518,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__bss_start__",
    "undecoratedNameEx(0)": "__bss_start__",
+   "undecoratedNameEx(0x1000)": "__bss_start__",
+   "undecoratedNameEx(0x87FE)": "__bss_start__",
    "virtualAddress": 16396
   },
   "Exe/PublicSymbol:__data_end__": {
@@ -6420,6 +6544,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__data_end__",
    "undecoratedNameEx(0)": "__data_end__",
+   "undecoratedNameEx(0x1000)": "__data_end__",
+   "undecoratedNameEx(0x87FE)": "__data_end__",
    "virtualAddress": 16396
   },
   "Exe/PublicSymbol:__data_start__": {
@@ -6444,6 +6570,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__data_start__",
    "undecoratedNameEx(0)": "__data_start__",
+   "undecoratedNameEx(0x1000)": "__data_start__",
+   "undecoratedNameEx(0x87FE)": "__data_start__",
    "virtualAddress": 16384
   },
   "Exe/PublicSymbol:_g_add": {
@@ -6468,6 +6596,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_g_add",
    "undecoratedNameEx(0)": "_g_add",
+   "undecoratedNameEx(0x1000)": "_g_add",
+   "undecoratedNameEx(0x87FE)": "_g_add",
    "virtualAddress": 16384
   },
   "Exe/PublicSymbol:_g_variadic": {
@@ -6492,6 +6622,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_g_variadic",
    "undecoratedNameEx(0)": "_g_variadic",
+   "undecoratedNameEx(0x1000)": "_g_variadic",
+   "undecoratedNameEx(0x87FE)": "_g_variadic",
    "virtualAddress": 16392
   },
   "Exe/PublicSymbol:_start": {
@@ -6516,6 +6648,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_start",
    "undecoratedNameEx(0)": "_start",
+   "undecoratedNameEx(0x1000)": "_start",
+   "undecoratedNameEx(0x87FE)": "_start",
    "virtualAddress": 4224
   },
   "Exe/Typedef:AddFn": {
@@ -7223,16 +7357,16 @@
   "000015f1": {"addr.Null": "Function:Right::~Right@5616", "addressForRVA": "1:1521", "rva.Block": "!S_FALSE", "rva.Data": "!S_FALSE", "rva.Function": "Function:Right::~Right@5616", "rva.Null": "Function:Right::~Right@5616", "rva.PublicSymbol": "PublicSymbol:__ZN5RightD2Ev@5616", "rvaEx.Null": "Function:Right::~Right@5616 disp=1", "va.Null": "Function:Right::~Right@5616"},
   "00001600": {"addr.Null": "Function:Right::~Right@5632", "addressForRVA": "1:1536", "findLinesByRVA": [{"addressOffset": 1536, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "length": 36, "lineNumber": 25, "lineNumberEnd": 25, "relativeVirtualAddress": 5632, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 238, "statement": 0, "virtualAddress": 5632}], "rva.Block": "!S_FALSE", "rva.Data": "!S_FALSE", "rva.Function": "Function:Right::~Right@5632", "rva.Null": "Function:Right::~Right@5632", "rva.PublicSymbol": "PublicSymbol:__ZN5RightD0Ev@5632", "rvaEx.Null": "Function:Right::~Right@5632 disp=0", "va.Null": "Function:Right::~Right@5632"},
   "00001601": {"addr.Null": "Function:Right::~Right@5632", "addressForRVA": "1:1537", "rva.Block": "!S_FALSE", "rva.Data": "!S_FALSE", "rva.Function": "Function:Right::~Right@5632", "rva.Null": "Function:Right::~Right@5632", "rva.PublicSymbol": "PublicSymbol:__ZN5RightD0Ev@5632", "rvaEx.Null": "Function:Right::~Right@5632 disp=1", "va.Null": "Function:Right::~Right@5632"},
-  "00002008": {"addr.Null": "Data:Both::_vtable$@8200", "addressForRVA": "2:8", "findLinesByRVA": [], "rva.Block": "!S_FALSE", "rva.Data": "Data:Both::_vtable$@8200", "rva.Function": "!S_FALSE", "rva.Null": "Data:Both::_vtable$@8200", "rva.PublicSymbol": "PublicSymbol:__ZTV4Both@8200", "rvaEx.Null": "Data:Both::_vtable$@8200 disp=0", "va.Null": "Data:Both::_vtable$@8200"},
-  "00002009": {"addr.Null": "Data:Both::_vtable$@8200", "addressForRVA": "2:9", "rva.Block": "!S_FALSE", "rva.Data": "Data:Both::_vtable$@8200", "rva.Function": "!S_FALSE", "rva.Null": "Data:Both::_vtable$@8200", "rva.PublicSymbol": "PublicSymbol:__ZTV4Both@8200", "rvaEx.Null": "Data:Both::_vtable$@8200 disp=1", "va.Null": "Data:Both::_vtable$@8200"},
-  "0000203c": {"addr.Null": "Data:Left::_vtable$@8252", "addressForRVA": "2:60", "findLinesByRVA": [], "rva.Block": "!S_FALSE", "rva.Data": "Data:Left::_vtable$@8252", "rva.Function": "!S_FALSE", "rva.Null": "Data:Left::_vtable$@8252", "rva.PublicSymbol": "PublicSymbol:__ZTV4Left@8252", "rvaEx.Null": "Data:Left::_vtable$@8252 disp=0", "va.Null": "Data:Left::_vtable$@8252"},
-  "0000203d": {"addr.Null": "Data:Left::_vtable$@8252", "addressForRVA": "2:61", "rva.Block": "!S_FALSE", "rva.Data": "Data:Left::_vtable$@8252", "rva.Function": "!S_FALSE", "rva.Null": "Data:Left::_vtable$@8252", "rva.PublicSymbol": "PublicSymbol:__ZTV4Left@8252", "rvaEx.Null": "Data:Left::_vtable$@8252 disp=1", "va.Null": "Data:Left::_vtable$@8252"},
-  "00002050": {"addr.Null": "Data:Right::_vtable$@8272", "addressForRVA": "2:80", "findLinesByRVA": [], "rva.Block": "!S_FALSE", "rva.Data": "Data:Right::_vtable$@8272", "rva.Function": "!S_FALSE", "rva.Null": "Data:Right::_vtable$@8272", "rva.PublicSymbol": "PublicSymbol:__ZTV5Right@8272", "rvaEx.Null": "Data:Right::_vtable$@8272 disp=0", "va.Null": "Data:Right::_vtable$@8272"},
-  "00002051": {"addr.Null": "Data:Right::_vtable$@8272", "addressForRVA": "2:81", "rva.Block": "!S_FALSE", "rva.Data": "Data:Right::_vtable$@8272", "rva.Function": "!S_FALSE", "rva.Null": "Data:Right::_vtable$@8272", "rva.PublicSymbol": "PublicSymbol:__ZTV5Right@8272", "rvaEx.Null": "Data:Right::_vtable$@8272 disp=1", "va.Null": "Data:Right::_vtable$@8272"},
-  "00002068": {"addr.Null": "PublicSymbol:___CTOR_LIST__@8296", "addressForRVA": "2:104", "findLinesByRVA": [], "rva.Block": "!S_FALSE", "rva.Data": "Data:Right::_vtable$@8272", "rva.Function": "!S_FALSE", "rva.Null": "PublicSymbol:___CTOR_LIST__@8296", "rva.PublicSymbol": "PublicSymbol:___CTOR_LIST__@8296", "rvaEx.Null": "PublicSymbol:___CTOR_LIST__@8296 disp=0", "va.Null": "PublicSymbol:___CTOR_LIST__@8296"},
-  "00002069": {"addr.Null": "PublicSymbol:___CTOR_LIST__@8296", "addressForRVA": "2:105", "rva.Block": "!S_FALSE", "rva.Data": "Data:Right::_vtable$@8272", "rva.Function": "!S_FALSE", "rva.Null": "PublicSymbol:___CTOR_LIST__@8296", "rva.PublicSymbol": "PublicSymbol:___CTOR_LIST__@8296", "rvaEx.Null": "PublicSymbol:___CTOR_LIST__@8296 disp=1", "va.Null": "PublicSymbol:___CTOR_LIST__@8296"},
-  "00002070": {"addr.Null": "PublicSymbol:___DTOR_LIST__@8304", "addressForRVA": "2:112", "findLinesByRVA": [], "rva.Block": "!S_FALSE", "rva.Data": "Data:Right::_vtable$@8272", "rva.Function": "!S_FALSE", "rva.Null": "PublicSymbol:___DTOR_LIST__@8304", "rva.PublicSymbol": "PublicSymbol:___DTOR_LIST__@8304", "rvaEx.Null": "PublicSymbol:___DTOR_LIST__@8304 disp=0", "va.Null": "PublicSymbol:___DTOR_LIST__@8304"},
-  "00002071": {"addr.Null": "PublicSymbol:___DTOR_LIST__@8304", "addressForRVA": "2:113", "rva.Block": "!S_FALSE", "rva.Data": "Data:Right::_vtable$@8272", "rva.Function": "!S_FALSE", "rva.Null": "PublicSymbol:___DTOR_LIST__@8304", "rva.PublicSymbol": "PublicSymbol:___DTOR_LIST__@8304", "rvaEx.Null": "PublicSymbol:___DTOR_LIST__@8304 disp=1", "va.Null": "PublicSymbol:___DTOR_LIST__@8304"},
+  "00002008": {"addr.Null": "Data:Both::__clang_vtable@8200", "addressForRVA": "2:8", "findLinesByRVA": [], "rva.Block": "!S_FALSE", "rva.Data": "Data:Both::__clang_vtable@8200", "rva.Function": "!S_FALSE", "rva.Null": "Data:Both::__clang_vtable@8200", "rva.PublicSymbol": "PublicSymbol:__ZTV4Both@8200", "rvaEx.Null": "Data:Both::__clang_vtable@8200 disp=0", "va.Null": "Data:Both::__clang_vtable@8200"},
+  "00002009": {"addr.Null": "Data:Both::__clang_vtable@8200", "addressForRVA": "2:9", "rva.Block": "!S_FALSE", "rva.Data": "Data:Both::__clang_vtable@8200", "rva.Function": "!S_FALSE", "rva.Null": "Data:Both::__clang_vtable@8200", "rva.PublicSymbol": "PublicSymbol:__ZTV4Both@8200", "rvaEx.Null": "Data:Both::__clang_vtable@8200 disp=1", "va.Null": "Data:Both::__clang_vtable@8200"},
+  "0000203c": {"addr.Null": "Data:Left::__clang_vtable@8252", "addressForRVA": "2:60", "findLinesByRVA": [], "rva.Block": "!S_FALSE", "rva.Data": "Data:Left::__clang_vtable@8252", "rva.Function": "!S_FALSE", "rva.Null": "Data:Left::__clang_vtable@8252", "rva.PublicSymbol": "PublicSymbol:__ZTV4Left@8252", "rvaEx.Null": "Data:Left::__clang_vtable@8252 disp=0", "va.Null": "Data:Left::__clang_vtable@8252"},
+  "0000203d": {"addr.Null": "Data:Left::__clang_vtable@8252", "addressForRVA": "2:61", "rva.Block": "!S_FALSE", "rva.Data": "Data:Left::__clang_vtable@8252", "rva.Function": "!S_FALSE", "rva.Null": "Data:Left::__clang_vtable@8252", "rva.PublicSymbol": "PublicSymbol:__ZTV4Left@8252", "rvaEx.Null": "Data:Left::__clang_vtable@8252 disp=1", "va.Null": "Data:Left::__clang_vtable@8252"},
+  "00002050": {"addr.Null": "Data:Right::__clang_vtable@8272", "addressForRVA": "2:80", "findLinesByRVA": [], "rva.Block": "!S_FALSE", "rva.Data": "Data:Right::__clang_vtable@8272", "rva.Function": "!S_FALSE", "rva.Null": "Data:Right::__clang_vtable@8272", "rva.PublicSymbol": "PublicSymbol:__ZTV5Right@8272", "rvaEx.Null": "Data:Right::__clang_vtable@8272 disp=0", "va.Null": "Data:Right::__clang_vtable@8272"},
+  "00002051": {"addr.Null": "Data:Right::__clang_vtable@8272", "addressForRVA": "2:81", "rva.Block": "!S_FALSE", "rva.Data": "Data:Right::__clang_vtable@8272", "rva.Function": "!S_FALSE", "rva.Null": "Data:Right::__clang_vtable@8272", "rva.PublicSymbol": "PublicSymbol:__ZTV5Right@8272", "rvaEx.Null": "Data:Right::__clang_vtable@8272 disp=1", "va.Null": "Data:Right::__clang_vtable@8272"},
+  "00002068": {"addr.Null": "PublicSymbol:___CTOR_LIST__@8296", "addressForRVA": "2:104", "findLinesByRVA": [], "rva.Block": "!S_FALSE", "rva.Data": "Data:Right::__clang_vtable@8272", "rva.Function": "!S_FALSE", "rva.Null": "PublicSymbol:___CTOR_LIST__@8296", "rva.PublicSymbol": "PublicSymbol:___CTOR_LIST__@8296", "rvaEx.Null": "PublicSymbol:___CTOR_LIST__@8296 disp=0", "va.Null": "PublicSymbol:___CTOR_LIST__@8296"},
+  "00002069": {"addr.Null": "PublicSymbol:___CTOR_LIST__@8296", "addressForRVA": "2:105", "rva.Block": "!S_FALSE", "rva.Data": "Data:Right::__clang_vtable@8272", "rva.Function": "!S_FALSE", "rva.Null": "PublicSymbol:___CTOR_LIST__@8296", "rva.PublicSymbol": "PublicSymbol:___CTOR_LIST__@8296", "rvaEx.Null": "PublicSymbol:___CTOR_LIST__@8296 disp=1", "va.Null": "PublicSymbol:___CTOR_LIST__@8296"},
+  "00002070": {"addr.Null": "PublicSymbol:___DTOR_LIST__@8304", "addressForRVA": "2:112", "findLinesByRVA": [], "rva.Block": "!S_FALSE", "rva.Data": "Data:Right::__clang_vtable@8272", "rva.Function": "!S_FALSE", "rva.Null": "PublicSymbol:___DTOR_LIST__@8304", "rva.PublicSymbol": "PublicSymbol:___DTOR_LIST__@8304", "rvaEx.Null": "PublicSymbol:___DTOR_LIST__@8304 disp=0", "va.Null": "PublicSymbol:___DTOR_LIST__@8304"},
+  "00002071": {"addr.Null": "PublicSymbol:___DTOR_LIST__@8304", "addressForRVA": "2:113", "rva.Block": "!S_FALSE", "rva.Data": "Data:Right::__clang_vtable@8272", "rva.Function": "!S_FALSE", "rva.Null": "PublicSymbol:___DTOR_LIST__@8304", "rva.PublicSymbol": "PublicSymbol:___DTOR_LIST__@8304", "rvaEx.Null": "PublicSymbol:___DTOR_LIST__@8304 disp=1", "va.Null": "PublicSymbol:___DTOR_LIST__@8304"},
   "00004000": {"addr.Null": "Data:g_add@16384", "addressForRVA": "4:0", "findLinesByRVA": [], "rva.Block": "!S_FALSE", "rva.Data": "Data:g_add@16384", "rva.Function": "!S_FALSE", "rva.Null": "Data:g_add@16384", "rva.PublicSymbol": "PublicSymbol:__data_start__@16384", "rvaEx.Null": "Data:g_add@16384 disp=0", "va.Null": "Data:g_add@16384"},
   "00004001": {"addr.Null": "Data:g_add@16384", "addressForRVA": "4:1", "rva.Block": "!S_FALSE", "rva.Data": "Data:g_add@16384", "rva.Function": "!S_FALSE", "rva.Null": "Data:g_add@16384", "rva.PublicSymbol": "PublicSymbol:__data_start__@16384", "rvaEx.Null": "Data:g_add@16384 disp=1", "va.Null": "Data:g_add@16384"},
   "00004008": {"addr.Null": "Data:g_variadic@16392", "addressForRVA": "4:8", "findLinesByRVA": [], "rva.Block": "!S_FALSE", "rva.Data": "Data:g_variadic@16392", "rva.Function": "!S_FALSE", "rva.Null": "Data:g_variadic@16392", "rva.PublicSymbol": "PublicSymbol:_g_variadic@16392", "rvaEx.Null": "Data:g_variadic@16392 disp=0", "va.Null": "Data:g_variadic@16392"},
@@ -7273,9 +7407,9 @@
   "Function:Right::both@5584",
   "Function:Right::~Right@5616",
   "Function:Right::~Right@5632",
-  "Data:Both::_vtable$@8200",
-  "Data:Left::_vtable$@8252",
-  "Data:Right::_vtable$@8272",
+  "Data:Both::__clang_vtable@8200",
+  "Data:Left::__clang_vtable@8252",
+  "Data:Right::__clang_vtable@8272",
   "PublicSymbol:___CTOR_LIST__@8296",
   "PublicSymbol:___DTOR_LIST__@8304",
   "Data:g_add@16384",
@@ -7284,11 +7418,11 @@
   "PublicSymbol:__bss_end__@16400"
  ],
  "tables": {
-  "FrameData": {"count": 79, "interfaces": []},
+  "FrameData": {"count": 79, "interfaces": [], "items": [{"!E_UNEXPECTED": ["functionParent"], "addressOffset": 0, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4096", "read 3 4089 7", "read 2 1048576 4", "put 20 = 20", "put 21 = 1048580", "put 22 = 1048832", "put 33 = 403769859", "put 30006 = 1048576", "put 30008 = 1048580", "-> S_OK"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4100", "read 3 4093 7", "read 4294967295 1048836 4", "read 4294967295 1048832 4", "put 17 = 17", "put 18 = 18", "put 19 = 19", "put 21 = 1048840", "put 22 = 403769859", "put 23 = 21", "put 24 = 22", "put 33 = 875374111", "put 30006 = 1048832", "-> S_OK"], "functionStart": 1, "lengthBlock": 7, "lengthLocals": 0, "lengthParams": 0, "lengthProlog": 3, "lengthSavedRegisters": 0, "maxStack": 0, "program": "$T0 .raSearch = $eip $T0 ^ = $esp $T0 4 + = ", "relativeVirtualAddress": 4096, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 4096}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 1, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4097", "read 3 4090 7", "-> E_UNEXPECTED"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4100", "read 3 4093 7", "-> E_UNEXPECTED"], "functionStart": 0, "lengthBlock": 6, "lengthLocals": 0, "lengthParams": 0, "lengthProlog": 2, "lengthSavedRegisters": 4, "maxStack": 0, "program": "$T0 .raSearch = $eip $T0 ^ = $esp $T0 4 + = $ebp $T0 4 - ^ = ", "relativeVirtualAddress": 4097, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 4097}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 3, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4099", "read 3 4092 7", "-> E_UNEXPECTED"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4100", "read 3 4093 7", "-> E_UNEXPECTED"], "functionStart": 0, "lengthBlock": 4, "lengthLocals": 0, "lengthParams": 0, "lengthProlog": 0, "lengthSavedRegisters": 4, "maxStack": 0, "program": "$T0 $ebp 4 + = $eip $T0 ^ = $esp $T0 4 + = $ebp $T0 4 - ^ = ", "relativeVirtualAddress": 4099, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 4099}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 16, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4112", "read 3 4105 7", "read 2 1048576 4", "put 20 = 20", "put 21 = 1048580", "put 22 = 1048832", "put 33 = 403769859", "put 30006 = 1048576", "put 30008 = 1048584", "-> S_OK"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4116", "read 3 4109 7", "read 4294967295 1048836 4", "read 4294967295 1048832 4", "put 17 = 17", "put 18 = 18", "put 19 = 19", "put 21 = 1048840", "put 22 = 403769859", "put 23 = 21", "put 24 = 22", "put 33 = 875374111", "put 30006 = 1048832", "-> S_OK"], "functionStart": 1, "lengthBlock": 8, "lengthLocals": 0, "lengthParams": 4, "lengthProlog": 3, "lengthSavedRegisters": 0, "maxStack": 0, "program": "$T0 .raSearch = $eip $T0 ^ = $esp $T0 4 + = ", "relativeVirtualAddress": 4112, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 4112}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 17, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4113", "read 3 4106 7", "-> E_UNEXPECTED"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4116", "read 3 4109 7", "-> E_UNEXPECTED"], "functionStart": 0, "lengthBlock": 7, "lengthLocals": 0, "lengthParams": 4, "lengthProlog": 2, "lengthSavedRegisters": 4, "maxStack": 0, "program": "$T0 .raSearch = $eip $T0 ^ = $esp $T0 4 + = $ebp $T0 4 - ^ = ", "relativeVirtualAddress": 4113, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 4113}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 19, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4115", "read 3 4108 7", "-> E_UNEXPECTED"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4116", "read 3 4109 7", "-> E_UNEXPECTED"], "functionStart": 0, "lengthBlock": 5, "lengthLocals": 0, "lengthParams": 4, "lengthProlog": 0, "lengthSavedRegisters": 4, "maxStack": 0, "program": "$T0 $ebp 4 + = $eip $T0 ^ = $esp $T0 4 + = $ebp $T0 4 - ^ = ", "relativeVirtualAddress": 4115, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 4115}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 32, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4128", "read 3 4121 7", "read 2 1048576 4", "put 20 = 20", "put 21 = 1048580", "put 22 = 1048832", "put 33 = 403769859", "put 30006 = 1048576", "put 30008 = 1048588", "-> S_OK"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4132", "read 3 4125 7", "read 4294967295 1048836 4", "read 4294967295 1048832 4", "put 17 = 17", "put 18 = 18", "put 19 = 19", "put 21 = 1048840", "put 22 = 403769859", "put 23 = 21", "put 24 = 22", "put 33 = 875374111", "put 30006 = 1048832", "-> S_OK"], "functionStart": 1, "lengthBlock": 11, "lengthLocals": 0, "lengthParams": 8, "lengthProlog": 3, "lengthSavedRegisters": 0, "maxStack": 0, "program": "$T0 .raSearch = $eip $T0 ^ = $esp $T0 4 + = ", "relativeVirtualAddress": 4128, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 4128}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 33, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4129", "read 3 4122 7", "-> E_UNEXPECTED"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4132", "read 3 4125 7", "-> E_UNEXPECTED"], "functionStart": 0, "lengthBlock": 10, "lengthLocals": 0, "lengthParams": 8, "lengthProlog": 2, "lengthSavedRegisters": 4, "maxStack": 0, "program": "$T0 .raSearch = $eip $T0 ^ = $esp $T0 4 + = $ebp $T0 4 - ^ = ", "relativeVirtualAddress": 4129, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 4129}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 35, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4131", "read 3 4124 7", "-> E_UNEXPECTED"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4132", "read 3 4125 7", "-> E_UNEXPECTED"], "functionStart": 0, "lengthBlock": 8, "lengthLocals": 0, "lengthParams": 8, "lengthProlog": 0, "lengthSavedRegisters": 4, "maxStack": 0, "program": "$T0 $ebp 4 + = $eip $T0 ^ = $esp $T0 4 + = $ebp $T0 4 - ^ = ", "relativeVirtualAddress": 4131, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 4131}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 48, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4144", "read 3 4137 7", "read 2 1048576 4", "put 20 = 20", "put 21 = 1048580", "put 22 = 1048832", "put 33 = 403769859", "put 30006 = 1048576", "put 30008 = 1048584", "-> S_OK"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4151", "read 3 4144 7", "read 4294967295 1048836 4", "read 4294967295 1048832 4", "put 17 = 17", "put 18 = 18", "put 19 = 19", "put 21 = 1048840", "put 22 = 403769859", "put 23 = 21", "put 24 = 22", "put 33 = 875374111", "put 30006 = 1048832", "-> S_OK"], "functionStart": 1, "lengthBlock": 75, "lengthLocals": 0, "lengthParams": 4, "lengthProlog": 6, "lengthSavedRegisters": 0, "maxStack": 0, "program": "$T0 .raSearch = $eip $T0 ^ = $esp $T0 4 + = ", "relativeVirtualAddress": 4144, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 4144}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 49, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4145", "read 3 4138 7", "-> E_UNEXPECTED"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4151", "read 3 4144 7", "-> E_UNEXPECTED"], "functionStart": 0, "lengthBlock": 74, "lengthLocals": 0, "lengthParams": 4, "lengthProlog": 5, "lengthSavedRegisters": 4, "maxStack": 0, "program": "$T0 .raSearch = $eip $T0 ^ = $esp $T0 4 + = $ebp $T0 4 - ^ = ", "relativeVirtualAddress": 4145, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 4145}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 51, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4147", "read 3 4140 7", "-> E_UNEXPECTED"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4151", "read 3 4144 7", "-> E_UNEXPECTED"], "functionStart": 0, "lengthBlock": 72, "lengthLocals": 0, "lengthParams": 4, "lengthProlog": 3, "lengthSavedRegisters": 4, "maxStack": 0, "program": "$T0 $ebp 4 + = $eip $T0 ^ = $esp $T0 4 + = $ebp $T0 4 - ^ = ", "relativeVirtualAddress": 4147, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 4147}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 128, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4224", "read 3 4217 7", "read 2 1048576 4", "put 20 = 20", "put 21 = 1048580", "put 22 = 1048832", "put 33 = 403769859", "put 30006 = 1048576", "put 30008 = 1048580", "-> S_OK"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4234", "read 3 4227 7", "read 4294967295 1048836 4", "read 4294967295 1048832 4", "put 17 = 17", "put 18 = 18", "put 19 = 19", "put 21 = 1048840", "put 22 = 403769859", "put 23 = 21", "put 24 = 22", "put 33 = 875374111", "put 30006 = 1048832", "-> S_OK"], "functionStart": 1, "lengthBlock": 429, "lengthLocals": 0, "lengthParams": 0, "lengthProlog": 9, "lengthSavedRegisters": 0, "maxStack": 0, "program": "$T0 .raSearch = $eip $T0 ^ = $esp $T0 4 + = ", "relativeVirtualAddress": 4224, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 4224}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 129, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4225", "read 3 4218 7", "-> E_UNEXPECTED"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4234", "read 3 4227 7", "-> E_UNEXPECTED"], "functionStart": 0, "lengthBlock": 428, "lengthLocals": 0, "lengthParams": 0, "lengthProlog": 8, "lengthSavedRegisters": 4, "maxStack": 0, "program": "$T0 .raSearch = $eip $T0 ^ = $esp $T0 4 + = $ebp $T0 4 - ^ = ", "relativeVirtualAddress": 4225, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 4225}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 131, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4227", "read 3 4220 7", "-> E_UNEXPECTED"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4234", "read 3 4227 7", "-> E_UNEXPECTED"], "functionStart": 0, "lengthBlock": 426, "lengthLocals": 0, "lengthParams": 0, "lengthProlog": 6, "lengthSavedRegisters": 4, "maxStack": 0, "program": "$T0 $ebp 4 + = $eip $T0 ^ = $esp $T0 4 + = $ebp $T0 4 - ^ = ", "relativeVirtualAddress": 4227, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 4227}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 134, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4230", "read 3 4223 7", "-> E_UNEXPECTED"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4234", "read 3 4227 7", "-> E_UNEXPECTED"], "functionStart": 0, "lengthBlock": 423, "lengthLocals": 0, "lengthParams": 0, "lengthProlog": 3, "lengthSavedRegisters": 4, "maxStack": 0, "program": "$T1 $ebp 4 + = $T0 $T1 4 - 8 @ = $eip $T1 ^ = $esp $T1 4 + = $ebp $T1 4 - ^ = ", "relativeVirtualAddress": 4230, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 4230}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 560, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4656", "read 3 4649 7", "read 2 1048576 4", "put 20 = 20", "put 21 = 1048580", "put 22 = 1048832", "put 33 = 403769859", "put 30006 = 1048576", "put 30008 = 1048584", "-> S_OK"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4661", "read 3 4654 7", "read 4294967295 1048836 4", "read 4294967295 1048832 4", "put 17 = 17", "put 18 = 18", "put 19 = 19", "put 21 = 1048840", "put 22 = 403769859", "put 23 = 21", "put 24 = 22", "put 33 = 875374111", "put 30006 = 1048832", "-> S_OK"], "functionStart": 1, "lengthBlock": 49, "lengthLocals": 0, "lengthParams": 4, "lengthProlog": 4, "lengthSavedRegisters": 0, "maxStack": 0, "program": "$T0 .raSearch = $eip $T0 ^ = $esp $T0 4 + = ", "relativeVirtualAddress": 4656, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 4656}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 561, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4657", "read 3 4650 7", "-> E_UNEXPECTED"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4661", "read 3 4654 7", "-> E_UNEXPECTED"], "functionStart": 0, "lengthBlock": 48, "lengthLocals": 0, "lengthParams": 4, "lengthProlog": 3, "lengthSavedRegisters": 4, "maxStack": 0, "program": "$T0 .raSearch = $eip $T0 ^ = $esp $T0 4 + = $ebp $T0 4 - ^ = ", "relativeVirtualAddress": 4657, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 4657}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 563, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4659", "read 3 4652 7", "-> E_UNEXPECTED"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4661", "read 3 4654 7", "-> E_UNEXPECTED"], "functionStart": 0, "lengthBlock": 46, "lengthLocals": 0, "lengthParams": 4, "lengthProlog": 1, "lengthSavedRegisters": 4, "maxStack": 0, "program": "$T0 $ebp 4 + = $eip $T0 ^ = $esp $T0 4 + = $ebp $T0 4 - ^ = ", "relativeVirtualAddress": 4659, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 4659}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 624, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4720", "read 3 4713 7", "read 2 1048576 4", "put 20 = 20", "put 21 = 1048580", "put 22 = 1048832", "put 33 = 403769859", "put 30006 = 1048576", "put 30008 = 1048584", "-> S_OK"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4725", "read 3 4718 7", "read 4294967295 1048836 4", "read 4294967295 1048832 4", "put 17 = 17", "put 18 = 18", "put 19 = 19", "put 21 = 1048840", "put 22 = 403769859", "put 23 = 21", "put 24 = 22", "put 33 = 875374111", "put 30006 = 1048832", "-> S_OK"], "functionStart": 1, "lengthBlock": 27, "lengthLocals": 0, "lengthParams": 4, "lengthProlog": 4, "lengthSavedRegisters": 0, "maxStack": 0, "program": "$T0 .raSearch = $eip $T0 ^ = $esp $T0 4 + = ", "relativeVirtualAddress": 4720, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 4720}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 625, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4721", "read 3 4714 7", "-> E_UNEXPECTED"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4725", "read 3 4718 7", "-> E_UNEXPECTED"], "functionStart": 0, "lengthBlock": 26, "lengthLocals": 0, "lengthParams": 4, "lengthProlog": 3, "lengthSavedRegisters": 4, "maxStack": 0, "program": "$T0 .raSearch = $eip $T0 ^ = $esp $T0 4 + = $ebp $T0 4 - ^ = ", "relativeVirtualAddress": 4721, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 4721}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 627, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4723", "read 3 4716 7", "-> E_UNEXPECTED"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4725", "read 3 4718 7", "-> E_UNEXPECTED"], "functionStart": 0, "lengthBlock": 24, "lengthLocals": 0, "lengthParams": 4, "lengthProlog": 1, "lengthSavedRegisters": 4, "maxStack": 0, "program": "$T0 $ebp 4 + = $eip $T0 ^ = $esp $T0 4 + = $ebp $T0 4 - ^ = ", "relativeVirtualAddress": 4723, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 4723}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 656, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4752", "read 3 4745 7", "read 2 1048576 4", "put 20 = 20", "put 21 = 1048580", "put 22 = 1048832", "put 33 = 403769859", "put 30006 = 1048576", "put 30008 = 1048584", "-> S_OK"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4757", "read 3 4750 7", "read 4294967295 1048836 4", "read 4294967295 1048832 4", "put 17 = 17", "put 18 = 18", "put 19 = 19", "put 21 = 1048840", "put 22 = 403769859", "put 23 = 21", "put 24 = 22", "put 33 = 875374111", "put 30006 = 1048832", "-> S_OK"], "functionStart": 1, "lengthBlock": 58, "lengthLocals": 0, "lengthParams": 4, "lengthProlog": 4, "lengthSavedRegisters": 0, "maxStack": 0, "program": "$T0 .raSearch = $eip $T0 ^ = $esp $T0 4 + = ", "relativeVirtualAddress": 4752, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 4752}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 657, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4753", "read 3 4746 7", "-> E_UNEXPECTED"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4757", "read 3 4750 7", "-> E_UNEXPECTED"], "functionStart": 0, "lengthBlock": 57, "lengthLocals": 0, "lengthParams": 4, "lengthProlog": 3, "lengthSavedRegisters": 4, "maxStack": 0, "program": "$T0 .raSearch = $eip $T0 ^ = $esp $T0 4 + = $ebp $T0 4 - ^ = ", "relativeVirtualAddress": 4753, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 4753}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 659, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4755", "read 3 4748 7", "-> E_UNEXPECTED"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4757", "read 3 4750 7", "-> E_UNEXPECTED"], "functionStart": 0, "lengthBlock": 55, "lengthLocals": 0, "lengthParams": 4, "lengthProlog": 1, "lengthSavedRegisters": 4, "maxStack": 0, "program": "$T0 $ebp 4 + = $eip $T0 ^ = $esp $T0 4 + = $ebp $T0 4 - ^ = ", "relativeVirtualAddress": 4755, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 4755}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 720, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4816", "read 3 4809 7", "read 2 1048576 4", "put 20 = 20", "put 21 = 1048580", "put 22 = 1048832", "put 33 = 403769859", "put 30006 = 1048576", "put 30008 = 1048580", "-> S_OK"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4823", "read 3 4816 7", "read 4294967295 1048836 4", "read 4294967295 1048832 4", "put 17 = 17", "put 18 = 18", "put 19 = 19", "put 21 = 1048840", "put 22 = 403769859", "put 23 = 21", "put 24 = 22", "put 33 = 875374111", "put 30006 = 1048832", "-> S_OK"], "functionStart": 1, "lengthBlock": 69, "lengthLocals": 0, "lengthParams": 0, "lengthProlog": 6, "lengthSavedRegisters": 0, "maxStack": 0, "program": "$T0 .raSearch = $eip $T0 ^ = $esp $T0 4 + = ", "relativeVirtualAddress": 4816, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 4816}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 721, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4817", "read 3 4810 7", "-> E_UNEXPECTED"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4823", "read 3 4816 7", "-> E_UNEXPECTED"], "functionStart": 0, "lengthBlock": 68, "lengthLocals": 0, "lengthParams": 0, "lengthProlog": 5, "lengthSavedRegisters": 4, "maxStack": 0, "program": "$T0 .raSearch = $eip $T0 ^ = $esp $T0 4 + = $ebp $T0 4 - ^ = ", "relativeVirtualAddress": 4817, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 4817}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 723, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4819", "read 3 4812 7", "-> E_UNEXPECTED"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4823", "read 3 4816 7", "-> E_UNEXPECTED"], "functionStart": 0, "lengthBlock": 66, "lengthLocals": 0, "lengthParams": 0, "lengthProlog": 3, "lengthSavedRegisters": 4, "maxStack": 0, "program": "$T0 $ebp 4 + = $eip $T0 ^ = $esp $T0 4 + = $ebp $T0 4 - ^ = ", "relativeVirtualAddress": 4819, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 4819}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 800, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4896", "read 3 4889 7", "read 2 1048576 4", "put 20 = 20", "put 21 = 1048580", "put 22 = 1048832", "put 33 = 403769859", "put 30006 = 1048576", "put 30008 = 1048580", "-> S_OK"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4901", "read 3 4894 7", "read 4294967295 1048836 4", "read 4294967295 1048832 4", "put 17 = 17", "put 18 = 18", "put 19 = 19", "put 21 = 1048840", "put 22 = 403769859", "put 23 = 21", "put 24 = 22", "put 33 = 875374111", "put 30006 = 1048832", "-> S_OK"], "functionStart": 1, "lengthBlock": 67, "lengthLocals": 0, "lengthParams": 0, "lengthProlog": 4, "lengthSavedRegisters": 0, "maxStack": 0, "program": "$T0 .raSearch = $eip $T0 ^ = $esp $T0 4 + = ", "relativeVirtualAddress": 4896, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 4896}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 801, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4897", "read 3 4890 7", "-> E_UNEXPECTED"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4901", "read 3 4894 7", "-> E_UNEXPECTED"], "functionStart": 0, "lengthBlock": 66, "lengthLocals": 0, "lengthParams": 0, "lengthProlog": 3, "lengthSavedRegisters": 4, "maxStack": 0, "program": "$T0 .raSearch = $eip $T0 ^ = $esp $T0 4 + = $ebp $T0 4 - ^ = ", "relativeVirtualAddress": 4897, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 4897}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 803, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4899", "read 3 4892 7", "-> E_UNEXPECTED"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4901", "read 3 4894 7", "-> E_UNEXPECTED"], "functionStart": 0, "lengthBlock": 64, "lengthLocals": 0, "lengthParams": 0, "lengthProlog": 1, "lengthSavedRegisters": 4, "maxStack": 0, "program": "$T0 $ebp 4 + = $eip $T0 ^ = $esp $T0 4 + = $ebp $T0 4 - ^ = ", "relativeVirtualAddress": 4899, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 4899}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 880, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4976", "read 3 4969 7", "read 2 1048576 4", "put 20 = 20", "put 21 = 1048580", "put 22 = 1048832", "put 33 = 403769859", "put 30006 = 1048576", "put 30008 = 1048580", "-> S_OK"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4981", "read 3 4974 7", "read 4294967295 1048836 4", "read 4294967295 1048832 4", "put 17 = 17", "put 18 = 18", "put 19 = 19", "put 21 = 1048840", "put 22 = 403769859", "put 23 = 21", "put 24 = 22", "put 33 = 875374111", "put 30006 = 1048832", "-> S_OK"], "functionStart": 1, "lengthBlock": 17, "lengthLocals": 0, "lengthParams": 0, "lengthProlog": 4, "lengthSavedRegisters": 0, "maxStack": 0, "program": "$T0 .raSearch = $eip $T0 ^ = $esp $T0 4 + = ", "relativeVirtualAddress": 4976, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 4976}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 881, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4977", "read 3 4970 7", "-> E_UNEXPECTED"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4981", "read 3 4974 7", "-> E_UNEXPECTED"], "functionStart": 0, "lengthBlock": 16, "lengthLocals": 0, "lengthParams": 0, "lengthProlog": 3, "lengthSavedRegisters": 4, "maxStack": 0, "program": "$T0 .raSearch = $eip $T0 ^ = $esp $T0 4 + = $ebp $T0 4 - ^ = ", "relativeVirtualAddress": 4977, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 4977}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 883, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4979", "read 3 4972 7", "-> E_UNEXPECTED"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 4981", "read 3 4974 7", "-> E_UNEXPECTED"], "functionStart": 0, "lengthBlock": 14, "lengthLocals": 0, "lengthParams": 0, "lengthProlog": 1, "lengthSavedRegisters": 4, "maxStack": 0, "program": "$T0 $ebp 4 + = $eip $T0 ^ = $esp $T0 4 + = $ebp $T0 4 - ^ = ", "relativeVirtualAddress": 4979, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 4979}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 912, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5008", "read 3 5001 7", "read 2 1048576 4", "put 20 = 20", "put 21 = 1048580", "put 22 = 1048832", "put 33 = 403769859", "put 30006 = 1048576", "put 30008 = 1048584", "-> S_OK"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5013", "read 3 5006 7", "read 4294967295 1048836 4", "read 4294967295 1048832 4", "put 17 = 17", "put 18 = 18", "put 19 = 19", "put 21 = 1048840", "put 22 = 403769859", "put 23 = 21", "put 24 = 22", "put 33 = 875374111", "put 30006 = 1048832", "-> S_OK"], "functionStart": 1, "lengthBlock": 34, "lengthLocals": 0, "lengthParams": 4, "lengthProlog": 4, "lengthSavedRegisters": 0, "maxStack": 0, "program": "$T0 .raSearch = $eip $T0 ^ = $esp $T0 4 + = ", "relativeVirtualAddress": 5008, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 5008}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 913, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5009", "read 3 5002 7", "-> E_UNEXPECTED"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5013", "read 3 5006 7", "-> E_UNEXPECTED"], "functionStart": 0, "lengthBlock": 33, "lengthLocals": 0, "lengthParams": 4, "lengthProlog": 3, "lengthSavedRegisters": 4, "maxStack": 0, "program": "$T0 .raSearch = $eip $T0 ^ = $esp $T0 4 + = $ebp $T0 4 - ^ = ", "relativeVirtualAddress": 5009, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 5009}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 915, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5011", "read 3 5004 7", "-> E_UNEXPECTED"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5013", "read 3 5006 7", "-> E_UNEXPECTED"], "functionStart": 0, "lengthBlock": 31, "lengthLocals": 0, "lengthParams": 4, "lengthProlog": 1, "lengthSavedRegisters": 4, "maxStack": 0, "program": "$T0 $ebp 4 + = $eip $T0 ^ = $esp $T0 4 + = $ebp $T0 4 - ^ = ", "relativeVirtualAddress": 5011, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 5011}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 960, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5056", "read 3 5049 7", "read 2 1048576 4", "put 20 = 20", "put 21 = 1048580", "put 22 = 1048832", "put 33 = 403769859", "put 30006 = 1048576", "put 30008 = 1048580", "-> S_OK"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5060", "read 3 5053 7", "read 4294967295 1048836 4", "read 4294967295 1048832 4", "put 17 = 17", "put 18 = 18", "put 19 = 19", "put 21 = 1048840", "put 22 = 403769859", "put 23 = 21", "put 24 = 22", "put 33 = 875374111", "put 30006 = 1048832", "-> S_OK"], "functionStart": 1, "lengthBlock": 10, "lengthLocals": 0, "lengthParams": 0, "lengthProlog": 3, "lengthSavedRegisters": 0, "maxStack": 0, "program": "$T0 .raSearch = $eip $T0 ^ = $esp $T0 4 + = ", "relativeVirtualAddress": 5056, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 5056}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 961, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5057", "read 3 5050 7", "-> E_UNEXPECTED"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5060", "read 3 5053 7", "-> E_UNEXPECTED"], "functionStart": 0, "lengthBlock": 9, "lengthLocals": 0, "lengthParams": 0, "lengthProlog": 2, "lengthSavedRegisters": 4, "maxStack": 0, "program": "$T0 .raSearch = $eip $T0 ^ = $esp $T0 4 + = $ebp $T0 4 - ^ = ", "relativeVirtualAddress": 5057, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 5057}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 963, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5059", "read 3 5052 7", "-> E_UNEXPECTED"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5060", "read 3 5053 7", "-> E_UNEXPECTED"], "functionStart": 0, "lengthBlock": 7, "lengthLocals": 0, "lengthParams": 0, "lengthProlog": 0, "lengthSavedRegisters": 4, "maxStack": 0, "program": "$T0 $ebp 4 + = $eip $T0 ^ = $esp $T0 4 + = $ebp $T0 4 - ^ = ", "relativeVirtualAddress": 5059, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 5059}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 976, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5072", "read 3 5065 7", "read 2 1048576 4", "put 20 = 20", "put 21 = 1048580", "put 22 = 1048832", "put 33 = 403769859", "put 30006 = 1048576", "put 30008 = 1048580", "-> S_OK"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5079", "read 3 5072 7", "read 4294967295 1048836 4", "read 4294967295 1048832 4", "put 17 = 17", "put 18 = 18", "put 19 = 19", "put 21 = 1048840", "put 22 = 403769859", "put 23 = 21", "put 24 = 22", "put 33 = 875374111", "put 30006 = 1048832", "-> S_OK"], "functionStart": 1, "lengthBlock": 36, "lengthLocals": 0, "lengthParams": 0, "lengthProlog": 6, "lengthSavedRegisters": 0, "maxStack": 0, "program": "$T0 .raSearch = $eip $T0 ^ = $esp $T0 4 + = ", "relativeVirtualAddress": 5072, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 5072}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 977, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5073", "read 3 5066 7", "-> E_UNEXPECTED"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5079", "read 3 5072 7", "-> E_UNEXPECTED"], "functionStart": 0, "lengthBlock": 35, "lengthLocals": 0, "lengthParams": 0, "lengthProlog": 5, "lengthSavedRegisters": 4, "maxStack": 0, "program": "$T0 .raSearch = $eip $T0 ^ = $esp $T0 4 + = $ebp $T0 4 - ^ = ", "relativeVirtualAddress": 5073, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 5073}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 979, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5075", "read 3 5068 7", "-> E_UNEXPECTED"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5079", "read 3 5072 7", "-> E_UNEXPECTED"], "functionStart": 0, "lengthBlock": 33, "lengthLocals": 0, "lengthParams": 0, "lengthProlog": 3, "lengthSavedRegisters": 4, "maxStack": 0, "program": "$T0 $ebp 4 + = $eip $T0 ^ = $esp $T0 4 + = $ebp $T0 4 - ^ = ", "relativeVirtualAddress": 5075, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 5075}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 1024, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5120", "read 3 5113 7", "read 2 1048576 4", "put 20 = 20", "put 21 = 1048580", "put 22 = 1048832", "put 33 = 403769859", "put 30006 = 1048576", "put 30008 = 1048580", "-> S_OK"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5125", "read 3 5118 7", "read 4294967295 1048836 4", "read 4294967295 1048832 4", "put 17 = 17", "put 18 = 18", "put 19 = 19", "put 21 = 1048840", "put 22 = 403769859", "put 23 = 21", "put 24 = 22", "put 33 = 875374111", "put 30006 = 1048832", "-> S_OK"], "functionStart": 1, "lengthBlock": 33, "lengthLocals": 0, "lengthParams": 0, "lengthProlog": 4, "lengthSavedRegisters": 0, "maxStack": 0, "program": "$T0 .raSearch = $eip $T0 ^ = $esp $T0 4 + = ", "relativeVirtualAddress": 5120, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 5120}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 1025, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5121", "read 3 5114 7", "-> E_UNEXPECTED"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5125", "read 3 5118 7", "-> E_UNEXPECTED"], "functionStart": 0, "lengthBlock": 32, "lengthLocals": 0, "lengthParams": 0, "lengthProlog": 3, "lengthSavedRegisters": 4, "maxStack": 0, "program": "$T0 .raSearch = $eip $T0 ^ = $esp $T0 4 + = $ebp $T0 4 - ^ = ", "relativeVirtualAddress": 5121, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 5121}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 1027, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5123", "read 3 5116 7", "-> E_UNEXPECTED"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5125", "read 3 5118 7", "-> E_UNEXPECTED"], "functionStart": 0, "lengthBlock": 30, "lengthLocals": 0, "lengthParams": 0, "lengthProlog": 1, "lengthSavedRegisters": 4, "maxStack": 0, "program": "$T0 $ebp 4 + = $eip $T0 ^ = $esp $T0 4 + = $ebp $T0 4 - ^ = ", "relativeVirtualAddress": 5123, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 5123}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 1072, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5168", "read 3 5161 7", "read 2 1048576 4", "put 20 = 20", "put 21 = 1048580", "put 22 = 1048832", "put 33 = 403769859", "put 30006 = 1048576", "put 30008 = 1048580", "-> S_OK"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5173", "read 3 5166 7", "read 4294967295 1048836 4", "read 4294967295 1048832 4", "put 17 = 17", "put 18 = 18", "put 19 = 19", "put 21 = 1048840", "put 22 = 403769859", "put 23 = 21", "put 24 = 22", "put 33 = 875374111", "put 30006 = 1048832", "-> S_OK"], "functionStart": 1, "lengthBlock": 33, "lengthLocals": 0, "lengthParams": 0, "lengthProlog": 4, "lengthSavedRegisters": 0, "maxStack": 0, "program": "$T0 .raSearch = $eip $T0 ^ = $esp $T0 4 + = ", "relativeVirtualAddress": 5168, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 5168}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 1073, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5169", "read 3 5162 7", "-> E_UNEXPECTED"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5173", "read 3 5166 7", "-> E_UNEXPECTED"], "functionStart": 0, "lengthBlock": 32, "lengthLocals": 0, "lengthParams": 0, "lengthProlog": 3, "lengthSavedRegisters": 4, "maxStack": 0, "program": "$T0 .raSearch = $eip $T0 ^ = $esp $T0 4 + = $ebp $T0 4 - ^ = ", "relativeVirtualAddress": 5169, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 5169}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 1075, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5171", "read 3 5164 7", "-> E_UNEXPECTED"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5173", "read 3 5166 7", "-> E_UNEXPECTED"], "functionStart": 0, "lengthBlock": 30, "lengthLocals": 0, "lengthParams": 0, "lengthProlog": 1, "lengthSavedRegisters": 4, "maxStack": 0, "program": "$T0 $ebp 4 + = $eip $T0 ^ = $esp $T0 4 + = $ebp $T0 4 - ^ = ", "relativeVirtualAddress": 5171, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 5171}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 1120, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5216", "read 3 5209 7", "read 2 1048576 4", "put 20 = 20", "put 21 = 1048580", "put 22 = 1048832", "put 33 = 403769859", "put 30006 = 1048576", "put 30008 = 1048580", "-> S_OK"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5221", "read 3 5214 7", "read 4294967295 1048836 4", "read 4294967295 1048832 4", "put 17 = 17", "put 18 = 18", "put 19 = 19", "put 21 = 1048840", "put 22 = 403769859", "put 23 = 21", "put 24 = 22", "put 33 = 875374111", "put 30006 = 1048832", "-> S_OK"], "functionStart": 1, "lengthBlock": 18, "lengthLocals": 0, "lengthParams": 0, "lengthProlog": 4, "lengthSavedRegisters": 0, "maxStack": 0, "program": "$T0 .raSearch = $eip $T0 ^ = $esp $T0 4 + = ", "relativeVirtualAddress": 5216, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 5216}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 1121, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5217", "read 3 5210 7", "-> E_UNEXPECTED"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5221", "read 3 5214 7", "-> E_UNEXPECTED"], "functionStart": 0, "lengthBlock": 17, "lengthLocals": 0, "lengthParams": 0, "lengthProlog": 3, "lengthSavedRegisters": 4, "maxStack": 0, "program": "$T0 .raSearch = $eip $T0 ^ = $esp $T0 4 + = $ebp $T0 4 - ^ = ", "relativeVirtualAddress": 5217, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 5217}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 1123, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5219", "read 3 5212 7", "-> E_UNEXPECTED"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5221", "read 3 5214 7", "-> E_UNEXPECTED"], "functionStart": 0, "lengthBlock": 15, "lengthLocals": 0, "lengthParams": 0, "lengthProlog": 1, "lengthSavedRegisters": 4, "maxStack": 0, "program": "$T0 $ebp 4 + = $eip $T0 ^ = $esp $T0 4 + = $ebp $T0 4 - ^ = ", "relativeVirtualAddress": 5219, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 5219}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 1152, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5248", "read 3 5241 7", "read 2 1048576 4", "put 20 = 20", "put 21 = 1048580", "put 22 = 1048832", "put 33 = 403769859", "put 30006 = 1048576", "put 30008 = 1048580", "-> S_OK"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5255", "read 3 5248 7", "read 4294967295 1048836 4", "read 4294967295 1048832 4", "put 17 = 17", "put 18 = 18", "put 19 = 19", "put 21 = 1048840", "put 22 = 403769859", "put 23 = 21", "put 24 = 22", "put 33 = 875374111", "put 30006 = 1048832", "-> S_OK"], "functionStart": 1, "lengthBlock": 36, "lengthLocals": 0, "lengthParams": 0, "lengthProlog": 6, "lengthSavedRegisters": 0, "maxStack": 0, "program": "$T0 .raSearch = $eip $T0 ^ = $esp $T0 4 + = ", "relativeVirtualAddress": 5248, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 5248}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 1153, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5249", "read 3 5242 7", "-> E_UNEXPECTED"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5255", "read 3 5248 7", "-> E_UNEXPECTED"], "functionStart": 0, "lengthBlock": 35, "lengthLocals": 0, "lengthParams": 0, "lengthProlog": 5, "lengthSavedRegisters": 4, "maxStack": 0, "program": "$T0 .raSearch = $eip $T0 ^ = $esp $T0 4 + = $ebp $T0 4 - ^ = ", "relativeVirtualAddress": 5249, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 5249}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 1155, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5251", "read 3 5244 7", "-> E_UNEXPECTED"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5255", "read 3 5248 7", "-> E_UNEXPECTED"], "functionStart": 0, "lengthBlock": 33, "lengthLocals": 0, "lengthParams": 0, "lengthProlog": 3, "lengthSavedRegisters": 4, "maxStack": 0, "program": "$T0 $ebp 4 + = $eip $T0 ^ = $esp $T0 4 + = $ebp $T0 4 - ^ = ", "relativeVirtualAddress": 5251, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 5251}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 1200, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5296", "read 3 5289 7", "read 2 1048576 4", "put 20 = 20", "put 21 = 1048580", "put 22 = 1048832", "put 33 = 403769859", "put 30006 = 1048576", "put 30008 = 1048580", "-> S_OK"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5301", "read 3 5294 7", "read 4294967295 1048836 4", "read 4294967295 1048832 4", "put 17 = 17", "put 18 = 18", "put 19 = 19", "put 21 = 1048840", "put 22 = 403769859", "put 23 = 21", "put 24 = 22", "put 33 = 875374111", "put 30006 = 1048832", "-> S_OK"], "functionStart": 1, "lengthBlock": 21, "lengthLocals": 0, "lengthParams": 0, "lengthProlog": 4, "lengthSavedRegisters": 0, "maxStack": 0, "program": "$T0 .raSearch = $eip $T0 ^ = $esp $T0 4 + = ", "relativeVirtualAddress": 5296, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 5296}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 1201, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5297", "read 3 5290 7", "-> E_UNEXPECTED"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5301", "read 3 5294 7", "-> E_UNEXPECTED"], "functionStart": 0, "lengthBlock": 20, "lengthLocals": 0, "lengthParams": 0, "lengthProlog": 3, "lengthSavedRegisters": 4, "maxStack": 0, "program": "$T0 .raSearch = $eip $T0 ^ = $esp $T0 4 + = $ebp $T0 4 - ^ = ", "relativeVirtualAddress": 5297, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 5297}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 1203, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5299", "read 3 5292 7", "-> E_UNEXPECTED"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5301", "read 3 5294 7", "-> E_UNEXPECTED"], "functionStart": 0, "lengthBlock": 18, "lengthLocals": 0, "lengthParams": 0, "lengthProlog": 1, "lengthSavedRegisters": 4, "maxStack": 0, "program": "$T0 $ebp 4 + = $eip $T0 ^ = $esp $T0 4 + = $ebp $T0 4 - ^ = ", "relativeVirtualAddress": 5299, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 5299}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 1232, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5328", "read 3 5321 7", "read 2 1048576 4", "put 20 = 20", "put 21 = 1048580", "put 22 = 1048832", "put 33 = 403769859", "put 30006 = 1048576", "put 30008 = 1048580", "-> S_OK"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5333", "read 3 5326 7", "read 4294967295 1048836 4", "read 4294967295 1048832 4", "put 17 = 17", "put 18 = 18", "put 19 = 19", "put 21 = 1048840", "put 22 = 403769859", "put 23 = 21", "put 24 = 22", "put 33 = 875374111", "put 30006 = 1048832", "-> S_OK"], "functionStart": 1, "lengthBlock": 20, "lengthLocals": 0, "lengthParams": 0, "lengthProlog": 4, "lengthSavedRegisters": 0, "maxStack": 0, "program": "$T0 .raSearch = $eip $T0 ^ = $esp $T0 4 + = ", "relativeVirtualAddress": 5328, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 5328}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 1233, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5329", "read 3 5322 7", "-> E_UNEXPECTED"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5333", "read 3 5326 7", "-> E_UNEXPECTED"], "functionStart": 0, "lengthBlock": 19, "lengthLocals": 0, "lengthParams": 0, "lengthProlog": 3, "lengthSavedRegisters": 4, "maxStack": 0, "program": "$T0 .raSearch = $eip $T0 ^ = $esp $T0 4 + = $ebp $T0 4 - ^ = ", "relativeVirtualAddress": 5329, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 5329}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 1235, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5331", "read 3 5324 7", "-> E_UNEXPECTED"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5333", "read 3 5326 7", "-> E_UNEXPECTED"], "functionStart": 0, "lengthBlock": 17, "lengthLocals": 0, "lengthParams": 0, "lengthProlog": 1, "lengthSavedRegisters": 4, "maxStack": 0, "program": "$T0 $ebp 4 + = $eip $T0 ^ = $esp $T0 4 + = $ebp $T0 4 - ^ = ", "relativeVirtualAddress": 5331, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 5331}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 1392, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5488", "read 3 5481 7", "read 2 1048576 4", "put 20 = 20", "put 21 = 1048580", "put 22 = 1048832", "put 33 = 403769859", "put 30006 = 1048576", "put 30008 = 1048580", "-> S_OK"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5493", "read 3 5486 7", "read 4294967295 1048836 4", "read 4294967295 1048832 4", "put 17 = 17", "put 18 = 18", "put 19 = 19", "put 21 = 1048840", "put 22 = 403769859", "put 23 = 21", "put 24 = 22", "put 33 = 875374111", "put 30006 = 1048832", "-> S_OK"], "functionStart": 1, "lengthBlock": 12, "lengthLocals": 0, "lengthParams": 0, "lengthProlog": 4, "lengthSavedRegisters": 0, "maxStack": 0, "program": "$T0 .raSearch = $eip $T0 ^ = $esp $T0 4 + = ", "relativeVirtualAddress": 5488, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 5488}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 1393, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5489", "read 3 5482 7", "-> E_UNEXPECTED"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5493", "read 3 5486 7", "-> E_UNEXPECTED"], "functionStart": 0, "lengthBlock": 11, "lengthLocals": 0, "lengthParams": 0, "lengthProlog": 3, "lengthSavedRegisters": 4, "maxStack": 0, "program": "$T0 .raSearch = $eip $T0 ^ = $esp $T0 4 + = $ebp $T0 4 - ^ = ", "relativeVirtualAddress": 5489, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 5489}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 1395, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5491", "read 3 5484 7", "-> E_UNEXPECTED"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5493", "read 3 5486 7", "-> E_UNEXPECTED"], "functionStart": 0, "lengthBlock": 9, "lengthLocals": 0, "lengthParams": 0, "lengthProlog": 1, "lengthSavedRegisters": 4, "maxStack": 0, "program": "$T0 $ebp 4 + = $eip $T0 ^ = $esp $T0 4 + = $ebp $T0 4 - ^ = ", "relativeVirtualAddress": 5491, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 5491}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 1408, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5504", "read 3 5497 7", "read 2 1048576 4", "put 20 = 20", "put 21 = 1048580", "put 22 = 1048832", "put 33 = 403769859", "put 30006 = 1048576", "put 30008 = 1048580", "-> S_OK"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5511", "read 3 5504 7", "read 4294967295 1048836 4", "read 4294967295 1048832 4", "put 17 = 17", "put 18 = 18", "put 19 = 19", "put 21 = 1048840", "put 22 = 403769859", "put 23 = 21", "put 24 = 22", "put 33 = 875374111", "put 30006 = 1048832", "-> S_OK"], "functionStart": 1, "lengthBlock": 36, "lengthLocals": 0, "lengthParams": 0, "lengthProlog": 6, "lengthSavedRegisters": 0, "maxStack": 0, "program": "$T0 .raSearch = $eip $T0 ^ = $esp $T0 4 + = ", "relativeVirtualAddress": 5504, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 5504}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 1409, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5505", "read 3 5498 7", "-> E_UNEXPECTED"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5511", "read 3 5504 7", "-> E_UNEXPECTED"], "functionStart": 0, "lengthBlock": 35, "lengthLocals": 0, "lengthParams": 0, "lengthProlog": 5, "lengthSavedRegisters": 4, "maxStack": 0, "program": "$T0 .raSearch = $eip $T0 ^ = $esp $T0 4 + = $ebp $T0 4 - ^ = ", "relativeVirtualAddress": 5505, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 5505}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 1411, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5507", "read 3 5500 7", "-> E_UNEXPECTED"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5511", "read 3 5504 7", "-> E_UNEXPECTED"], "functionStart": 0, "lengthBlock": 33, "lengthLocals": 0, "lengthParams": 0, "lengthProlog": 3, "lengthSavedRegisters": 4, "maxStack": 0, "program": "$T0 $ebp 4 + = $eip $T0 ^ = $esp $T0 4 + = $ebp $T0 4 - ^ = ", "relativeVirtualAddress": 5507, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 5507}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 1456, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5552", "read 3 5545 7", "read 2 1048576 4", "put 20 = 20", "put 21 = 1048580", "put 22 = 1048832", "put 33 = 403769859", "put 30006 = 1048576", "put 30008 = 1048580", "-> S_OK"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5557", "read 3 5550 7", "read 4294967295 1048836 4", "read 4294967295 1048832 4", "put 17 = 17", "put 18 = 18", "put 19 = 19", "put 21 = 1048840", "put 22 = 403769859", "put 23 = 21", "put 24 = 22", "put 33 = 875374111", "put 30006 = 1048832", "-> S_OK"], "functionStart": 1, "lengthBlock": 18, "lengthLocals": 0, "lengthParams": 0, "lengthProlog": 4, "lengthSavedRegisters": 0, "maxStack": 0, "program": "$T0 .raSearch = $eip $T0 ^ = $esp $T0 4 + = ", "relativeVirtualAddress": 5552, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 5552}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 1457, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5553", "read 3 5546 7", "-> E_UNEXPECTED"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5557", "read 3 5550 7", "-> E_UNEXPECTED"], "functionStart": 0, "lengthBlock": 17, "lengthLocals": 0, "lengthParams": 0, "lengthProlog": 3, "lengthSavedRegisters": 4, "maxStack": 0, "program": "$T0 .raSearch = $eip $T0 ^ = $esp $T0 4 + = $ebp $T0 4 - ^ = ", "relativeVirtualAddress": 5553, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 5553}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 1459, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5555", "read 3 5548 7", "-> E_UNEXPECTED"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5557", "read 3 5550 7", "-> E_UNEXPECTED"], "functionStart": 0, "lengthBlock": 15, "lengthLocals": 0, "lengthParams": 0, "lengthProlog": 1, "lengthSavedRegisters": 4, "maxStack": 0, "program": "$T0 $ebp 4 + = $eip $T0 ^ = $esp $T0 4 + = $ebp $T0 4 - ^ = ", "relativeVirtualAddress": 5555, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 5555}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 1488, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5584", "read 3 5577 7", "read 2 1048576 4", "put 20 = 20", "put 21 = 1048580", "put 22 = 1048832", "put 33 = 403769859", "put 30006 = 1048576", "put 30008 = 1048580", "-> S_OK"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5589", "read 3 5582 7", "read 4294967295 1048836 4", "read 4294967295 1048832 4", "put 17 = 17", "put 18 = 18", "put 19 = 19", "put 21 = 1048840", "put 22 = 403769859", "put 23 = 21", "put 24 = 22", "put 33 = 875374111", "put 30006 = 1048832", "-> S_OK"], "functionStart": 1, "lengthBlock": 20, "lengthLocals": 0, "lengthParams": 0, "lengthProlog": 4, "lengthSavedRegisters": 0, "maxStack": 0, "program": "$T0 .raSearch = $eip $T0 ^ = $esp $T0 4 + = ", "relativeVirtualAddress": 5584, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 5584}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 1489, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5585", "read 3 5578 7", "-> E_UNEXPECTED"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5589", "read 3 5582 7", "-> E_UNEXPECTED"], "functionStart": 0, "lengthBlock": 19, "lengthLocals": 0, "lengthParams": 0, "lengthProlog": 3, "lengthSavedRegisters": 4, "maxStack": 0, "program": "$T0 .raSearch = $eip $T0 ^ = $esp $T0 4 + = $ebp $T0 4 - ^ = ", "relativeVirtualAddress": 5585, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 5585}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 1491, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5587", "read 3 5580 7", "-> E_UNEXPECTED"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5589", "read 3 5582 7", "-> E_UNEXPECTED"], "functionStart": 0, "lengthBlock": 17, "lengthLocals": 0, "lengthParams": 0, "lengthProlog": 1, "lengthSavedRegisters": 4, "maxStack": 0, "program": "$T0 $ebp 4 + = $eip $T0 ^ = $esp $T0 4 + = $ebp $T0 4 - ^ = ", "relativeVirtualAddress": 5587, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 5587}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 1520, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5616", "read 3 5609 7", "read 2 1048576 4", "put 20 = 20", "put 21 = 1048580", "put 22 = 1048832", "put 33 = 403769859", "put 30006 = 1048576", "put 30008 = 1048580", "-> S_OK"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5621", "read 3 5614 7", "read 4294967295 1048836 4", "read 4294967295 1048832 4", "put 17 = 17", "put 18 = 18", "put 19 = 19", "put 21 = 1048840", "put 22 = 403769859", "put 23 = 21", "put 24 = 22", "put 33 = 875374111", "put 30006 = 1048832", "-> S_OK"], "functionStart": 1, "lengthBlock": 12, "lengthLocals": 0, "lengthParams": 0, "lengthProlog": 4, "lengthSavedRegisters": 0, "maxStack": 0, "program": "$T0 .raSearch = $eip $T0 ^ = $esp $T0 4 + = ", "relativeVirtualAddress": 5616, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 5616}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 1521, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5617", "read 3 5610 7", "-> E_UNEXPECTED"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5621", "read 3 5614 7", "-> E_UNEXPECTED"], "functionStart": 0, "lengthBlock": 11, "lengthLocals": 0, "lengthParams": 0, "lengthProlog": 3, "lengthSavedRegisters": 4, "maxStack": 0, "program": "$T0 .raSearch = $eip $T0 ^ = $esp $T0 4 + = $ebp $T0 4 - ^ = ", "relativeVirtualAddress": 5617, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 5617}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 1523, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5619", "read 3 5612 7", "-> E_UNEXPECTED"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5621", "read 3 5614 7", "-> E_UNEXPECTED"], "functionStart": 0, "lengthBlock": 9, "lengthLocals": 0, "lengthParams": 0, "lengthProlog": 1, "lengthSavedRegisters": 4, "maxStack": 0, "program": "$T0 $ebp 4 + = $eip $T0 ^ = $esp $T0 4 + = $ebp $T0 4 - ^ = ", "relativeVirtualAddress": 5619, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 5619}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 1536, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5632", "read 3 5625 7", "read 2 1048576 4", "put 20 = 20", "put 21 = 1048580", "put 22 = 1048832", "put 33 = 403769859", "put 30006 = 1048576", "put 30008 = 1048580", "-> S_OK"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5639", "read 3 5632 7", "read 4294967295 1048836 4", "read 4294967295 1048832 4", "put 17 = 17", "put 18 = 18", "put 19 = 19", "put 21 = 1048840", "put 22 = 403769859", "put 23 = 21", "put 24 = 22", "put 33 = 875374111", "put 30006 = 1048832", "-> S_OK"], "functionStart": 1, "lengthBlock": 36, "lengthLocals": 0, "lengthParams": 0, "lengthProlog": 6, "lengthSavedRegisters": 0, "maxStack": 0, "program": "$T0 .raSearch = $eip $T0 ^ = $esp $T0 4 + = ", "relativeVirtualAddress": 5632, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 5632}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 1537, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5633", "read 3 5626 7", "-> E_UNEXPECTED"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5639", "read 3 5632 7", "-> E_UNEXPECTED"], "functionStart": 0, "lengthBlock": 35, "lengthLocals": 0, "lengthParams": 0, "lengthProlog": 5, "lengthSavedRegisters": 4, "maxStack": 0, "program": "$T0 .raSearch = $eip $T0 ^ = $esp $T0 4 + = $ebp $T0 4 - ^ = ", "relativeVirtualAddress": 5633, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 5633}, {"!E_UNEXPECTED": ["functionParent"], "addressOffset": 1539, "addressSection": 1, "cplusplusExceptionHandling": 0, "execute": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5635", "read 3 5628 7", "-> E_UNEXPECTED"], "execute(after prolog)": ["get 17 = 17", "get 20 = 20", "get 18 = 18", "get 19 = 19", "get 23 = 21", "get 24 = 22", "get 22 = 1048832", "get 21 = 1048576", "get 33 = 5639", "read 3 5632 7", "-> E_UNEXPECTED"], "functionStart": 0, "lengthBlock": 33, "lengthLocals": 0, "lengthParams": 0, "lengthProlog": 3, "lengthSavedRegisters": 4, "maxStack": 0, "program": "$T0 $ebp 4 + = $eip $T0 ^ = $esp $T0 4 + = $ebp $T0 4 - ^ = ", "relativeVirtualAddress": 5635, "systemExceptionHandling": 0, "type": 4, "virtualAddress": 5635}]},
   "InjectedSource": {"count": 0, "interfaces": ["IDiaEnumInjectedSources"]},
   "InputAssemblyFiles": {"count": 0, "interfaces": ["IDiaEnumInputAssemblyFiles"]},
   "LineNumbers": {"count": 56, "interfaces": ["IDiaEnumLineNumbers"]},
-  "Sections": {"count": 42, "interfaces": ["IDiaEnumSectionContribs"], "items": [{"addressOffset": 0, "addressSection": 1, "code": 1, "code16bit": 0, "comdat": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "dataCrc": 3857138653, "discardable": 0, "execute": 1, "initializedData": 0, "length": 651, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 4096, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 4096, "write": 0}, {"addressOffset": 656, "addressSection": 1, "code": 1, "code16bit": 0, "comdat": 1, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "dataCrc": 4024404928, "discardable": 0, "execute": 1, "initializedData": 0, "length": 58, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 4752, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 4752, "write": 0}, {"addressOffset": 720, "addressSection": 1, "code": 1, "code16bit": 0, "comdat": 1, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "dataCrc": 57418634, "discardable": 0, "execute": 1, "initializedData": 0, "length": 69, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 4816, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 4816, "write": 0}, {"addressOffset": 800, "addressSection": 1, "code": 1, "code16bit": 0, "comdat": 1, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "dataCrc": 3577032030, "discardable": 0, "execute": 1, "initializedData": 0, "length": 67, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 4896, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 4896, "write": 0}, {"addressOffset": 880, "addressSection": 1, "code": 1, "code16bit": 0, "comdat": 1, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "dataCrc": 2160983876, "discardable": 0, "execute": 1, "initializedData": 0, "length": 17, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 4976, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 4976, "write": 0}, {"addressOffset": 912, "addressSection": 1, "code": 1, "code16bit": 0, "comdat": 1, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "dataCrc": 2591997959, "discardable": 0, "execute": 1, "initializedData": 0, "length": 34, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 5008, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 5008, "write": 0}, {"addressOffset": 960, "addressSection": 1, "code": 1, "code16bit": 0, "comdat": 1, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "dataCrc": 2992617684, "discardable": 0, "execute": 1, "initializedData": 0, "length": 10, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 5056, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 5056, "write": 0}, {"addressOffset": 976, "addressSection": 1, "code": 1, "code16bit": 0, "comdat": 1, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "dataCrc": 242304010, "discardable": 0, "execute": 1, "initializedData": 0, "length": 36, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 5072, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 5072, "write": 0}, {"addressOffset": 1024, "addressSection": 1, "code": 1, "code16bit": 0, "comdat": 1, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "dataCrc": 723292406, "discardable": 0, "execute": 1, "initializedData": 0, "length": 33, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 5120, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 5120, "write": 0}, {"addressOffset": 1072, "addressSection": 1, "code": 1, "code16bit": 0, "comdat": 1, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "dataCrc": 311536691, "discardable": 0, "execute": 1, "initializedData": 0, "length": 33, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 5168, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 5168, "write": 0}, {"addressOffset": 1120, "addressSection": 1, "code": 1, "code16bit": 0, "comdat": 1, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "dataCrc": 617829009, "discardable": 0, "execute": 1, "initializedData": 0, "length": 18, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 5216, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 5216, "write": 0}, {"addressOffset": 1152, "addressSection": 1, "code": 1, "code16bit": 0, "comdat": 1, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "dataCrc": 248572274, "discardable": 0, "execute": 1, "initializedData": 0, "length": 36, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 5248, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 5248, "write": 0}, {"addressOffset": 1200, "addressSection": 1, "code": 1, "code16bit": 0, "comdat": 1, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "dataCrc": 3947816665, "discardable": 0, "execute": 1, "initializedData": 0, "length": 21, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 5296, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 5296, "write": 0}, {"addressOffset": 1232, "addressSection": 1, "code": 1, "code16bit": 0, "comdat": 1, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "dataCrc": 1739578693, "discardable": 0, "execute": 1, "initializedData": 0, "length": 20, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 5328, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 5328, "write": 0}, {"addressOffset": 1264, "addressSection": 1, "code": 1, "code16bit": 0, "comdat": 1, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "dataCrc": 4276737847, "discardable": 0, "execute": 1, "initializedData": 0, "length": 22, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 5360, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 5360, "write": 0}, {"addressOffset": 1296, "addressSection": 1, "code": 1, "code16bit": 0, "comdat": 1, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "dataCrc": 4276737847, "discardable": 0, "execute": 1, "initializedData": 0, "length": 22, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 5392, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 5392, "write": 0}, {"addressOffset": 1328, "addressSection": 1, "code": 1, "code16bit": 0, "comdat": 1, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "dataCrc": 4276737847, "discardable": 0, "execute": 1, "initializedData": 0, "length": 22, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 5424, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 5424, "write": 0}, {"addressOffset": 1360, "addressSection": 1, "code": 1, "code16bit": 0, "comdat": 1, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "dataCrc": 4276737847, "discardable": 0, "execute": 1, "initializedData": 0, "length": 22, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 5456, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 5456, "write": 0}, {"addressOffset": 1392, "addressSection": 1, "code": 1, "code16bit": 0, "comdat": 1, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "dataCrc": 84761011, "discardable": 0, "execute": 1, "initializedData": 0, "length": 12, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 5488, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 5488, "write": 0}, {"addressOffset": 1408, "addressSection": 1, "code": 1, "code16bit": 0, "comdat": 1, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "dataCrc": 248572274, "discardable": 0, "execute": 1, "initializedData": 0, "length": 36, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 5504, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 5504, "write": 0}, {"addressOffset": 1456, "addressSection": 1, "code": 1, "code16bit": 0, "comdat": 1, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "dataCrc": 617829009, "discardable": 0, "execute": 1, "initializedData": 0, "length": 18, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 5552, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 5552, "write": 0}, {"addressOffset": 1488, "addressSection": 1, "code": 1, "code16bit": 0, "comdat": 1, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "dataCrc": 2673795732, "discardable": 0, "execute": 1, "initializedData": 0, "length": 20, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 5584, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 5584, "write": 0}, {"addressOffset": 1520, "addressSection": 1, "code": 1, "code16bit": 0, "comdat": 1, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "dataCrc": 84761011, "discardable": 0, "execute": 1, "initializedData": 0, "length": 12, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 5616, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 5616, "write": 0}, {"addressOffset": 1536, "addressSection": 1, "code": 1, "code16bit": 0, "comdat": 1, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "dataCrc": 248572274, "discardable": 0, "execute": 1, "initializedData": 0, "length": 36, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 5632, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 5632, "write": 0}, {"addressOffset": 0, "addressSection": 2, "code": 0, "code16bit": 0, "comdat": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "dataCrc": 180685081, "discardable": 0, "execute": 0, "initializedData": 1, "length": 8, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 8192, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 8192, "write": 0}, {"addressOffset": 8, "addressSection": 2, "code": 0, "code16bit": 0, "comdat": 1, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "dataCrc": 1831207592, "discardable": 0, "execute": 0, "initializedData": 1, "length": 52, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 8200, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 8200, "write": 0}, {"addressOffset": 60, "addressSection": 2, "code": 0, "code16bit": 0, "comdat": 1, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "dataCrc": 0, "discardable": 0, "execute": 0, "initializedData": 1, "length": 20, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 8252, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 8252, "write": 0}, {"addressOffset": 80, "addressSection": 2, "code": 0, "code16bit": 0, "comdat": 1, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "dataCrc": 0, "discardable": 0, "execute": 0, "initializedData": 1, "length": 24, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 8272, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 8272, "write": 0}, {"addressOffset": 104, "addressSection": 2, "code": 0, "code16bit": 0, "comdat": 0, "compiland": "Compiland:* Linker *", "compilandId": 33, "dataCrc": 0, "discardable": 0, "execute": 0, "initializedData": 1, "length": 0, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 8296, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 8296, "write": 0}, {"addressOffset": 104, "addressSection": 2, "code": 0, "code16bit": 0, "comdat": 0, "compiland": "Compiland:* Linker *", "compilandId": 33, "dataCrc": 0, "discardable": 0, "execute": 0, "initializedData": 1, "length": 0, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 8296, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 8296, "write": 0}, {"addressOffset": 104, "addressSection": 2, "code": 0, "code16bit": 0, "comdat": 0, "compiland": "Compiland:* Linker *", "compilandId": 33, "dataCrc": 0, "discardable": 0, "execute": 0, "initializedData": 1, "length": 4, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 8296, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 8296, "write": 0}, {"addressOffset": 108, "addressSection": 2, "code": 0, "code16bit": 0, "comdat": 0, "compiland": "Compiland:* Linker *", "compilandId": 33, "dataCrc": 0, "discardable": 0, "execute": 0, "initializedData": 1, "length": 4, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 8300, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 8300, "write": 0}, {"addressOffset": 112, "addressSection": 2, "code": 0, "code16bit": 0, "comdat": 0, "compiland": "Compiland:* Linker *", "compilandId": 33, "dataCrc": 0, "discardable": 0, "execute": 0, "initializedData": 1, "length": 4, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 8304, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 8304, "write": 0}, {"addressOffset": 116, "addressSection": 2, "code": 0, "code16bit": 0, "comdat": 0, "compiland": "Compiland:* Linker *", "compilandId": 33, "dataCrc": 0, "discardable": 0, "execute": 0, "initializedData": 1, "length": 4, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 8308, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 8308, "write": 0}, {"addressOffset": 0, "addressSection": 3, "code": 0, "code16bit": 0, "comdat": 0, "compiland": "Compiland:* Linker *", "compilandId": 33, "dataCrc": 0, "discardable": 0, "execute": 0, "initializedData": 1, "length": 28, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 12288, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 12288, "write": 0}, {"addressOffset": 28, "addressSection": 3, "code": 0, "code16bit": 0, "comdat": 0, "compiland": "Compiland:* Linker *", "compilandId": 33, "dataCrc": 0, "discardable": 0, "execute": 0, "initializedData": 1, "length": 95, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 12316, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 12316, "write": 0}, {"addressOffset": 0, "addressSection": 4, "code": 0, "code16bit": 0, "comdat": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "dataCrc": 0, "discardable": 0, "execute": 0, "initializedData": 1, "length": 12, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 16384, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 16384, "write": 1}, {"addressOffset": 12, "addressSection": 4, "code": 0, "code16bit": 0, "comdat": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "dataCrc": 4294967295, "discardable": 0, "execute": 0, "initializedData": 0, "length": 4, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 16396, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 1, "virtualAddress": 16396, "write": 1}, {"addressOffset": 0, "addressSection": 5, "code": 0, "code16bit": 0, "comdat": 0, "compiland": "Compiland:* Linker *", "compilandId": 33, "dataCrc": 0, "discardable": 1, "execute": 0, "initializedData": 1, "length": 32, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 20480, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 20480, "write": 0}, {"addressOffset": 32, "addressSection": 5, "code": 0, "code16bit": 0, "comdat": 0, "compiland": "Compiland:* Linker *", "compilandId": 33, "dataCrc": 0, "discardable": 1, "execute": 0, "initializedData": 1, "length": 40, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 20512, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 20512, "write": 0}, {"addressOffset": 72, "addressSection": 5, "code": 0, "code16bit": 0, "comdat": 0, "compiland": "Compiland:* Linker *", "compilandId": 33, "dataCrc": 0, "discardable": 1, "execute": 0, "initializedData": 1, "length": 12, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 20552, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 20552, "write": 0}, {"addressOffset": 0, "addressSection": 6, "code": 0, "code16bit": 0, "comdat": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "dataCrc": 2054028294, "discardable": 1, "execute": 0, "initializedData": 1, "length": 740, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 24576, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 24576, "write": 0}]},
+  "Sections": {"count": 42, "interfaces": ["IDiaEnumSectionContribs"], "items": [{"addressOffset": 0, "addressSection": 1, "code": 1, "code16bit": 0, "comdat": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "dataCrc": 3857138653, "discardable": 0, "execute": 1, "initializedData": 0, "length": 651, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 4096, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 4096, "write": 0}, {"addressOffset": 656, "addressSection": 1, "code": 1, "code16bit": 0, "comdat": 1, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "dataCrc": 4024404928, "discardable": 0, "execute": 1, "initializedData": 0, "length": 58, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 4752, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 4752, "write": 0}, {"addressOffset": 720, "addressSection": 1, "code": 1, "code16bit": 0, "comdat": 1, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "dataCrc": 57418634, "discardable": 0, "execute": 1, "initializedData": 0, "length": 69, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 4816, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 4816, "write": 0}, {"addressOffset": 800, "addressSection": 1, "code": 1, "code16bit": 0, "comdat": 1, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "dataCrc": 3577032030, "discardable": 0, "execute": 1, "initializedData": 0, "length": 67, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 4896, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 4896, "write": 0}, {"addressOffset": 880, "addressSection": 1, "code": 1, "code16bit": 0, "comdat": 1, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "dataCrc": 2160983876, "discardable": 0, "execute": 1, "initializedData": 0, "length": 17, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 4976, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 4976, "write": 0}, {"addressOffset": 912, "addressSection": 1, "code": 1, "code16bit": 0, "comdat": 1, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "dataCrc": 2591997959, "discardable": 0, "execute": 1, "initializedData": 0, "length": 34, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 5008, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 5008, "write": 0}, {"addressOffset": 960, "addressSection": 1, "code": 1, "code16bit": 0, "comdat": 1, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "dataCrc": 2992617684, "discardable": 0, "execute": 1, "initializedData": 0, "length": 10, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 5056, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 5056, "write": 0}, {"addressOffset": 976, "addressSection": 1, "code": 1, "code16bit": 0, "comdat": 1, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "dataCrc": 242304010, "discardable": 0, "execute": 1, "initializedData": 0, "length": 36, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 5072, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 5072, "write": 0}, {"addressOffset": 1024, "addressSection": 1, "code": 1, "code16bit": 0, "comdat": 1, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "dataCrc": 723292406, "discardable": 0, "execute": 1, "initializedData": 0, "length": 33, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 5120, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 5120, "write": 0}, {"addressOffset": 1072, "addressSection": 1, "code": 1, "code16bit": 0, "comdat": 1, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "dataCrc": 311536691, "discardable": 0, "execute": 1, "initializedData": 0, "length": 33, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 5168, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 5168, "write": 0}, {"addressOffset": 1120, "addressSection": 1, "code": 1, "code16bit": 0, "comdat": 1, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "dataCrc": 617829009, "discardable": 0, "execute": 1, "initializedData": 0, "length": 18, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 5216, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 5216, "write": 0}, {"addressOffset": 1152, "addressSection": 1, "code": 1, "code16bit": 0, "comdat": 1, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "dataCrc": 248572274, "discardable": 0, "execute": 1, "initializedData": 0, "length": 36, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 5248, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 5248, "write": 0}, {"addressOffset": 1200, "addressSection": 1, "code": 1, "code16bit": 0, "comdat": 1, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "dataCrc": 3947816665, "discardable": 0, "execute": 1, "initializedData": 0, "length": 21, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 5296, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 5296, "write": 0}, {"addressOffset": 1232, "addressSection": 1, "code": 1, "code16bit": 0, "comdat": 1, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "dataCrc": 1739578693, "discardable": 0, "execute": 1, "initializedData": 0, "length": 20, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 5328, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 5328, "write": 0}, {"addressOffset": 1264, "addressSection": 1, "code": 1, "code16bit": 0, "comdat": 1, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "dataCrc": 4276737847, "discardable": 0, "execute": 1, "initializedData": 0, "length": 22, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 5360, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 5360, "write": 0}, {"addressOffset": 1296, "addressSection": 1, "code": 1, "code16bit": 0, "comdat": 1, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "dataCrc": 4276737847, "discardable": 0, "execute": 1, "initializedData": 0, "length": 22, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 5392, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 5392, "write": 0}, {"addressOffset": 1328, "addressSection": 1, "code": 1, "code16bit": 0, "comdat": 1, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "dataCrc": 4276737847, "discardable": 0, "execute": 1, "initializedData": 0, "length": 22, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 5424, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 5424, "write": 0}, {"addressOffset": 1360, "addressSection": 1, "code": 1, "code16bit": 0, "comdat": 1, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "dataCrc": 4276737847, "discardable": 0, "execute": 1, "initializedData": 0, "length": 22, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 5456, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 5456, "write": 0}, {"addressOffset": 1392, "addressSection": 1, "code": 1, "code16bit": 0, "comdat": 1, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "dataCrc": 84761011, "discardable": 0, "execute": 1, "initializedData": 0, "length": 12, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 5488, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 5488, "write": 0}, {"addressOffset": 1408, "addressSection": 1, "code": 1, "code16bit": 0, "comdat": 1, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "dataCrc": 248572274, "discardable": 0, "execute": 1, "initializedData": 0, "length": 36, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 5504, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 5504, "write": 0}, {"addressOffset": 1456, "addressSection": 1, "code": 1, "code16bit": 0, "comdat": 1, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "dataCrc": 617829009, "discardable": 0, "execute": 1, "initializedData": 0, "length": 18, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 5552, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 5552, "write": 0}, {"addressOffset": 1488, "addressSection": 1, "code": 1, "code16bit": 0, "comdat": 1, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "dataCrc": 2673795732, "discardable": 0, "execute": 1, "initializedData": 0, "length": 20, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 5584, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 5584, "write": 0}, {"addressOffset": 1520, "addressSection": 1, "code": 1, "code16bit": 0, "comdat": 1, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "dataCrc": 84761011, "discardable": 0, "execute": 1, "initializedData": 0, "length": 12, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 5616, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 5616, "write": 0}, {"addressOffset": 1536, "addressSection": 1, "code": 1, "code16bit": 0, "comdat": 1, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "dataCrc": 248572274, "discardable": 0, "execute": 1, "initializedData": 0, "length": 36, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 5632, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 5632, "write": 0}, {"addressOffset": 0, "addressSection": 2, "code": 0, "code16bit": 0, "comdat": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "dataCrc": 180685081, "discardable": 0, "execute": 0, "initializedData": 1, "length": 8, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 8192, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 8192, "write": 0}, {"addressOffset": 8, "addressSection": 2, "code": 0, "code16bit": 0, "comdat": 1, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "dataCrc": 1831207592, "discardable": 0, "execute": 0, "initializedData": 1, "length": 52, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 8200, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 8200, "write": 0}, {"addressOffset": 60, "addressSection": 2, "code": 0, "code16bit": 0, "comdat": 1, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "dataCrc": 0, "discardable": 0, "execute": 0, "initializedData": 1, "length": 20, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 8252, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 8252, "write": 0}, {"addressOffset": 80, "addressSection": 2, "code": 0, "code16bit": 0, "comdat": 1, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "dataCrc": 0, "discardable": 0, "execute": 0, "initializedData": 1, "length": 24, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 8272, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 8272, "write": 0}, {"addressOffset": 104, "addressSection": 2, "code": 0, "code16bit": 0, "comdat": 0, "compiland": "Compiland:* Linker *", "compilandId": 33, "dataCrc": 0, "discardable": 0, "execute": 0, "initializedData": 1, "length": 0, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 8296, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 8296, "write": 0}, {"addressOffset": 104, "addressSection": 2, "code": 0, "code16bit": 0, "comdat": 0, "compiland": "Compiland:* Linker *", "compilandId": 33, "dataCrc": 0, "discardable": 0, "execute": 0, "initializedData": 1, "length": 0, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 8296, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 8296, "write": 0}, {"addressOffset": 104, "addressSection": 2, "code": 0, "code16bit": 0, "comdat": 0, "compiland": "Compiland:* Linker *", "compilandId": 33, "dataCrc": 0, "discardable": 0, "execute": 0, "initializedData": 1, "length": 4, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 8296, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 8296, "write": 0}, {"addressOffset": 108, "addressSection": 2, "code": 0, "code16bit": 0, "comdat": 0, "compiland": "Compiland:* Linker *", "compilandId": 33, "dataCrc": 0, "discardable": 0, "execute": 0, "initializedData": 1, "length": 4, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 8300, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 8300, "write": 0}, {"addressOffset": 112, "addressSection": 2, "code": 0, "code16bit": 0, "comdat": 0, "compiland": "Compiland:* Linker *", "compilandId": 33, "dataCrc": 0, "discardable": 0, "execute": 0, "initializedData": 1, "length": 4, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 8304, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 8304, "write": 0}, {"addressOffset": 116, "addressSection": 2, "code": 0, "code16bit": 0, "comdat": 0, "compiland": "Compiland:* Linker *", "compilandId": 33, "dataCrc": 0, "discardable": 0, "execute": 0, "initializedData": 1, "length": 4, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 8308, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 8308, "write": 0}, {"addressOffset": 0, "addressSection": 3, "code": 0, "code16bit": 0, "comdat": 0, "compiland": "Compiland:* Linker *", "compilandId": 33, "dataCrc": 0, "discardable": 0, "execute": 0, "initializedData": 1, "length": 28, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 12288, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 12288, "write": 0}, {"addressOffset": 28, "addressSection": 3, "code": 0, "code16bit": 0, "comdat": 0, "compiland": "Compiland:* Linker *", "compilandId": 33, "dataCrc": 0, "discardable": 0, "execute": 0, "initializedData": 1, "length": 91, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 12316, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 12316, "write": 0}, {"addressOffset": 0, "addressSection": 4, "code": 0, "code16bit": 0, "comdat": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "dataCrc": 0, "discardable": 0, "execute": 0, "initializedData": 1, "length": 12, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 16384, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 16384, "write": 1}, {"addressOffset": 12, "addressSection": 4, "code": 0, "code16bit": 0, "comdat": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "dataCrc": 4294967295, "discardable": 0, "execute": 0, "initializedData": 0, "length": 4, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 16396, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 1, "virtualAddress": 16396, "write": 1}, {"addressOffset": 0, "addressSection": 5, "code": 0, "code16bit": 0, "comdat": 0, "compiland": "Compiland:* Linker *", "compilandId": 33, "dataCrc": 0, "discardable": 1, "execute": 0, "initializedData": 1, "length": 32, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 20480, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 20480, "write": 0}, {"addressOffset": 32, "addressSection": 5, "code": 0, "code16bit": 0, "comdat": 0, "compiland": "Compiland:* Linker *", "compilandId": 33, "dataCrc": 0, "discardable": 1, "execute": 0, "initializedData": 1, "length": 40, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 20512, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 20512, "write": 0}, {"addressOffset": 72, "addressSection": 5, "code": 0, "code16bit": 0, "comdat": 0, "compiland": "Compiland:* Linker *", "compilandId": 33, "dataCrc": 0, "discardable": 1, "execute": 0, "initializedData": 1, "length": 12, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 20552, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 20552, "write": 0}, {"addressOffset": 0, "addressSection": 6, "code": 0, "code16bit": 0, "comdat": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_x86.obj\\more.cpp.o", "compilandId": 40, "dataCrc": 2054028294, "discardable": 1, "execute": 0, "initializedData": 1, "length": 740, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 24576, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 24576, "write": 0}]},
   "SegmentMap": {"count": 7, "interfaces": []},
   "SourceFiles": {"count": 1, "interfaces": ["IDiaEnumSourceFiles"]},
   "Symbols": {"count": 294, "interfaces": ["IDiaEnumSymbols"]}

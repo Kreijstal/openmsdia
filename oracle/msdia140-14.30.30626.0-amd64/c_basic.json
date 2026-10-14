@@ -9,12 +9,12 @@
    "children": {"ArrayType": 7, "BaseType": 3, "Compiland": 3, "Data": 45, "Enum": 2, "Function": 9, "FunctionArgType": 13, "FunctionType": 8, "PointerType": 7, "PublicSymbol": 19, "Typedef": 11, "UDT": 7},
    "findChildren().count": 134,
    "findChildren().fetched": 134,
-   "guid": "2D501CC0-09E1-B4C6-4C4C-44205044422E",
+   "guid": "B54166DC-6E02-AA01-4C4C-44205044422E",
    "isCTypes": 0,
    "isStripped": 0,
    "machineType": 34404,
    "name": "c_basic",
-   "signature": 760224960,
+   "signature": 3040962268,
    "symIndexId": 1,
    "symTag": 1,
    "symbolsFileName": "<ROOT>\\<CORPUS>\\c_basic.pdb",
@@ -316,7 +316,7 @@
    "symTag": 4,
    "types()": "!S_FALSE",
    "undecoratedNameEx(0)": "!S_FALSE",
-   "value": {"vt": 8, "v": "-lldmingw -entry:start -subsystem:console -out:c_basic.exe -debug -pdb:c_basic.pdb -build-id -WX:no -timestamp:0 -opt:noref -demangle -auto-import -runtime-pseudo-reloc -opt:noicf -machine:x64 -fat-lto-objects:no -pdbsourcepath:C:\\corpus -alternatename:__image_base__=__ImageBase -libpath:<CLANG64>/x86_64-w64-mingw32/lib -libpath:<CLANG64>/x86_64-w64-mingw32/mingw/lib -libpath:<CLANG64>/lib -libpath:<CLANG64>/lib/clang/22/lib/windows"}
+   "value": {"vt": 8, "v": "-lldmingw -entry:start -subsystem:console -out:c_basic.exe -debug -pdb:c_basic.pdb -build-id -WX:no -timestamp:0 -opt:noref -demangle -auto-import -runtime-pseudo-reloc -opt:noicf -machine:x64 -fat-lto-objects:no -pdbsourcepath:C:\\corpus -alternatename:__image_base__=__ImageBase -libpath:<CLANG64>/x86_64-w64-mingw32/lib -libpath:<CLANG64>/x86_64-w64-mingw32/mingw/lib -libpath:<CLANG64>/lib -libpath:<CLANG64>/lib/clang/23/lib/windows"}
   },
   "Exe/Compiland:* Linker */CompilandEnv:cwd": {
    "!E_NOINTERFACE": ["<IDiaSymbol10>", "<IDiaSymbol11>"],
@@ -398,16 +398,16 @@
    "!E_NOINTERFACE": ["<IDiaSymbol10>", "<IDiaSymbol11>"],
    "!E_NOTIMPL": ["unused"],
    "backEndBuild": 0,
-   "backEndMajor": 22018,
+   "backEndMajor": 23013,
    "backEndMinor": 0,
    "backEndQFE": 0,
    "children": {},
-   "compilerName": "clang version 22.1.8 (https://github.com/msys2/MINGW-packages d34feaaa1d0aff624c870910b6f2589aa40d20de)",
+   "compilerName": "clang version 23.1.3 (https://github.com/msys2/MINGW-packages 067886dba977a6b4c97dfedfb25286b5eda55620)",
    "editAndContinueEnabled": 0,
    "findChildren().count": 0,
    "findChildren().fetched": 0,
-   "frontEndBuild": 8,
-   "frontEndMajor": 22,
+   "frontEndBuild": 3,
+   "frontEndMajor": 23,
    "frontEndMinor": 1,
    "frontEndQFE": 0,
    "hasDebugInfo": 1,
@@ -457,7 +457,7 @@
    "symTag": 4,
    "types()": "!S_FALSE",
    "undecoratedNameEx(0)": "!S_FALSE",
-   "value": {"vt": 8, "v": "\"-cc1\" \"-triple\" \"x86_64-w64-windows-gnu\" \"-O0\" \"-emit-obj\" \"-disable-free\" \"-clear-ast-before-backend\" \"-disable-llvm-verifier\" \"-discard-value-names\" \"-mrelocation-model\" \"pic\" \"-pic-level\" \"2\" \"-mframe-pointer=none\" \"-fmath-errno\" \"-ffp-contract=on\" \"-fno-rounding-math\" \"-mconstructor-aliases\" \"-ffreestanding\" \"-fno-sized-deallocation\" \"-fno-use-init-array\" \"-target-cpu\" \"x86-64\" \"-tune-cpu\" \"generic\" \"-gno-column-info\" \"-gcodeview\" \"-debug-info-kind=constructor\" \"-debugger-tuning=gdb\" \"-fdebug-compilation-dir=.\" \"-fcoverage-compilation-dir=<ROOT>/corpus\" \"-resource-dir\" \"<CLANG64>/lib/clang/22\" \"-internal-isystem\" \"<CLANG64>/lib/clang/22/include\" \"-internal-isystem\" \"<CLANG64>/x86_64-w64-mingw32/include\" \"-internal-isystem\" \"<CLANG64>/x86_64-w64-mingw32/usr/include\" \"-internal-isystem\" \"<CLANG64>/include\" \"-std=c11\" \"-ferror-limit\" \"19\" \"-mno-stack-arg-probe\" \"-fno-builtin\" \"-fno-use-cxa-atexit\" \"-fgnuc-version=4.2.1\" \"-fskip-odr-check-in-gmf\" \"-exception-model=seh\" \"-faddrsig\" \"-x\" \"c\""}
+   "value": {"vt": 8, "v": "\"-cc1\" \"-triple\" \"x86_64-w64-windows-gnu\" \"-O0\" \"-emit-obj\" \"-disable-free\" \"-clear-ast-before-backend\" \"-disable-llvm-verifier\" \"-discard-value-names\" \"-mrelocation-model\" \"pic\" \"-pic-level\" \"2\" \"-mframe-pointer=none\" \"-fmath-errno\" \"-ffp-contract=on\" \"-fno-rounding-math\" \"-mconstructor-aliases\" \"-ffreestanding\" \"-fno-sized-deallocation\" \"-fno-use-init-array\" \"-target-cpu\" \"x86-64\" \"-tune-cpu\" \"generic\" \"-gno-column-info\" \"-gcodeview\" \"-debug-info-kind=constructor\" \"-debugger-tuning=gdb\" \"-fdebug-compilation-dir=.\" \"-fcoverage-compilation-dir=<ROOT>/corpus\" \"-resource-dir\" \"<CLANG64>/lib/clang/23\" \"-internal-isystem\" \"<CLANG64>/lib/clang/23/include\" \"-internal-isystem\" \"<CLANG64>/x86_64-w64-mingw32/include\" \"-internal-isystem\" \"<CLANG64>/x86_64-w64-mingw32/usr/include\" \"-internal-isystem\" \"<CLANG64>/include\" \"-std=c11\" \"-ferror-limit\" \"19\" \"-mno-stack-arg-probe\" \"-fno-builtin\" \"-fno-use-cxa-atexit\" \"-fgnuc-version=4.2.1\" \"-fskip-odr-check-in-gmf\" \"-exception-model=seh\" \"-faddrsig\" \"-x\" \"c\""}
   },
   "Exe/Compiland:C:\\corpus\\c_basic.obj\\main.c.o/CompilandEnv:cwd": {
    "!E_NOINTERFACE": ["<IDiaSymbol10>", "<IDiaSymbol11>"],
@@ -623,6 +623,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "static int add(int, int)",
    "undecoratedNameEx(0)": "static int add(int, int)",
+   "undecoratedNameEx(0x1000)": "static int add(int, int)",
+   "undecoratedNameEx(0x87FE)": "static int add(int, int)",
    "virtualAddress": 4656,
    "wasInlined": 0
   },
@@ -740,6 +742,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "static void bump(struct node *, int)",
    "undecoratedNameEx(0)": "static void bump(struct node *, int)",
+   "undecoratedNameEx(0x1000)": "static void bump(struct node *, int)",
+   "undecoratedNameEx(0x87FE)": "static void bump(struct node *, int)",
    "virtualAddress": 4720,
    "wasInlined": 0
   },
@@ -857,6 +861,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "static int count_up(int)",
    "undecoratedNameEx(0)": "static int count_up(int)",
+   "undecoratedNameEx(0x1000)": "static int count_up(int)",
+   "undecoratedNameEx(0x87FE)": "static int count_up(int)",
    "virtualAddress": 4768,
    "wasInlined": 0
   },
@@ -1036,6 +1042,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "static int mul(int, int)",
    "undecoratedNameEx(0)": "static int mul(int, int)",
+   "undecoratedNameEx(0x1000)": "static int mul(int, int)",
+   "undecoratedNameEx(0x87FE)": "static int mul(int, int)",
    "virtualAddress": 4688,
    "wasInlined": 0
   },
@@ -1152,6 +1160,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "start",
    "undecoratedNameEx(0)": "start",
+   "undecoratedNameEx(0x1000)": "start",
+   "undecoratedNameEx(0x87FE)": "start",
    "virtualAddress": 4144,
    "wasInlined": 0
   },
@@ -1286,6 +1296,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "stdcall_fn",
    "undecoratedNameEx(0)": "stdcall_fn",
+   "undecoratedNameEx(0x1000)": "stdcall_fn",
+   "undecoratedNameEx(0x87FE)": "stdcall_fn",
    "virtualAddress": 4096,
    "wasInlined": 0
   },
@@ -1361,16 +1373,16 @@
    "!E_NOINTERFACE": ["<IDiaSymbol10>", "<IDiaSymbol11>"],
    "!E_NOTIMPL": ["unused"],
    "backEndBuild": 0,
-   "backEndMajor": 22018,
+   "backEndMajor": 23013,
    "backEndMinor": 0,
    "backEndQFE": 0,
    "children": {},
-   "compilerName": "clang version 22.1.8 (https://github.com/msys2/MINGW-packages d34feaaa1d0aff624c870910b6f2589aa40d20de)",
+   "compilerName": "clang version 23.1.3 (https://github.com/msys2/MINGW-packages 067886dba977a6b4c97dfedfb25286b5eda55620)",
    "editAndContinueEnabled": 0,
    "findChildren().count": 0,
    "findChildren().fetched": 0,
-   "frontEndBuild": 8,
-   "frontEndMajor": 22,
+   "frontEndBuild": 3,
+   "frontEndMajor": 23,
    "frontEndMinor": 1,
    "frontEndQFE": 0,
    "hasDebugInfo": 1,
@@ -1420,7 +1432,7 @@
    "symTag": 4,
    "types()": "!S_FALSE",
    "undecoratedNameEx(0)": "!S_FALSE",
-   "value": {"vt": 8, "v": "\"-cc1\" \"-triple\" \"x86_64-w64-windows-gnu\" \"-O0\" \"-emit-obj\" \"-disable-free\" \"-clear-ast-before-backend\" \"-disable-llvm-verifier\" \"-discard-value-names\" \"-mrelocation-model\" \"pic\" \"-pic-level\" \"2\" \"-mframe-pointer=none\" \"-fmath-errno\" \"-ffp-contract=on\" \"-fno-rounding-math\" \"-mconstructor-aliases\" \"-ffreestanding\" \"-fno-sized-deallocation\" \"-fno-use-init-array\" \"-target-cpu\" \"x86-64\" \"-tune-cpu\" \"generic\" \"-gno-column-info\" \"-gcodeview\" \"-debug-info-kind=constructor\" \"-debugger-tuning=gdb\" \"-fdebug-compilation-dir=.\" \"-fcoverage-compilation-dir=<ROOT>/corpus\" \"-resource-dir\" \"<CLANG64>/lib/clang/22\" \"-internal-isystem\" \"<CLANG64>/lib/clang/22/include\" \"-internal-isystem\" \"<CLANG64>/x86_64-w64-mingw32/include\" \"-internal-isystem\" \"<CLANG64>/x86_64-w64-mingw32/usr/include\" \"-internal-isystem\" \"<CLANG64>/include\" \"-std=c11\" \"-ferror-limit\" \"19\" \"-mno-stack-arg-probe\" \"-fno-builtin\" \"-fno-use-cxa-atexit\" \"-fgnuc-version=4.2.1\" \"-fskip-odr-check-in-gmf\" \"-exception-model=seh\" \"-faddrsig\" \"-x\" \"c\""}
+   "value": {"vt": 8, "v": "\"-cc1\" \"-triple\" \"x86_64-w64-windows-gnu\" \"-O0\" \"-emit-obj\" \"-disable-free\" \"-clear-ast-before-backend\" \"-disable-llvm-verifier\" \"-discard-value-names\" \"-mrelocation-model\" \"pic\" \"-pic-level\" \"2\" \"-mframe-pointer=none\" \"-fmath-errno\" \"-ffp-contract=on\" \"-fno-rounding-math\" \"-mconstructor-aliases\" \"-ffreestanding\" \"-fno-sized-deallocation\" \"-fno-use-init-array\" \"-target-cpu\" \"x86-64\" \"-tune-cpu\" \"generic\" \"-gno-column-info\" \"-gcodeview\" \"-debug-info-kind=constructor\" \"-debugger-tuning=gdb\" \"-fdebug-compilation-dir=.\" \"-fcoverage-compilation-dir=<ROOT>/corpus\" \"-resource-dir\" \"<CLANG64>/lib/clang/23\" \"-internal-isystem\" \"<CLANG64>/lib/clang/23/include\" \"-internal-isystem\" \"<CLANG64>/x86_64-w64-mingw32/include\" \"-internal-isystem\" \"<CLANG64>/x86_64-w64-mingw32/usr/include\" \"-internal-isystem\" \"<CLANG64>/include\" \"-std=c11\" \"-ferror-limit\" \"19\" \"-mno-stack-arg-probe\" \"-fno-builtin\" \"-fno-use-cxa-atexit\" \"-fgnuc-version=4.2.1\" \"-fskip-odr-check-in-gmf\" \"-exception-model=seh\" \"-faddrsig\" \"-x\" \"c\""}
   },
   "Exe/Compiland:C:\\corpus\\c_basic.obj\\util.c.o/CompilandEnv:cwd": {
    "!E_NOINTERFACE": ["<IDiaSymbol10>", "<IDiaSymbol11>"],
@@ -1563,6 +1575,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "apply",
    "undecoratedNameEx(0)": "apply",
+   "undecoratedNameEx(0x1000)": "apply",
+   "undecoratedNameEx(0x87FE)": "apply",
    "virtualAddress": 4960,
    "wasInlined": 0
   },
@@ -1677,6 +1691,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "area",
    "undecoratedNameEx(0)": "area",
+   "undecoratedNameEx(0x1000)": "area",
+   "undecoratedNameEx(0x87FE)": "area",
    "virtualAddress": 4880,
    "wasInlined": 0
   },
@@ -1791,6 +1807,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "sum_list",
    "undecoratedNameEx(0)": "sum_list",
+   "undecoratedNameEx(0x1000)": "sum_list",
+   "undecoratedNameEx(0x87FE)": "sum_list",
    "virtualAddress": 5024,
    "wasInlined": 0
   },
@@ -3544,6 +3562,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__CTOR_LIST__",
    "undecoratedNameEx(0)": "__CTOR_LIST__",
+   "undecoratedNameEx(0x1000)": "__CTOR_LIST__",
+   "undecoratedNameEx(0x87FE)": "__CTOR_LIST__",
    "virtualAddress": 8256
   },
   "Exe/PublicSymbol:__DTOR_LIST__": {
@@ -3568,6 +3588,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__DTOR_LIST__",
    "undecoratedNameEx(0)": "__DTOR_LIST__",
+   "undecoratedNameEx(0x1000)": "__DTOR_LIST__",
+   "undecoratedNameEx(0x87FE)": "__DTOR_LIST__",
    "virtualAddress": 8272
   },
   "Exe/PublicSymbol:__RUNTIME_PSEUDO_RELOC_LIST_END__": {
@@ -3592,6 +3614,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__RUNTIME_PSEUDO_RELOC_LIST_END__",
    "undecoratedNameEx(0)": "__RUNTIME_PSEUDO_RELOC_LIST_END__",
+   "undecoratedNameEx(0x1000)": "__RUNTIME_PSEUDO_RELOC_LIST_END__",
+   "undecoratedNameEx(0x87FE)": "__RUNTIME_PSEUDO_RELOC_LIST_END__",
    "virtualAddress": 8256
   },
   "Exe/PublicSymbol:__RUNTIME_PSEUDO_RELOC_LIST__": {
@@ -3616,6 +3640,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__RUNTIME_PSEUDO_RELOC_LIST__",
    "undecoratedNameEx(0)": "__RUNTIME_PSEUDO_RELOC_LIST__",
+   "undecoratedNameEx(0x1000)": "__RUNTIME_PSEUDO_RELOC_LIST__",
+   "undecoratedNameEx(0x87FE)": "__RUNTIME_PSEUDO_RELOC_LIST__",
    "virtualAddress": 8256
   },
   "Exe/PublicSymbol:__bss_end__": {
@@ -3640,6 +3666,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__bss_end__",
    "undecoratedNameEx(0)": "__bss_end__",
+   "undecoratedNameEx(0x1000)": "__bss_end__",
+   "undecoratedNameEx(0x87FE)": "__bss_end__",
    "virtualAddress": 16744
   },
   "Exe/PublicSymbol:__bss_start__": {
@@ -3664,6 +3692,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__bss_start__",
    "undecoratedNameEx(0)": "__bss_start__",
+   "undecoratedNameEx(0x1000)": "__bss_start__",
+   "undecoratedNameEx(0x87FE)": "__bss_start__",
    "virtualAddress": 16464
   },
   "Exe/PublicSymbol:__data_end__": {
@@ -3688,6 +3718,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__data_end__",
    "undecoratedNameEx(0)": "__data_end__",
+   "undecoratedNameEx(0x1000)": "__data_end__",
+   "undecoratedNameEx(0x87FE)": "__data_end__",
    "virtualAddress": 16452
   },
   "Exe/PublicSymbol:__data_start__": {
@@ -3712,6 +3744,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__data_start__",
    "undecoratedNameEx(0)": "__data_start__",
+   "undecoratedNameEx(0x1000)": "__data_start__",
+   "undecoratedNameEx(0x87FE)": "__data_start__",
    "virtualAddress": 16384
   },
   "Exe/PublicSymbol:apply": {
@@ -3736,6 +3770,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "apply",
    "undecoratedNameEx(0)": "apply",
+   "undecoratedNameEx(0x1000)": "apply",
+   "undecoratedNameEx(0x87FE)": "apply",
    "virtualAddress": 4960
   },
   "Exe/PublicSymbol:area": {
@@ -3760,6 +3796,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "area",
    "undecoratedNameEx(0)": "area",
+   "undecoratedNameEx(0x1000)": "area",
+   "undecoratedNameEx(0x87FE)": "area",
    "virtualAddress": 4880
   },
   "Exe/PublicSymbol:global_counter": {
@@ -3784,6 +3822,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "global_counter",
    "undecoratedNameEx(0)": "global_counter",
+   "undecoratedNameEx(0x1000)": "global_counter",
+   "undecoratedNameEx(0x87FE)": "global_counter",
    "virtualAddress": 16384
   },
   "Exe/PublicSymbol:global_flags": {
@@ -3808,6 +3848,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "global_flags",
    "undecoratedNameEx(0)": "global_flags",
+   "undecoratedNameEx(0x1000)": "global_flags",
+   "undecoratedNameEx(0x87FE)": "global_flags",
    "virtualAddress": 16432
   },
   "Exe/PublicSymbol:message": {
@@ -3832,6 +3874,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "message",
    "undecoratedNameEx(0)": "message",
+   "undecoratedNameEx(0x1000)": "message",
+   "undecoratedNameEx(0x87FE)": "message",
    "virtualAddress": 16388
   },
   "Exe/PublicSymbol:ratios": {
@@ -3856,6 +3900,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "ratios",
    "undecoratedNameEx(0)": "ratios",
+   "undecoratedNameEx(0x1000)": "ratios",
+   "undecoratedNameEx(0x87FE)": "ratios",
    "virtualAddress": 16400
   },
   "Exe/PublicSymbol:shared_value": {
@@ -3880,6 +3926,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "shared_value",
    "undecoratedNameEx(0)": "shared_value",
+   "undecoratedNameEx(0x1000)": "shared_value",
+   "undecoratedNameEx(0x87FE)": "shared_value",
    "virtualAddress": 16728
   },
   "Exe/PublicSymbol:start": {
@@ -3904,6 +3952,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "start",
    "undecoratedNameEx(0)": "start",
+   "undecoratedNameEx(0x1000)": "start",
+   "undecoratedNameEx(0x87FE)": "start",
    "virtualAddress": 4144
   },
   "Exe/PublicSymbol:stdcall_fn": {
@@ -3928,6 +3978,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "stdcall_fn",
    "undecoratedNameEx(0)": "stdcall_fn",
+   "undecoratedNameEx(0x1000)": "stdcall_fn",
+   "undecoratedNameEx(0x87FE)": "stdcall_fn",
    "virtualAddress": 4096
   },
   "Exe/PublicSymbol:sum_list": {
@@ -3952,6 +4004,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "sum_list",
    "undecoratedNameEx(0)": "sum_list",
+   "undecoratedNameEx(0x1000)": "sum_list",
+   "undecoratedNameEx(0x87FE)": "sum_list",
    "virtualAddress": 5024
   },
   "Exe/PublicSymbol:unit_rect": {
@@ -3976,6 +4030,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "unit_rect",
    "undecoratedNameEx(0)": "unit_rect",
+   "undecoratedNameEx(0x1000)": "unit_rect",
+   "undecoratedNameEx(0x87FE)": "unit_rect",
    "virtualAddress": 8192
   },
   "Exe/Typedef:binop": {

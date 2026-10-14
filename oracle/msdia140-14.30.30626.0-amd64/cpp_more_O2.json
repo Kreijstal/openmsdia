@@ -9,12 +9,12 @@
    "children": {"BaseClass": 2, "Compiland": 2, "Data": 18, "Enum": 3, "Function": 23, "FunctionArgType": 7, "FunctionType": 15, "PointerType": 11, "PublicSymbol": 16, "Typedef": 8, "UDT": 9, "VTable": 2},
    "findChildren().count": 116,
    "findChildren().fetched": 116,
-   "guid": "E2CDA77C-BCE1-4959-4C4C-44205044422E",
+   "guid": "F6D81FA2-E6CC-EB85-4C4C-44205044422E",
    "isCTypes": 0,
    "isStripped": 0,
    "machineType": 34404,
    "name": "cpp_more_O2",
-   "signature": 3805128572,
+   "signature": 4141359010,
    "symIndexId": 1,
    "symTag": 1,
    "symbolsFileName": "<ROOT>\\<CORPUS>\\cpp_more_O2.pdb",
@@ -117,6 +117,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "int left()",
    "undecoratedNameEx(0)": "int left()",
+   "undecoratedNameEx(0x1000)": "int left()",
+   "undecoratedNameEx(0x87FE)": "int left()",
    "virtual": 1,
    "virtualBaseOffset": 0
   },
@@ -144,6 +146,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "void ~Left()",
    "undecoratedNameEx(0)": "void ~Left()",
+   "undecoratedNameEx(0x1000)": "void ~Left()",
+   "undecoratedNameEx(0x87FE)": "void ~Left()",
    "virtual": 1,
    "virtualBaseOffset": 0
   },
@@ -265,6 +269,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "int both()",
    "undecoratedNameEx(0)": "int both()",
+   "undecoratedNameEx(0x1000)": "int both()",
+   "undecoratedNameEx(0x87FE)": "int both()",
    "virtual": 1,
    "virtualBaseOffset": 0
   },
@@ -292,6 +298,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "int right()",
    "undecoratedNameEx(0)": "int right()",
+   "undecoratedNameEx(0x1000)": "int right()",
+   "undecoratedNameEx(0x87FE)": "int right()",
    "virtual": 1,
    "virtualBaseOffset": 0
   },
@@ -319,6 +327,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "void ~Right()",
    "undecoratedNameEx(0)": "void ~Right()",
+   "undecoratedNameEx(0x1000)": "void ~Right()",
+   "undecoratedNameEx(0x87FE)": "void ~Right()",
    "virtual": 1,
    "virtualBaseOffset": 0
   },
@@ -408,7 +418,7 @@
    "symTag": 4,
    "types()": "!S_FALSE",
    "undecoratedNameEx(0)": "!S_FALSE",
-   "value": {"vt": 8, "v": "-lldmingw -entry:start -subsystem:console -out:cpp_more_O2.exe -debug -pdb:cpp_more_O2.pdb -build-id -WX:no -timestamp:0 -opt:noref -demangle -auto-import -runtime-pseudo-reloc -opt:noicf -machine:x64 -fat-lto-objects:no -pdbsourcepath:C:\\corpus -alternatename:__image_base__=__ImageBase -libpath:<CLANG64>/x86_64-w64-mingw32/lib -libpath:<CLANG64>/x86_64-w64-mingw32/mingw/lib -libpath:<CLANG64>/lib -libpath:<CLANG64>/lib/clang/22/lib/windows"}
+   "value": {"vt": 8, "v": "-lldmingw -entry:start -subsystem:console -out:cpp_more_O2.exe -debug -pdb:cpp_more_O2.pdb -build-id -WX:no -timestamp:0 -opt:noref -demangle -auto-import -runtime-pseudo-reloc -opt:noicf -machine:x64 -fat-lto-objects:no -pdbsourcepath:C:\\corpus -alternatename:__image_base__=__ImageBase -libpath:<CLANG64>/x86_64-w64-mingw32/lib -libpath:<CLANG64>/x86_64-w64-mingw32/mingw/lib -libpath:<CLANG64>/lib -libpath:<CLANG64>/lib/clang/23/lib/windows"}
   },
   "Exe/Compiland:* Linker */CompilandEnv:cwd": {
    "!E_NOINTERFACE": ["<IDiaSymbol10>", "<IDiaSymbol11>"],
@@ -490,16 +500,16 @@
    "!E_NOINTERFACE": ["<IDiaSymbol10>", "<IDiaSymbol11>"],
    "!E_NOTIMPL": ["unused"],
    "backEndBuild": 0,
-   "backEndMajor": 22018,
+   "backEndMajor": 23013,
    "backEndMinor": 0,
    "backEndQFE": 0,
    "children": {},
-   "compilerName": "clang version 22.1.8 (https://github.com/msys2/MINGW-packages d34feaaa1d0aff624c870910b6f2589aa40d20de)",
+   "compilerName": "clang version 23.1.3 (https://github.com/msys2/MINGW-packages 067886dba977a6b4c97dfedfb25286b5eda55620)",
    "editAndContinueEnabled": 0,
    "findChildren().count": 0,
    "findChildren().fetched": 0,
-   "frontEndBuild": 8,
-   "frontEndMajor": 22,
+   "frontEndBuild": 3,
+   "frontEndMajor": 23,
    "frontEndMinor": 1,
    "frontEndQFE": 0,
    "hasDebugInfo": 1,
@@ -549,7 +559,7 @@
    "symTag": 4,
    "types()": "!S_FALSE",
    "undecoratedNameEx(0)": "!S_FALSE",
-   "value": {"vt": 8, "v": "\"-cc1\" \"-triple\" \"x86_64-w64-windows-gnu\" \"-O2\" \"-emit-obj\" \"-disable-free\" \"-clear-ast-before-backend\" \"-disable-llvm-verifier\" \"-discard-value-names\" \"-mrelocation-model\" \"pic\" \"-pic-level\" \"2\" \"-mframe-pointer=none\" \"-fmath-errno\" \"-ffp-contract=on\" \"-fno-rounding-math\" \"-mconstructor-aliases\" \"-ffreestanding\" \"-fno-sized-deallocation\" \"-fno-use-init-array\" \"-target-cpu\" \"x86-64\" \"-tune-cpu\" \"generic\" \"-gno-column-info\" \"-gcodeview\" \"-debug-info-kind=constructor\" \"-debugger-tuning=gdb\" \"-fdebug-compilation-dir=.\" \"-fcoverage-compilation-dir=<ROOT>/corpus\" \"-resource-dir\" \"<CLANG64>/lib/clang/22\" \"-internal-isystem\" \"<CLANG64>/x86_64-w64-mingw32/include/c++/v1\" \"-internal-isystem\" \"<CLANG64>/include/c++/v1\" \"-internal-isystem\" \"<CLANG64>/lib/clang/22/include\" \"-internal-isystem\" \"<CLANG64>/x86_64-w64-mingw32/include\" \"-internal-isystem\" \"<CLANG64>/x86_64-w64-mingw32/usr/include\" \"-internal-isystem\" \"<CLANG64>/include\" \"-std=c++17\" \"-fdeprecated-macro\" \"-ferror-limit\" \"19\" \"-mno-stack-arg-probe\" \"-fno-builtin\" \"-fno-rtti\" \"-fno-use-cxa-atexit\" \"-fgnuc-version=4.2.1\" \"-fno-threadsafe-statics\" \"-fskip-odr-check-in-gmf\" \"-exception-model=seh\" \"-vectorize-loops\" \"-vectorize-slp\" \"-faddrsig\" \"-x\" \"c++\""}
+   "value": {"vt": 8, "v": "\"-cc1\" \"-triple\" \"x86_64-w64-windows-gnu\" \"-O2\" \"-emit-obj\" \"-disable-free\" \"-clear-ast-before-backend\" \"-disable-llvm-verifier\" \"-discard-value-names\" \"-mrelocation-model\" \"pic\" \"-pic-level\" \"2\" \"-mframe-pointer=none\" \"-fmath-errno\" \"-ffp-contract=on\" \"-fno-rounding-math\" \"-mconstructor-aliases\" \"-ffreestanding\" \"-fno-sized-deallocation\" \"-fno-use-init-array\" \"-target-cpu\" \"x86-64\" \"-tune-cpu\" \"generic\" \"-gno-column-info\" \"-gcodeview\" \"-debug-info-kind=constructor\" \"-debugger-tuning=gdb\" \"-fdebug-compilation-dir=.\" \"-fcoverage-compilation-dir=<ROOT>/corpus\" \"-resource-dir\" \"<CLANG64>/lib/clang/23\" \"-internal-isystem\" \"<CLANG64>/x86_64-w64-mingw32/include/c++/v1\" \"-internal-isystem\" \"<CLANG64>/include/c++/v1\" \"-internal-isystem\" \"<CLANG64>/lib/clang/23/include\" \"-internal-isystem\" \"<CLANG64>/x86_64-w64-mingw32/include\" \"-internal-isystem\" \"<CLANG64>/x86_64-w64-mingw32/usr/include\" \"-internal-isystem\" \"<CLANG64>/include\" \"-std=c++17\" \"-fdeprecated-macro\" \"-ferror-limit\" \"19\" \"-mno-stack-arg-probe\" \"-fno-builtin\" \"-fno-rtti\" \"-fno-use-cxa-atexit\" \"-fgnuc-version=4.2.1\" \"-fno-threadsafe-statics\" \"-fskip-odr-check-in-gmf\" \"-exception-model=seh\" \"-vectorize-loops\" \"-vectorize-slp\" \"-faddrsig\" \"-x\" \"c++\""}
   },
   "Exe/Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o/CompilandEnv:cwd": {
    "!E_NOINTERFACE": ["<IDiaSymbol10>", "<IDiaSymbol11>"],
@@ -579,7 +589,7 @@
    "symTag": 4,
    "types()": "!S_FALSE",
    "undecoratedNameEx(0)": "!S_FALSE",
-   "value": {"vt": 8, "v": "<ROOT>/build/corpus_new/cpp_more_O2.obj/more.cpp.o"}
+   "value": {"vt": 8, "v": "<ROOT>/<CORPUS>/cpp_more_O2.obj/more.cpp.o"}
   },
   "Exe/Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o/CompilandEnv:pdb": {
    "!E_NOINTERFACE": ["<IDiaSymbol10>", "<IDiaSymbol11>"],
@@ -668,6 +678,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__cxa_pure_virtual",
    "undecoratedNameEx(0)": "__cxa_pure_virtual",
+   "undecoratedNameEx(0x1000)": "__cxa_pure_virtual",
+   "undecoratedNameEx(0x87FE)": "__cxa_pure_virtual",
    "virtualAddress": 4096,
    "wasInlined": 0
   },
@@ -788,6 +800,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "int ns::Counter::add(int)",
    "undecoratedNameEx(0)": "int ns::Counter::add(int)",
+   "undecoratedNameEx(0x1000)": "int ns::Counter::add(int)",
+   "undecoratedNameEx(0x87FE)": "int ns::Counter::add(int)",
    "virtual": 0,
    "virtualAddress": 4592,
    "virtualBaseOffset": 0,
@@ -902,6 +916,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "void operator delete(void *)",
    "undecoratedNameEx(0)": "void operator delete(void *)",
+   "undecoratedNameEx(0x1000)": "void operator delete(void *)",
+   "undecoratedNameEx(0x87FE)": "void operator delete(void *)",
    "virtualAddress": 4112,
    "wasInlined": 0
   },
@@ -1014,6 +1030,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "void operator delete(void *, unsigned __int64)",
    "undecoratedNameEx(0)": "void operator delete(void *, unsigned __int64)",
+   "undecoratedNameEx(0x1000)": "void operator delete(void *, unsigned __int64)",
+   "undecoratedNameEx(0x87FE)": "void operator delete(void *, unsigned __int64)",
    "virtualAddress": 4128,
    "wasInlined": 0
   },
@@ -1128,6 +1146,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "start",
    "undecoratedNameEx(0)": "start",
+   "undecoratedNameEx(0x1000)": "start",
+   "undecoratedNameEx(0x87FE)": "start",
    "virtualAddress": 4480,
    "wasInlined": 0
   },
@@ -1243,12 +1263,14 @@
    "types()": "!S_FALSE",
    "undecoratedName": "",
    "undecoratedNameEx(0)": "",
+   "undecoratedNameEx(0x1000)": "",
+   "undecoratedNameEx(0x87FE)": "",
    "virtualAddress": 4485
   },
   "Exe/Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o/Function:start/InlineSite:ns::Counter::bump": {
    "!E_NOINTERFACE": ["<IDiaSymbol10>", "<IDiaSymbol11>"],
    "!E_NOTIMPL": ["unused"],
-   "addressOffset": 461,
+   "addressOffset": 456,
    "addressSection": 1,
    "children": {},
    "findChildren().count": 0,
@@ -1259,7 +1281,7 @@
    "lexicalParentId": 55,
    "locationType": 1,
    "name": "ns::Counter::bump",
-   "relativeVirtualAddress": 4557,
+   "relativeVirtualAddress": 4552,
    "symIndexId": 65,
    "symTag": 32,
    "type": "FunctionType(2 args -> BaseType(6:4))",
@@ -1267,7 +1289,9 @@
    "types()": "!S_FALSE",
    "undecoratedName": "",
    "undecoratedNameEx(0)": "",
-   "virtualAddress": 4557
+   "undecoratedNameEx(0x1000)": "",
+   "undecoratedNameEx(0x87FE)": "",
+   "virtualAddress": 4552
   },
   "Exe/Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o/Function:start/InlineSite:ns::Counter::count": {
    "!E_NOINTERFACE": ["<IDiaSymbol10>", "<IDiaSymbol11>"],
@@ -1291,6 +1315,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "",
    "undecoratedNameEx(0)": "",
+   "undecoratedNameEx(0x1000)": "",
+   "undecoratedNameEx(0x87FE)": "",
    "virtualAddress": 4561
   },
   "Exe/Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o/Function:sum_ints": {
@@ -1353,6 +1379,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "static int sum_ints(int, <NoType>)",
    "undecoratedNameEx(0)": "static int sum_ints(int, <NoType>)",
+   "undecoratedNameEx(0x1000)": "static int sum_ints(int, <NoType>)",
+   "undecoratedNameEx(0x87FE)": "static int sum_ints(int, <NoType>)",
    "virtualAddress": 4144,
    "wasInlined": 0
   },
@@ -1861,6 +1889,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "void Counter()",
    "undecoratedNameEx(0)": "void Counter()",
+   "undecoratedNameEx(0x1000)": "void Counter()",
+   "undecoratedNameEx(0x87FE)": "void Counter()",
    "virtual": 0,
    "virtualBaseOffset": 0
   },
@@ -1900,6 +1930,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "int both()",
    "undecoratedNameEx(0)": "int both()",
+   "undecoratedNameEx(0x1000)": "int both()",
+   "undecoratedNameEx(0x87FE)": "int both()",
    "virtual": 1,
    "virtualBaseOffset": 0
   },
@@ -1930,6 +1962,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "int bump(ns::Counter::Step)",
    "undecoratedNameEx(0)": "int bump(ns::Counter::Step)",
+   "undecoratedNameEx(0x1000)": "int bump(ns::Counter::Step)",
+   "undecoratedNameEx(0x87FE)": "int bump(ns::Counter::Step)",
    "virtual": 0,
    "virtualBaseOffset": 0
   },
@@ -1960,6 +1994,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "int count()",
    "undecoratedNameEx(0)": "int count()",
+   "undecoratedNameEx(0x1000)": "int count()",
+   "undecoratedNameEx(0x87FE)": "int count()",
    "virtual": 0,
    "virtualBaseOffset": 0
   },
@@ -1990,6 +2026,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "int get()",
    "undecoratedNameEx(0)": "int get()",
+   "undecoratedNameEx(0x1000)": "int get()",
+   "undecoratedNameEx(0x87FE)": "int get()",
    "virtual": 0,
    "virtualBaseOffset": 0
   },
@@ -2032,6 +2070,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "int right()",
    "undecoratedNameEx(0)": "int right()",
+   "undecoratedNameEx(0x1000)": "int right()",
+   "undecoratedNameEx(0x87FE)": "int right()",
    "virtual": 1,
    "virtualBaseOffset": 0
   },
@@ -2904,6 +2944,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_ZN2ns7Counter3addEi",
    "undecoratedNameEx(0)": "_ZN2ns7Counter3addEi",
+   "undecoratedNameEx(0x1000)": "_ZN2ns7Counter3addEi",
+   "undecoratedNameEx(0x87FE)": "_ZN2ns7Counter3addEi",
    "virtualAddress": 4592
   },
   "Exe/PublicSymbol:_ZN2ns7Counter9instancesE": {
@@ -2928,6 +2970,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_ZN2ns7Counter9instancesE",
    "undecoratedNameEx(0)": "_ZN2ns7Counter9instancesE",
+   "undecoratedNameEx(0x1000)": "_ZN2ns7Counter9instancesE",
+   "undecoratedNameEx(0x87FE)": "_ZN2ns7Counter9instancesE",
    "virtualAddress": 16408
   },
   "Exe/PublicSymbol:_ZdlPv": {
@@ -2952,6 +2996,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_ZdlPv",
    "undecoratedNameEx(0)": "_ZdlPv",
+   "undecoratedNameEx(0x1000)": "_ZdlPv",
+   "undecoratedNameEx(0x87FE)": "_ZdlPv",
    "virtualAddress": 4112
   },
   "Exe/PublicSymbol:_ZdlPvy": {
@@ -2976,6 +3022,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_ZdlPvy",
    "undecoratedNameEx(0)": "_ZdlPvy",
+   "undecoratedNameEx(0x1000)": "_ZdlPvy",
+   "undecoratedNameEx(0x87FE)": "_ZdlPvy",
    "virtualAddress": 4128
   },
   "Exe/PublicSymbol:__CTOR_LIST__": {
@@ -3000,6 +3048,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__CTOR_LIST__",
    "undecoratedNameEx(0)": "__CTOR_LIST__",
+   "undecoratedNameEx(0x1000)": "__CTOR_LIST__",
+   "undecoratedNameEx(0x87FE)": "__CTOR_LIST__",
    "virtualAddress": 8192
   },
   "Exe/PublicSymbol:__DTOR_LIST__": {
@@ -3024,6 +3074,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__DTOR_LIST__",
    "undecoratedNameEx(0)": "__DTOR_LIST__",
+   "undecoratedNameEx(0x1000)": "__DTOR_LIST__",
+   "undecoratedNameEx(0x87FE)": "__DTOR_LIST__",
    "virtualAddress": 8208
   },
   "Exe/PublicSymbol:__RUNTIME_PSEUDO_RELOC_LIST_END__": {
@@ -3048,6 +3100,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__RUNTIME_PSEUDO_RELOC_LIST_END__",
    "undecoratedNameEx(0)": "__RUNTIME_PSEUDO_RELOC_LIST_END__",
+   "undecoratedNameEx(0x1000)": "__RUNTIME_PSEUDO_RELOC_LIST_END__",
+   "undecoratedNameEx(0x87FE)": "__RUNTIME_PSEUDO_RELOC_LIST_END__",
    "virtualAddress": 8192
   },
   "Exe/PublicSymbol:__RUNTIME_PSEUDO_RELOC_LIST__": {
@@ -3072,6 +3126,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__RUNTIME_PSEUDO_RELOC_LIST__",
    "undecoratedNameEx(0)": "__RUNTIME_PSEUDO_RELOC_LIST__",
+   "undecoratedNameEx(0x1000)": "__RUNTIME_PSEUDO_RELOC_LIST__",
+   "undecoratedNameEx(0x87FE)": "__RUNTIME_PSEUDO_RELOC_LIST__",
    "virtualAddress": 8192
   },
   "Exe/PublicSymbol:__bss_end__": {
@@ -3096,6 +3152,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__bss_end__",
    "undecoratedNameEx(0)": "__bss_end__",
+   "undecoratedNameEx(0x1000)": "__bss_end__",
+   "undecoratedNameEx(0x87FE)": "__bss_end__",
    "virtualAddress": 16412
   },
   "Exe/PublicSymbol:__bss_start__": {
@@ -3120,6 +3178,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__bss_start__",
    "undecoratedNameEx(0)": "__bss_start__",
+   "undecoratedNameEx(0x1000)": "__bss_start__",
+   "undecoratedNameEx(0x87FE)": "__bss_start__",
    "virtualAddress": 16408
   },
   "Exe/PublicSymbol:__cxa_pure_virtual": {
@@ -3144,6 +3204,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__cxa_pure_virtual",
    "undecoratedNameEx(0)": "__cxa_pure_virtual",
+   "undecoratedNameEx(0x1000)": "__cxa_pure_virtual",
+   "undecoratedNameEx(0x87FE)": "__cxa_pure_virtual",
    "virtualAddress": 4096
   },
   "Exe/PublicSymbol:__data_end__": {
@@ -3168,6 +3230,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__data_end__",
    "undecoratedNameEx(0)": "__data_end__",
+   "undecoratedNameEx(0x1000)": "__data_end__",
+   "undecoratedNameEx(0x87FE)": "__data_end__",
    "virtualAddress": 16408
   },
   "Exe/PublicSymbol:__data_start__": {
@@ -3192,6 +3256,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__data_start__",
    "undecoratedNameEx(0)": "__data_start__",
+   "undecoratedNameEx(0x1000)": "__data_start__",
+   "undecoratedNameEx(0x87FE)": "__data_start__",
    "virtualAddress": 16384
   },
   "Exe/PublicSymbol:g_add": {
@@ -3216,6 +3282,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "g_add",
    "undecoratedNameEx(0)": "g_add",
+   "undecoratedNameEx(0x1000)": "g_add",
+   "undecoratedNameEx(0x87FE)": "g_add",
    "virtualAddress": 16384
   },
   "Exe/PublicSymbol:g_variadic": {
@@ -3240,6 +3308,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "g_variadic",
    "undecoratedNameEx(0)": "g_variadic",
+   "undecoratedNameEx(0x1000)": "g_variadic",
+   "undecoratedNameEx(0x87FE)": "g_variadic",
    "virtualAddress": 16400
   },
   "Exe/PublicSymbol:start": {
@@ -3264,6 +3334,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "start",
    "undecoratedNameEx(0)": "start",
+   "undecoratedNameEx(0x1000)": "start",
+   "undecoratedNameEx(0x87FE)": "start",
    "virtualAddress": 4480
   },
   "Exe/Typedef:AddFn": {
@@ -3819,7 +3891,7 @@
   }
  },
  "lines": {
-  "Exe/Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o|C:\\corpus\\cpp_more\\more.cpp": [{"addressOffset": 0, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 2, "lineNumber": 11, "lineNumberEnd": 11, "relativeVirtualAddress": 4096, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4096}, {"addressOffset": 16, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 1, "lineNumber": 12, "lineNumberEnd": 12, "relativeVirtualAddress": 4112, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4112}, {"addressOffset": 32, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 1, "lineNumber": 13, "lineNumberEnd": 13, "relativeVirtualAddress": 4128, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4128}, {"addressOffset": 48, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 21, "lineNumber": 58, "lineNumberEnd": 58, "relativeVirtualAddress": 4144, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4144}, {"addressOffset": 69, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 4, "lineNumber": 60, "lineNumberEnd": 60, "relativeVirtualAddress": 4165, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4165}, {"addressOffset": 73, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 58, "lineNumber": 62, "lineNumberEnd": 62, "relativeVirtualAddress": 4169, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4169}, {"addressOffset": 131, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 45, "lineNumber": 65, "lineNumberEnd": 65, "relativeVirtualAddress": 4227, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4227}, {"addressOffset": 176, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 29, "lineNumber": 63, "lineNumberEnd": 63, "relativeVirtualAddress": 4272, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4272}, {"addressOffset": 205, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 10, "lineNumber": 62, "lineNumberEnd": 62, "relativeVirtualAddress": 4301, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4301}, {"addressOffset": 215, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 4, "lineNumber": 63, "lineNumberEnd": 63, "relativeVirtualAddress": 4311, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4311}, {"addressOffset": 219, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 37, "lineNumber": 62, "lineNumberEnd": 62, "relativeVirtualAddress": 4315, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4315}, {"addressOffset": 256, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 14, "lineNumber": 63, "lineNumberEnd": 63, "relativeVirtualAddress": 4352, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4352}, {"addressOffset": 270, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 50, "lineNumber": 62, "lineNumberEnd": 62, "relativeVirtualAddress": 4366, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4366}, {"addressOffset": 320, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 39, "lineNumber": 63, "lineNumberEnd": 63, "relativeVirtualAddress": 4416, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4416}, {"addressOffset": 359, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 9, "lineNumber": 62, "lineNumberEnd": 62, "relativeVirtualAddress": 4455, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4455}, {"addressOffset": 368, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 2, "lineNumber": 65, "lineNumberEnd": 65, "relativeVirtualAddress": 4464, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4464}, {"addressOffset": 384, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 5, "lineNumber": 85, "lineNumberEnd": 85, "relativeVirtualAddress": 4480, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4480}, {"addressOffset": 389, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 19, "lineNumber": 89, "lineNumberEnd": 89, "relativeVirtualAddress": 4485, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4485}, {"addressOffset": 408, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 20, "lineNumber": 90, "lineNumberEnd": 90, "relativeVirtualAddress": 4504, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4504}, {"addressOffset": 428, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 33, "lineNumber": 93, "lineNumberEnd": 93, "relativeVirtualAddress": 4524, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4524}, {"addressOffset": 461, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 10, "lineNumber": 94, "lineNumberEnd": 94, "relativeVirtualAddress": 4557, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4557}, {"addressOffset": 471, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 4, "lineNumber": 93, "lineNumberEnd": 93, "relativeVirtualAddress": 4567, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4567}, {"addressOffset": 475, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 6, "lineNumber": 94, "lineNumberEnd": 94, "relativeVirtualAddress": 4571, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4571}, {"addressOffset": 481, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 6, "lineNumber": 96, "lineNumberEnd": 96, "relativeVirtualAddress": 4577, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4577}, {"addressOffset": 496, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 25, "lineNumber": 45, "lineNumberEnd": 45, "relativeVirtualAddress": 4592, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4592}, {"addressOffset": 521, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 1, "lineNumber": 46, "lineNumberEnd": 46, "relativeVirtualAddress": 4617, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4617}]
+  "Exe/Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o|C:\\corpus\\cpp_more\\more.cpp": [{"addressOffset": 0, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 2, "lineNumber": 11, "lineNumberEnd": 11, "relativeVirtualAddress": 4096, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4096}, {"addressOffset": 16, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 1, "lineNumber": 12, "lineNumberEnd": 12, "relativeVirtualAddress": 4112, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4112}, {"addressOffset": 32, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 1, "lineNumber": 13, "lineNumberEnd": 13, "relativeVirtualAddress": 4128, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4128}, {"addressOffset": 48, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 21, "lineNumber": 58, "lineNumberEnd": 58, "relativeVirtualAddress": 4144, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4144}, {"addressOffset": 69, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 4, "lineNumber": 60, "lineNumberEnd": 60, "relativeVirtualAddress": 4165, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4165}, {"addressOffset": 73, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 58, "lineNumber": 62, "lineNumberEnd": 62, "relativeVirtualAddress": 4169, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4169}, {"addressOffset": 131, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 45, "lineNumber": 65, "lineNumberEnd": 65, "relativeVirtualAddress": 4227, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4227}, {"addressOffset": 176, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 29, "lineNumber": 63, "lineNumberEnd": 63, "relativeVirtualAddress": 4272, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4272}, {"addressOffset": 205, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 10, "lineNumber": 62, "lineNumberEnd": 62, "relativeVirtualAddress": 4301, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4301}, {"addressOffset": 215, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 4, "lineNumber": 63, "lineNumberEnd": 63, "relativeVirtualAddress": 4311, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4311}, {"addressOffset": 219, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 37, "lineNumber": 62, "lineNumberEnd": 62, "relativeVirtualAddress": 4315, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4315}, {"addressOffset": 256, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 14, "lineNumber": 63, "lineNumberEnd": 63, "relativeVirtualAddress": 4352, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4352}, {"addressOffset": 270, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 50, "lineNumber": 62, "lineNumberEnd": 62, "relativeVirtualAddress": 4366, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4366}, {"addressOffset": 320, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 39, "lineNumber": 63, "lineNumberEnd": 63, "relativeVirtualAddress": 4416, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4416}, {"addressOffset": 359, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 9, "lineNumber": 62, "lineNumberEnd": 62, "relativeVirtualAddress": 4455, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4455}, {"addressOffset": 368, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 2, "lineNumber": 65, "lineNumberEnd": 65, "relativeVirtualAddress": 4464, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4464}, {"addressOffset": 384, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 5, "lineNumber": 85, "lineNumberEnd": 85, "relativeVirtualAddress": 4480, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4480}, {"addressOffset": 389, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 19, "lineNumber": 89, "lineNumberEnd": 89, "relativeVirtualAddress": 4485, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4485}, {"addressOffset": 408, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 20, "lineNumber": 90, "lineNumberEnd": 90, "relativeVirtualAddress": 4504, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4504}, {"addressOffset": 428, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 28, "lineNumber": 93, "lineNumberEnd": 93, "relativeVirtualAddress": 4524, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4524}, {"addressOffset": 456, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 15, "lineNumber": 94, "lineNumberEnd": 94, "relativeVirtualAddress": 4552, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4552}, {"addressOffset": 471, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 4, "lineNumber": 93, "lineNumberEnd": 93, "relativeVirtualAddress": 4567, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4567}, {"addressOffset": 475, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 6, "lineNumber": 94, "lineNumberEnd": 94, "relativeVirtualAddress": 4571, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4571}, {"addressOffset": 481, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 6, "lineNumber": 96, "lineNumberEnd": 96, "relativeVirtualAddress": 4577, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4577}, {"addressOffset": 496, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 25, "lineNumber": 45, "lineNumberEnd": 45, "relativeVirtualAddress": 4592, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4592}, {"addressOffset": 521, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 1, "lineNumber": 46, "lineNumberEnd": 46, "relativeVirtualAddress": 4617, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4617}]
  },
  "files": {
   "C:\\corpus\\cpp_more\\more.cpp": {"checksum()": "!S_FALSE cb=0", "compilands": "<object>", "compilands()": ["Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o"], "fileName": "C:\\corpus\\cpp_more\\more.cpp", "uniqueId": 151}
@@ -3833,13 +3905,13 @@
   "00001021": {"addr.Null": "Function:operator delete@4128", "addressForRVA": "1:33", "rva.Block": "!S_FALSE", "rva.Data": "!S_FALSE", "rva.Function": "!S_FALSE", "rva.Null": "Function:operator delete@4128", "rva.PublicSymbol": "PublicSymbol:_ZdlPvy@4128", "rvaEx.Null": "Function:operator delete@4128 disp=1", "va.Null": "Function:operator delete@4128"},
   "00001030": {"addr.Null": "Function:sum_ints@4144", "addressForRVA": "1:48", "findLinesByRVA": [{"addressOffset": 48, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 21, "lineNumber": 58, "lineNumberEnd": 58, "relativeVirtualAddress": 4144, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4144}, {"addressOffset": 69, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 4, "lineNumber": 60, "lineNumberEnd": 60, "relativeVirtualAddress": 4165, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4165}, {"addressOffset": 73, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 58, "lineNumber": 62, "lineNumberEnd": 62, "relativeVirtualAddress": 4169, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4169}, {"addressOffset": 131, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 45, "lineNumber": 65, "lineNumberEnd": 65, "relativeVirtualAddress": 4227, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4227}, {"addressOffset": 176, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 29, "lineNumber": 63, "lineNumberEnd": 63, "relativeVirtualAddress": 4272, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4272}, {"addressOffset": 205, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 10, "lineNumber": 62, "lineNumberEnd": 62, "relativeVirtualAddress": 4301, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4301}, {"addressOffset": 215, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 4, "lineNumber": 63, "lineNumberEnd": 63, "relativeVirtualAddress": 4311, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4311}, {"addressOffset": 219, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 37, "lineNumber": 62, "lineNumberEnd": 62, "relativeVirtualAddress": 4315, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4315}, {"addressOffset": 256, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 14, "lineNumber": 63, "lineNumberEnd": 63, "relativeVirtualAddress": 4352, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4352}, {"addressOffset": 270, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 50, "lineNumber": 62, "lineNumberEnd": 62, "relativeVirtualAddress": 4366, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4366}, {"addressOffset": 320, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 39, "lineNumber": 63, "lineNumberEnd": 63, "relativeVirtualAddress": 4416, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4416}, {"addressOffset": 359, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 9, "lineNumber": 62, "lineNumberEnd": 62, "relativeVirtualAddress": 4455, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4455}, {"addressOffset": 368, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 2, "lineNumber": 65, "lineNumberEnd": 65, "relativeVirtualAddress": 4464, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4464}], "rva.Block": "!S_FALSE", "rva.Data": "!S_FALSE", "rva.Function": "Function:sum_ints@4144", "rva.Null": "Function:sum_ints@4144", "rva.PublicSymbol": "PublicSymbol:_ZdlPvy@4128", "rvaEx.Null": "Function:sum_ints@4144 disp=0", "va.Null": "Function:sum_ints@4144"},
   "00001031": {"addr.Null": "Function:sum_ints@4144", "addressForRVA": "1:49", "rva.Block": "!S_FALSE", "rva.Data": "!S_FALSE", "rva.Function": "Function:sum_ints@4144", "rva.Null": "Function:sum_ints@4144", "rva.PublicSymbol": "PublicSymbol:_ZdlPvy@4128", "rvaEx.Null": "Function:sum_ints@4144 disp=1", "va.Null": "Function:sum_ints@4144"},
-  "00001180": {"addr.Null": "Function:start@4480", "addressForRVA": "1:384", "findLinesByRVA": [{"addressOffset": 384, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 5, "lineNumber": 85, "lineNumberEnd": 85, "relativeVirtualAddress": 4480, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4480}, {"addressOffset": 389, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 19, "lineNumber": 89, "lineNumberEnd": 89, "relativeVirtualAddress": 4485, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4485}, {"addressOffset": 408, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 20, "lineNumber": 90, "lineNumberEnd": 90, "relativeVirtualAddress": 4504, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4504}, {"addressOffset": 428, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 33, "lineNumber": 93, "lineNumberEnd": 93, "relativeVirtualAddress": 4524, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4524}, {"addressOffset": 461, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 10, "lineNumber": 94, "lineNumberEnd": 94, "relativeVirtualAddress": 4557, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4557}, {"addressOffset": 471, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 4, "lineNumber": 93, "lineNumberEnd": 93, "relativeVirtualAddress": 4567, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4567}, {"addressOffset": 475, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 6, "lineNumber": 94, "lineNumberEnd": 94, "relativeVirtualAddress": 4571, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4571}, {"addressOffset": 481, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 6, "lineNumber": 96, "lineNumberEnd": 96, "relativeVirtualAddress": 4577, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4577}], "rva.Block": "!S_FALSE", "rva.Data": "!S_FALSE", "rva.Function": "Function:start@4480", "rva.Null": "Function:start@4480", "rva.PublicSymbol": "PublicSymbol:start@4480", "rvaEx.Null": "Function:start@4480 disp=0", "va.Null": "Function:start@4480"},
+  "00001180": {"addr.Null": "Function:start@4480", "addressForRVA": "1:384", "findLinesByRVA": [{"addressOffset": 384, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 5, "lineNumber": 85, "lineNumberEnd": 85, "relativeVirtualAddress": 4480, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4480}, {"addressOffset": 389, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 19, "lineNumber": 89, "lineNumberEnd": 89, "relativeVirtualAddress": 4485, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4485}, {"addressOffset": 408, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 20, "lineNumber": 90, "lineNumberEnd": 90, "relativeVirtualAddress": 4504, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4504}, {"addressOffset": 428, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 28, "lineNumber": 93, "lineNumberEnd": 93, "relativeVirtualAddress": 4524, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4524}, {"addressOffset": 456, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 15, "lineNumber": 94, "lineNumberEnd": 94, "relativeVirtualAddress": 4552, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4552}, {"addressOffset": 471, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 4, "lineNumber": 93, "lineNumberEnd": 93, "relativeVirtualAddress": 4567, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4567}, {"addressOffset": 475, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 6, "lineNumber": 94, "lineNumberEnd": 94, "relativeVirtualAddress": 4571, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4571}, {"addressOffset": 481, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 6, "lineNumber": 96, "lineNumberEnd": 96, "relativeVirtualAddress": 4577, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4577}], "rva.Block": "!S_FALSE", "rva.Data": "!S_FALSE", "rva.Function": "Function:start@4480", "rva.Null": "Function:start@4480", "rva.PublicSymbol": "PublicSymbol:start@4480", "rvaEx.Null": "Function:start@4480 disp=0", "va.Null": "Function:start@4480"},
   "00001181": {"addr.Null": "Function:start@4480", "addressForRVA": "1:385", "rva.Block": "!S_FALSE", "rva.Data": "!S_FALSE", "rva.Function": "Function:start@4480", "rva.Null": "Function:start@4480", "rva.PublicSymbol": "PublicSymbol:start@4480", "rvaEx.Null": "Function:start@4480 disp=1", "va.Null": "Function:start@4480"},
   "00001185": {"addr.Null": "Function:start@4480", "addressForRVA": "1:389", "findLinesByRVA": [{"addressOffset": 389, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 19, "lineNumber": 89, "lineNumberEnd": 89, "relativeVirtualAddress": 4485, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4485}], "rva.Block": "!S_FALSE", "rva.Data": "!S_FALSE", "rva.Function": "Function:start@4480", "rva.Null": "Function:start@4480", "rva.PublicSymbol": "PublicSymbol:start@4480", "rvaEx.Null": "Function:start@4480 disp=5", "va.Null": "Function:start@4480"},
   "00001186": {"addr.Null": "Function:start@4480", "addressForRVA": "1:390", "rva.Block": "!S_FALSE", "rva.Data": "!S_FALSE", "rva.Function": "Function:start@4480", "rva.Null": "Function:start@4480", "rva.PublicSymbol": "PublicSymbol:start@4480", "rvaEx.Null": "Function:start@4480 disp=6", "va.Null": "Function:start@4480"},
-  "000011cd": {"addr.Null": "Function:start@4480", "addressForRVA": "1:461", "findLinesByRVA": [{"addressOffset": 461, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 10, "lineNumber": 94, "lineNumberEnd": 94, "relativeVirtualAddress": 4557, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4557}], "rva.Block": "!S_FALSE", "rva.Data": "!S_FALSE", "rva.Function": "Function:start@4480", "rva.Null": "Function:start@4480", "rva.PublicSymbol": "PublicSymbol:start@4480", "rvaEx.Null": "Function:start@4480 disp=77", "va.Null": "Function:start@4480"},
-  "000011ce": {"addr.Null": "Function:start@4480", "addressForRVA": "1:462", "rva.Block": "!S_FALSE", "rva.Data": "!S_FALSE", "rva.Function": "Function:start@4480", "rva.Null": "Function:start@4480", "rva.PublicSymbol": "PublicSymbol:start@4480", "rvaEx.Null": "Function:start@4480 disp=78", "va.Null": "Function:start@4480"},
-  "000011d1": {"addr.Null": "Function:start@4480", "addressForRVA": "1:465", "findLinesByRVA": [{"addressOffset": 461, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 10, "lineNumber": 94, "lineNumberEnd": 94, "relativeVirtualAddress": 4557, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4557}], "rva.Block": "!S_FALSE", "rva.Data": "!S_FALSE", "rva.Function": "Function:start@4480", "rva.Null": "Function:start@4480", "rva.PublicSymbol": "PublicSymbol:start@4480", "rvaEx.Null": "Function:start@4480 disp=81", "va.Null": "Function:start@4480"},
+  "000011c8": {"addr.Null": "Function:start@4480", "addressForRVA": "1:456", "findLinesByRVA": [{"addressOffset": 456, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 15, "lineNumber": 94, "lineNumberEnd": 94, "relativeVirtualAddress": 4552, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4552}], "rva.Block": "!S_FALSE", "rva.Data": "!S_FALSE", "rva.Function": "Function:start@4480", "rva.Null": "Function:start@4480", "rva.PublicSymbol": "PublicSymbol:start@4480", "rvaEx.Null": "Function:start@4480 disp=72", "va.Null": "Function:start@4480"},
+  "000011c9": {"addr.Null": "Function:start@4480", "addressForRVA": "1:457", "rva.Block": "!S_FALSE", "rva.Data": "!S_FALSE", "rva.Function": "Function:start@4480", "rva.Null": "Function:start@4480", "rva.PublicSymbol": "PublicSymbol:start@4480", "rvaEx.Null": "Function:start@4480 disp=73", "va.Null": "Function:start@4480"},
+  "000011d1": {"addr.Null": "Function:start@4480", "addressForRVA": "1:465", "findLinesByRVA": [{"addressOffset": 456, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 15, "lineNumber": 94, "lineNumberEnd": 94, "relativeVirtualAddress": 4552, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4552}], "rva.Block": "!S_FALSE", "rva.Data": "!S_FALSE", "rva.Function": "Function:start@4480", "rva.Null": "Function:start@4480", "rva.PublicSymbol": "PublicSymbol:start@4480", "rvaEx.Null": "Function:start@4480 disp=81", "va.Null": "Function:start@4480"},
   "000011d2": {"addr.Null": "Function:start@4480", "addressForRVA": "1:466", "rva.Block": "!S_FALSE", "rva.Data": "!S_FALSE", "rva.Function": "Function:start@4480", "rva.Null": "Function:start@4480", "rva.PublicSymbol": "PublicSymbol:start@4480", "rvaEx.Null": "Function:start@4480 disp=82", "va.Null": "Function:start@4480"},
   "000011f0": {"addr.Null": "Function:ns::Counter::add@4592", "addressForRVA": "1:496", "findLinesByRVA": [{"addressOffset": 496, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 25, "lineNumber": 45, "lineNumberEnd": 45, "relativeVirtualAddress": 4592, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4592}, {"addressOffset": 521, "addressSection": 1, "columnNumber": 0, "columnNumberEnd": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "length": 1, "lineNumber": 46, "lineNumberEnd": 46, "relativeVirtualAddress": 4617, "sourceFile": "C:\\corpus\\cpp_more\\more.cpp", "sourceFileId": 150, "statement": 0, "virtualAddress": 4617}], "rva.Block": "!S_FALSE", "rva.Data": "!S_FALSE", "rva.Function": "Function:ns::Counter::add@4592", "rva.Null": "Function:ns::Counter::add@4592", "rva.PublicSymbol": "PublicSymbol:_ZN2ns7Counter3addEi@4592", "rvaEx.Null": "Function:ns::Counter::add@4592 disp=0", "va.Null": "Function:ns::Counter::add@4592"},
   "000011f1": {"addr.Null": "Function:ns::Counter::add@4592", "addressForRVA": "1:497", "rva.Block": "!S_FALSE", "rva.Data": "!S_FALSE", "rva.Function": "Function:ns::Counter::add@4592", "rva.Null": "Function:ns::Counter::add@4592", "rva.PublicSymbol": "PublicSymbol:_ZN2ns7Counter3addEi@4592", "rvaEx.Null": "Function:ns::Counter::add@4592 disp=1", "va.Null": "Function:ns::Counter::add@4592"},
@@ -3875,7 +3947,7 @@
   "InjectedSource": {"count": 0, "interfaces": ["IDiaEnumInjectedSources"]},
   "InputAssemblyFiles": {"count": 0, "interfaces": ["IDiaEnumInputAssemblyFiles"]},
   "LineNumbers": {"count": 26, "interfaces": ["IDiaEnumLineNumbers"]},
-  "Sections": {"count": 13, "interfaces": ["IDiaEnumSectionContribs"], "items": [{"addressOffset": 0, "addressSection": 1, "code": 1, "code16bit": 0, "comdat": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "dataCrc": 2820870307, "discardable": 0, "execute": 1, "initializedData": 0, "length": 487, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 4096, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 4096, "write": 0}, {"addressOffset": 496, "addressSection": 1, "code": 1, "code16bit": 0, "comdat": 1, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "dataCrc": 1108235151, "discardable": 0, "execute": 1, "initializedData": 0, "length": 26, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 4592, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 4592, "write": 0}, {"addressOffset": 0, "addressSection": 2, "code": 0, "code16bit": 0, "comdat": 0, "compiland": "Compiland:* Linker *", "compilandId": 23, "dataCrc": 0, "discardable": 0, "execute": 0, "initializedData": 1, "length": 0, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 8192, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 8192, "write": 0}, {"addressOffset": 0, "addressSection": 2, "code": 0, "code16bit": 0, "comdat": 0, "compiland": "Compiland:* Linker *", "compilandId": 23, "dataCrc": 0, "discardable": 0, "execute": 0, "initializedData": 1, "length": 0, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 8192, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 8192, "write": 0}, {"addressOffset": 0, "addressSection": 2, "code": 0, "code16bit": 0, "comdat": 0, "compiland": "Compiland:* Linker *", "compilandId": 23, "dataCrc": 0, "discardable": 0, "execute": 0, "initializedData": 1, "length": 8, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 8192, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 8192, "write": 0}, {"addressOffset": 8, "addressSection": 2, "code": 0, "code16bit": 0, "comdat": 0, "compiland": "Compiland:* Linker *", "compilandId": 23, "dataCrc": 0, "discardable": 0, "execute": 0, "initializedData": 1, "length": 8, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 8200, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 8200, "write": 0}, {"addressOffset": 16, "addressSection": 2, "code": 0, "code16bit": 0, "comdat": 0, "compiland": "Compiland:* Linker *", "compilandId": 23, "dataCrc": 0, "discardable": 0, "execute": 0, "initializedData": 1, "length": 8, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 8208, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 8208, "write": 0}, {"addressOffset": 24, "addressSection": 2, "code": 0, "code16bit": 0, "comdat": 0, "compiland": "Compiland:* Linker *", "compilandId": 23, "dataCrc": 0, "discardable": 0, "execute": 0, "initializedData": 1, "length": 8, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 8216, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 8216, "write": 0}, {"addressOffset": 0, "addressSection": 3, "code": 0, "code16bit": 0, "comdat": 0, "compiland": "Compiland:* Linker *", "compilandId": 23, "dataCrc": 0, "discardable": 0, "execute": 0, "initializedData": 1, "length": 28, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 12288, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 12288, "write": 0}, {"addressOffset": 28, "addressSection": 3, "code": 0, "code16bit": 0, "comdat": 0, "compiland": "Compiland:* Linker *", "compilandId": 23, "dataCrc": 0, "discardable": 0, "execute": 0, "initializedData": 1, "length": 94, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 12316, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 12316, "write": 0}, {"addressOffset": 0, "addressSection": 4, "code": 0, "code16bit": 0, "comdat": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "dataCrc": 0, "discardable": 0, "execute": 0, "initializedData": 1, "length": 24, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 16384, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 16384, "write": 1}, {"addressOffset": 24, "addressSection": 4, "code": 0, "code16bit": 0, "comdat": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "dataCrc": 4294967295, "discardable": 0, "execute": 0, "initializedData": 0, "length": 4, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 16408, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 1, "virtualAddress": 16408, "write": 1}, {"addressOffset": 0, "addressSection": 5, "code": 0, "code16bit": 0, "comdat": 0, "compiland": "Compiland:* Linker *", "compilandId": 23, "dataCrc": 0, "discardable": 1, "execute": 0, "initializedData": 1, "length": 12, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 20480, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 20480, "write": 0}]},
+  "Sections": {"count": 13, "interfaces": ["IDiaEnumSectionContribs"], "items": [{"addressOffset": 0, "addressSection": 1, "code": 1, "code16bit": 0, "comdat": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "dataCrc": 2820870307, "discardable": 0, "execute": 1, "initializedData": 0, "length": 487, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 4096, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 4096, "write": 0}, {"addressOffset": 496, "addressSection": 1, "code": 1, "code16bit": 0, "comdat": 1, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "dataCrc": 1108235151, "discardable": 0, "execute": 1, "initializedData": 0, "length": 26, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 4592, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 4592, "write": 0}, {"addressOffset": 0, "addressSection": 2, "code": 0, "code16bit": 0, "comdat": 0, "compiland": "Compiland:* Linker *", "compilandId": 23, "dataCrc": 0, "discardable": 0, "execute": 0, "initializedData": 1, "length": 0, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 8192, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 8192, "write": 0}, {"addressOffset": 0, "addressSection": 2, "code": 0, "code16bit": 0, "comdat": 0, "compiland": "Compiland:* Linker *", "compilandId": 23, "dataCrc": 0, "discardable": 0, "execute": 0, "initializedData": 1, "length": 0, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 8192, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 8192, "write": 0}, {"addressOffset": 0, "addressSection": 2, "code": 0, "code16bit": 0, "comdat": 0, "compiland": "Compiland:* Linker *", "compilandId": 23, "dataCrc": 0, "discardable": 0, "execute": 0, "initializedData": 1, "length": 8, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 8192, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 8192, "write": 0}, {"addressOffset": 8, "addressSection": 2, "code": 0, "code16bit": 0, "comdat": 0, "compiland": "Compiland:* Linker *", "compilandId": 23, "dataCrc": 0, "discardable": 0, "execute": 0, "initializedData": 1, "length": 8, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 8200, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 8200, "write": 0}, {"addressOffset": 16, "addressSection": 2, "code": 0, "code16bit": 0, "comdat": 0, "compiland": "Compiland:* Linker *", "compilandId": 23, "dataCrc": 0, "discardable": 0, "execute": 0, "initializedData": 1, "length": 8, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 8208, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 8208, "write": 0}, {"addressOffset": 24, "addressSection": 2, "code": 0, "code16bit": 0, "comdat": 0, "compiland": "Compiland:* Linker *", "compilandId": 23, "dataCrc": 0, "discardable": 0, "execute": 0, "initializedData": 1, "length": 8, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 8216, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 8216, "write": 0}, {"addressOffset": 0, "addressSection": 3, "code": 0, "code16bit": 0, "comdat": 0, "compiland": "Compiland:* Linker *", "compilandId": 23, "dataCrc": 0, "discardable": 0, "execute": 0, "initializedData": 1, "length": 28, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 12288, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 12288, "write": 0}, {"addressOffset": 28, "addressSection": 3, "code": 0, "code16bit": 0, "comdat": 0, "compiland": "Compiland:* Linker *", "compilandId": 23, "dataCrc": 0, "discardable": 0, "execute": 0, "initializedData": 1, "length": 90, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 12316, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 12316, "write": 0}, {"addressOffset": 0, "addressSection": 4, "code": 0, "code16bit": 0, "comdat": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "dataCrc": 0, "discardable": 0, "execute": 0, "initializedData": 1, "length": 24, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 16384, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 16384, "write": 1}, {"addressOffset": 24, "addressSection": 4, "code": 0, "code16bit": 0, "comdat": 0, "compiland": "Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o", "compilandId": 30, "dataCrc": 4294967295, "discardable": 0, "execute": 0, "initializedData": 0, "length": 4, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 16408, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 1, "virtualAddress": 16408, "write": 1}, {"addressOffset": 0, "addressSection": 5, "code": 0, "code16bit": 0, "comdat": 0, "compiland": "Compiland:* Linker *", "compilandId": 23, "dataCrc": 0, "discardable": 1, "execute": 0, "initializedData": 1, "length": 12, "notCached": 0, "notPaged": 0, "read": 1, "relativeVirtualAddress": 20480, "relocationsCrc": 0, "remove": 0, "share": 0, "uninitializedData": 0, "virtualAddress": 20480, "write": 0}]},
   "SegmentMap": {"count": 6, "interfaces": []},
   "SourceFiles": {"count": 1, "interfaces": ["IDiaEnumSourceFiles"]},
   "Symbols": {"count": 162, "interfaces": ["IDiaEnumSymbols"]}
