@@ -209,6 +209,13 @@ public:
     std::string frameProgram(uint32_t frameFunc);  // from the PDB string table
     bool is64();  // a 64-bit image (pointers print as __ptr64 in complete undecorated names)  // records of the x86 frame data (NEWFPO) stream
     uint32_t segmentCount();
+    // A section map entry, as IDiaSegment reports it (the RVA is 0 past the
+    // section headers: the absolute entry).
+    struct SegmentInfo {
+        uint32_t frame = 0, offset = 0, length = 0, section = 0, rva = 0;
+        bool read = false, write = false, execute = false;
+    };
+    bool segment(uint32_t i, SegmentInfo &out);
 
     // Types: the symbol of a type index (forward references resolved to
     // their definition), created on first use; 0 for records DIA has no

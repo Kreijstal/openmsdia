@@ -2857,6 +2857,23 @@ bool Model::codeContribution(uint32_t sect, uint32_t off)
     return c->sect == sect && off < c->off + c->size && (c->characteristics & 0x20);  // IMAGE_SCN_CNT_CODE
 }
 
+bool Model::segment(uint32_t i, SegmentInfo &out)
+{
+    DbiStream *dbi = pdb->dbi();
+    if (!dbi || i >= dbi->getSectionMap().size()) return false;
+    const auto &e = dbi->getSectionMap()[i];
+    out.frame = e.Frame;
+    out.offset = e.Offset;
+    out.length = e.SecByteLength;
+    uint16_t f = e.Flags;
+    out.read = f & 1;
+    out.write = (f >> 1) & 1;
+    out.execute = (f >> 2) & 1;
+    out.section = i + 1;
+    out.rva = !absoluteSection(i + 1) ? rva(i + 1, e.Offset) : 0;
+    return true;
+}
+
 uint32_t Model::segmentCount()
 {
     DbiStream *dbi = pdb->dbi();

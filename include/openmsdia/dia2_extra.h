@@ -50,4 +50,53 @@ struct IDiaReadExeAtRVACallback : public IUnknown {
                                                           BYTE *pbData) = 0;
 };
 
+/* Tables' enumerators that are not in the type library. The IIDs are those
+ * Ghidra's PDB exporter queries a table for (traced with
+ * OPENMSDIA_TRACE_QI; its source names the interfaces), the method names
+ * and signatures are from the public documentation, the vtable order is
+ * observed by calling each slot of the real DLL's objects
+ * (walker/call_probe.cpp). */
+inline constexpr IID IID_IDiaEnumSegments = {0xE8368CA9, 0x01D1, 0x419D, {0xAC, 0x0C, 0xE3, 0x12, 0x35, 0xDB, 0xDA, 0x9F}};
+inline constexpr IID IID_IDiaEnumFrameData = {0x9FC77A4B, 0x3C1C, 0x44ED, {0xA7, 0x98, 0x6C, 0x1D, 0xEE, 0xA5, 0x3E, 0x1F}};
+
+/* A section map entry (slots 3 to 11 in this order). */
+struct IDiaSegment : public IUnknown {
+    virtual HRESULT STDMETHODCALLTYPE get_frame(DWORD *pRetVal) = 0;
+    virtual HRESULT STDMETHODCALLTYPE get_offset(DWORD *pRetVal) = 0;
+    virtual HRESULT STDMETHODCALLTYPE get_length(DWORD *pRetVal) = 0;
+    virtual HRESULT STDMETHODCALLTYPE get_read(BOOL *pRetVal) = 0;
+    virtual HRESULT STDMETHODCALLTYPE get_write(BOOL *pRetVal) = 0;
+    virtual HRESULT STDMETHODCALLTYPE get_execute(BOOL *pRetVal) = 0;
+    virtual HRESULT STDMETHODCALLTYPE get_addressSection(DWORD *pRetVal) = 0;
+    virtual HRESULT STDMETHODCALLTYPE get_relativeVirtualAddress(DWORD *pRetVal) = 0;
+    virtual HRESULT STDMETHODCALLTYPE get_virtualAddress(ULONGLONG *pRetVal) = 0;
+};
+
+/* Laid out like the type library's enumerators: get__NewEnum, get_Count
+ * (slot 4), Item, Next (slot 6), Skip, Reset, Clone. */
+struct IDiaEnumSegments : public IUnknown {
+    virtual HRESULT STDMETHODCALLTYPE get__NewEnum(IUnknown **pRetVal) = 0;
+    virtual HRESULT STDMETHODCALLTYPE get_Count(LONG *pRetVal) = 0;
+    virtual HRESULT STDMETHODCALLTYPE Item(DWORD index, IDiaSegment **segment) = 0;
+    virtual HRESULT STDMETHODCALLTYPE Next(ULONG celt, IDiaSegment **rgelt, ULONG *pceltFetched) = 0;
+    virtual HRESULT STDMETHODCALLTYPE Skip(ULONG celt) = 0;
+    virtual HRESULT STDMETHODCALLTYPE Reset() = 0;
+    virtual HRESULT STDMETHODCALLTYPE Clone(IDiaEnumSegments **ppenum) = 0;
+};
+
+struct IDiaFrameData;
+
+/* The same, then frameByRVA (slot 10) and frameByVA (slot 11). */
+struct IDiaEnumFrameData : public IUnknown {
+    virtual HRESULT STDMETHODCALLTYPE get__NewEnum(IUnknown **pRetVal) = 0;
+    virtual HRESULT STDMETHODCALLTYPE get_Count(LONG *pRetVal) = 0;
+    virtual HRESULT STDMETHODCALLTYPE Item(DWORD index, IDiaFrameData **frame) = 0;
+    virtual HRESULT STDMETHODCALLTYPE Next(ULONG celt, IDiaFrameData **rgelt, ULONG *pceltFetched) = 0;
+    virtual HRESULT STDMETHODCALLTYPE Skip(ULONG celt) = 0;
+    virtual HRESULT STDMETHODCALLTYPE Reset() = 0;
+    virtual HRESULT STDMETHODCALLTYPE Clone(IDiaEnumFrameData **ppenum) = 0;
+    virtual HRESULT STDMETHODCALLTYPE frameByRVA(DWORD relativeVirtualAddress, IDiaFrameData **frame) = 0;
+    virtual HRESULT STDMETHODCALLTYPE frameByVA(ULONGLONG virtualAddress, IDiaFrameData **frame) = 0;
+};
+
 #endif

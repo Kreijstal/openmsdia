@@ -228,10 +228,11 @@ public:
 class DiaSourceFile : public Stub_IDiaSourceFile<IDiaSourceFile>, Counted {
 public:
     OM_IUNKNOWN(&IID_IDiaSourceFile)
-    DiaSourceFile(DiaSession *s, uint32_t idx);
+    DiaSourceFile(DiaSession *s, uint32_t idx, bool withChecksum = false);
     ~DiaSourceFile();
     DiaSession *s;
     uint32_t idx;
+    bool withChecksum;
     HRESULT STDMETHODCALLTYPE get_uniqueId(ULONG *p) override
     {
         if (!p) return E_POINTER;
@@ -247,10 +248,11 @@ public:
 class DiaEnumSourceFiles : public Stub_IDiaEnumSourceFiles<IDiaEnumSourceFiles>, Counted {
 public:
     OM_IUNKNOWN(&IID_IDiaEnumSourceFiles)
-    DiaEnumSourceFiles(DiaSession *s, std::vector<uint32_t> f);
+    DiaEnumSourceFiles(DiaSession *s, std::vector<uint32_t> f, bool withChecksum = false);
     ~DiaEnumSourceFiles();
     DiaSession *s;
     std::vector<uint32_t> f;
+    bool withChecksum;
     size_t pos = 0;
     HRESULT STDMETHODCALLTYPE get_count(LONG *p) override
     {
@@ -262,14 +264,14 @@ public:
     {
         if (!out) return E_POINTER;
         if (i >= f.size()) return E_INVALIDARG;
-        *out = new DiaSourceFile(s, f[i]);
+        *out = new DiaSourceFile(s, f[i], withChecksum);
         return S_OK;
     }
     HRESULT STDMETHODCALLTYPE Next(ULONG celt, IDiaSourceFile **rgelt, ULONG *fetched) override
     {
         if (!rgelt) return E_POINTER;
         ULONG n = 0;
-        while (n < celt && pos < f.size()) rgelt[n++] = new DiaSourceFile(s, f[pos++]);
+        while (n < celt && pos < f.size()) rgelt[n++] = new DiaSourceFile(s, f[pos++], withChecksum);
         if (fetched) *fetched = n;
         return n == celt ? S_OK : S_FALSE;
     }
@@ -286,7 +288,7 @@ public:
     HRESULT STDMETHODCALLTYPE Clone(IDiaEnumSourceFiles **out) override
     {
         if (!out) return E_POINTER;
-        auto *c = new DiaEnumSourceFiles(s, f);
+        auto *c = new DiaEnumSourceFiles(s, f, withChecksum);
         c->pos = pos;
         *out = c;
         return S_OK;
@@ -788,7 +790,9 @@ public:
             }
             f = g;
         }
-        *out = new DiaEnumSourceFiles(this, f);
+        // Files found through a compiland carry their checksum, the
+        // session's files do not (observed with call_probe).
+        *out = new DiaEnumSourceFiles(this, f, compiland != nullptr);
         return S_OK;
     }
     HRESULT STDMETHODCALLTYPE findFileById(ULONG id, IDiaSourceFile **out) override
@@ -947,7 +951,6 @@ public:
         if (p == P_unused) return E_NOTIMPL;  // as observed
         if (!keptOnFailure(p)) *out = nullptr;
         if (p == P_name && !firstNameUsed) {
-            firstNameUsed = true;
             *out = toBSTR(firstName);
             return S_OK;
         }
@@ -1005,8 +1008,26 @@ public:
         return newSymbol(s, (SymIndexId)v.u, out);
     }
 
+    // A method reached through its class answers get_name with its short
+    // name until a getter that needs the function itself is called (its
+    // id, address, length, location, undecorated name...); the ones its
+    // class member record answers keep it short (observed with call_probe).
+    void touch(Prop p)
+    {
+        if (firstNameUsed) return;
+        switch (p) {
+        case P_name: case P_symTag: case P_access: case P_classParent: case P_classParentId:
+        case P_lexicalParent: case P_lexicalParentId: case P_type: case P_typeId: case P_virtual:
+        case P_intro: case P_pure: case P_isStaticMemberFunc: case P_virtualBaseOffset:
+        case P_compilerGenerated: case P_sealed: case P_constType: case P_volatileType: case P_unalignedType:
+        case P_constantExport:
+            return;
+        default:
+            firstNameUsed = true;
+        }
+    }
 #define OM_GETTER(n, k) \
-    HRESULT STDMETHODCALLTYPE get_##n(OM_T_##k *out) override { return get##k(P_##n, out); }
+    HRESULT STDMETHODCALLTYPE get_##n(OM_T_##k *out) override { touch(P_##n); return get##k(P_##n, out); }
 #define OM_T_LONG LONG
 #define OM_T_ULONG ULONG
 #define OM_T_ULONGLONG ULONGLONG
@@ -1089,6 +1110,7 @@ public:
     HRESULT STDMETHODCALLTYPE get_undecoratedNameEx(ULONG options, BSTR *out) override
     {
         if (!out) return E_POINTER;
+        touch(P_undecoratedName);
         *out = nullptr;
         std::string u;
         if (s->m->undecoratedNameEx(id, options, u)) {
@@ -1161,7 +1183,7 @@ HRESULT DiaLineNumber::get_compilandId(ULONG *p) { return put(p, s->m->compiland
 HRESULT DiaLineNumber::get_sourceFile(IDiaSourceFile **p)
 {
     if (!p) return E_POINTER;
-    *p = new DiaSourceFile(s, e.file);
+    *p = new DiaSourceFile(s, e.file, true);  // a line's file carries its checksum
     return S_OK;
 }
 HRESULT DiaLineNumber::get_relativeVirtualAddress(ULONG *p) { return put(p, s->m->rva(e.sect, e.off)); }
@@ -1175,7 +1197,10 @@ HRESULT DiaLineNumber::get_virtualAddress(ULONGLONG *p)
 DiaEnumLineNumbers::DiaEnumLineNumbers(DiaSession *s, std::vector<LineEntry> l) : s(s), l(std::move(l)) { s->AddRef(); }
 DiaEnumLineNumbers::~DiaEnumLineNumbers() { s->Release(); }
 
-DiaSourceFile::DiaSourceFile(DiaSession *s, uint32_t idx) : s(s), idx(idx) { s->AddRef(); }
+DiaSourceFile::DiaSourceFile(DiaSession *s, uint32_t idx, bool withChecksum) : s(s), idx(idx), withChecksum(withChecksum)
+{
+    s->AddRef();
+}
 DiaSourceFile::~DiaSourceFile() { s->Release(); }
 HRESULT DiaSourceFile::get_fileName(BSTR *p)
 {
@@ -1185,13 +1210,14 @@ HRESULT DiaSourceFile::get_fileName(BSTR *p)
 }
 // The real 14.30 DLL reports no checksum for the MD5 checksums clang
 // writes; we do the same for every kind until a PDB shows otherwise.
-static bool reportChecksums = false;
-
 HRESULT DiaSourceFile::get_checksumType(ULONG *p)
 {
     if (!p) return E_POINTER;
     const auto &f = s->m->files()[idx];
-    if (!f.checksumKind || !reportChecksums) return S_FALSE;
+    if (!f.checksumKind || !withChecksum) {
+        *p = 0;
+        return S_FALSE;
+    }
     *p = f.checksumKind;
     return S_OK;
 }
@@ -1199,10 +1225,7 @@ HRESULT DiaSourceFile::get_checksum(ULONG cb, ULONG *pcb, BYTE *data)
 {
     if (!pcb) return E_POINTER;
     const auto &f = s->m->files()[idx];
-    if (!f.checksumKind || !reportChecksums) {
-        *pcb = 0;
-        return S_FALSE;
-    }
+    if (!f.checksumKind || !withChecksum) return S_FALSE;  // *pcb left alone (observed)
     *pcb = (ULONG)f.checksum.size();
     if (data) {
         if (cb < f.checksum.size()) return E_INVALIDARG;
@@ -1219,7 +1242,11 @@ HRESULT DiaSourceFile::get_compilands(IDiaEnumSymbols **p)
     return S_OK;
 }
 
-DiaEnumSourceFiles::DiaEnumSourceFiles(DiaSession *s, std::vector<uint32_t> f) : s(s), f(std::move(f)) { s->AddRef(); }
+DiaEnumSourceFiles::DiaEnumSourceFiles(DiaSession *s, std::vector<uint32_t> f, bool withChecksum)
+    : s(s), f(std::move(f)), withChecksum(withChecksum)
+{
+    s->AddRef();
+}
 DiaEnumSourceFiles::~DiaEnumSourceFiles() { s->Release(); }
 
 DiaSectionContrib::DiaSectionContrib(DiaSession *s, const SectionContrib &c) : s(s), c(c) { s->AddRef(); }
@@ -1281,6 +1308,150 @@ public:
         c->pos = pos;
         *out = c;
         return S_OK;
+    }
+};
+
+// IDiaSegment: a section map entry (SegmentMap table).
+class DiaSegment : public IDiaSegment, Counted {
+public:
+    OM_IUNKNOWN()
+    DiaSegment(DiaSession *s, uint32_t i) : s(s), i(i)
+    {
+        s->AddRef();
+        s->m->segment(i, info);
+    }
+    ~DiaSegment() { s->Release(); }
+    DiaSession *s;
+    uint32_t i;
+    Model::SegmentInfo info;
+    static HRESULT put(DWORD *p, DWORD v)
+    {
+        if (!p) return E_POINTER;
+        *p = v;
+        return S_OK;
+    }
+    HRESULT STDMETHODCALLTYPE get_frame(DWORD *p) override { return put(p, info.frame); }
+    HRESULT STDMETHODCALLTYPE get_offset(DWORD *p) override { return put(p, info.offset); }
+    HRESULT STDMETHODCALLTYPE get_length(DWORD *p) override { return put(p, info.length); }
+    HRESULT STDMETHODCALLTYPE get_read(BOOL *p) override { return put((DWORD *)p, info.read); }
+    HRESULT STDMETHODCALLTYPE get_write(BOOL *p) override { return put((DWORD *)p, info.write); }
+    HRESULT STDMETHODCALLTYPE get_execute(BOOL *p) override { return put((DWORD *)p, info.execute); }
+    HRESULT STDMETHODCALLTYPE get_addressSection(DWORD *p) override { return put(p, info.section); }
+    HRESULT STDMETHODCALLTYPE get_relativeVirtualAddress(DWORD *p) override { return put(p, info.rva); }
+    HRESULT STDMETHODCALLTYPE get_virtualAddress(ULONGLONG *p) override
+    {
+        if (!p) return E_POINTER;
+        *p = info.rva ? info.rva + s->m->loadAddress : 0;
+        return S_OK;
+    }
+};
+
+// A DIA-style enumerator over rows made by `make(i)`.
+template <class Iface, class Row, const IID *Iid> class DiaEnumRows : public Iface, Counted {
+public:
+    OM_IUNKNOWN(Iid)
+    DiaSession *s;
+    size_t n, pos = 0;
+    DiaEnumRows(DiaSession *s, size_t n) : s(s), n(n) { s->AddRef(); }
+    virtual ~DiaEnumRows() { s->Release(); }
+    virtual Row *make(size_t i) = 0;
+    virtual DiaEnumRows *copy() = 0;
+    HRESULT STDMETHODCALLTYPE get__NewEnum(IUnknown **p) override
+    {
+        if (!p) return E_POINTER;
+        *p = nullptr;
+        return E_NOTIMPL;
+    }
+    HRESULT STDMETHODCALLTYPE get_Count(LONG *p) override
+    {
+        if (!p) return E_POINTER;
+        *p = (LONG)n;
+        return S_OK;
+    }
+    HRESULT STDMETHODCALLTYPE Item(DWORD i, Row **out) override
+    {
+        if (!out) return E_POINTER;
+        if (i >= n) return E_INVALIDARG;
+        *out = make(i);
+        return S_OK;
+    }
+    HRESULT STDMETHODCALLTYPE Next(ULONG celt, Row **rgelt, ULONG *fetched) override
+    {
+        if (!rgelt) return E_POINTER;
+        ULONG k = 0;
+        while (k < celt && pos < n) rgelt[k++] = make(pos++);
+        if (fetched) *fetched = k;
+        return k == celt ? S_OK : S_FALSE;
+    }
+    HRESULT STDMETHODCALLTYPE Skip(ULONG celt) override
+    {
+        pos = std::min(n, pos + celt);
+        return S_OK;
+    }
+    HRESULT STDMETHODCALLTYPE Reset() override
+    {
+        pos = 0;
+        return S_OK;
+    }
+};
+
+class DiaEnumSegments : public DiaEnumRows<IDiaEnumSegments, IDiaSegment, &IID_IDiaEnumSegments> {
+public:
+    explicit DiaEnumSegments(DiaSession *s) : DiaEnumRows(s, s->m->segmentCount()) {}
+    IDiaSegment *make(size_t i) override { return new DiaSegment(s, (uint32_t)i); }
+    DiaEnumRows *copy() override { return new DiaEnumSegments(s); }
+    HRESULT STDMETHODCALLTYPE Clone(IDiaEnumSegments **out) override
+    {
+        if (!out) return E_POINTER;
+        auto *c = new DiaEnumSegments(s);
+        c->pos = pos;
+        *out = c;
+        return S_OK;
+    }
+};
+
+IUnknown *newFrameData(DiaSession *s, size_t i);
+
+// The FrameData table as IDiaEnumFrameData; frameByRVA/VA find the row
+// holding the address that starts last (observed: the row at rva+1 when
+// one starts there).
+class DiaEnumFrameData : public DiaEnumRows<IDiaEnumFrameData, IDiaFrameData, &IID_IDiaEnumFrameData> {
+public:
+    explicit DiaEnumFrameData(DiaSession *s) : DiaEnumRows(s, s->m->frameRows().size()) {}
+    IDiaFrameData *make(size_t i) override
+    {
+        IDiaFrameData *f = nullptr;
+        IUnknown *u = newFrameData(s, i);
+        u->QueryInterface(IID_IDiaFrameData, (void **)&f);
+        u->Release();
+        return f;
+    }
+    DiaEnumRows *copy() override { return new DiaEnumFrameData(s); }
+    HRESULT STDMETHODCALLTYPE Clone(IDiaEnumFrameData **out) override
+    {
+        if (!out) return E_POINTER;
+        auto *c = new DiaEnumFrameData(s);
+        c->pos = pos;
+        *out = c;
+        return S_OK;
+    }
+    HRESULT STDMETHODCALLTYPE frameByRVA(DWORD rva, IDiaFrameData **out) override
+    {
+        if (!out) return E_POINTER;
+        *out = nullptr;
+        const auto &rows = s->m->frameRows();
+        size_t best = rows.size();
+        for (size_t i = 0; i < rows.size(); i++)
+            if (rva >= rows[i].rva && rva - rows[i].rva < rows[i].codeSize &&
+                (best == rows.size() || rows[i].rva >= rows[best].rva))
+                best = i;
+        if (best == rows.size()) return S_FALSE;
+        *out = make(best);
+        return S_OK;
+    }
+    HRESULT STDMETHODCALLTYPE frameByVA(ULONGLONG va, IDiaFrameData **out) override
+    {
+        return frameByRVA((DWORD)(va - s->m->loadAddress), out);
     }
 };
 
@@ -1471,12 +1642,14 @@ HRESULT DiaEnumTables::make(size_t i, IDiaTable **out)
         *out = new DiaTable(s, "Sections", (LONG)m.sectionContribs().size(), new DiaEnumSectionContribs(s),
                             IID_IDiaEnumSectionContribs);
         return S_OK;
-    case 4: *out = new DiaTable(s, "SegmentMap", (LONG)m.segmentCount(), nullptr, IID_IUnknown); return S_OK;
+    case 4:
+        *out = new DiaTable(s, "SegmentMap", (LONG)m.segmentCount(), new DiaEnumSegments(s), IID_IDiaEnumSegments);
+        return S_OK;
     case 5:
         *out = new DiaTable(s, "InjectedSource", 0, new DiaEnumInjectedSources(), IID_IDiaEnumInjectedSources);
         return S_OK;
     case 6: {
-        auto *t = new DiaTable(s, "FrameData", (LONG)m.frameRows().size(), nullptr, IID_IUnknown);
+        auto *t = new DiaTable(s, "FrameData", (LONG)m.frameRows().size(), new DiaEnumFrameData(s), IID_IDiaEnumFrameData);
         DiaSession *ses = s;
         t->row = [ses](ULONG i) -> IUnknown * { return newFrameData(ses, i); };
         *out = t;
