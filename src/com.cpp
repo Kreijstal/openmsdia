@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "dia2_stubs_gen.h"
+#include "exeload.h"
 
 using namespace om;
 
@@ -1324,6 +1325,51 @@ public:
         return S_OK;
     }
     HRESULT STDMETHODCALLTYPE loadDataFromPdbEx(LPWSTR path, LONG) override { return loadDataFromPdb(path); }
+
+    // loadDataForExe and loadDataFromCodeViewInfo: see exeload.cpp.
+    HRESULT forExe(const wchar_t *exe, const wchar_t *search, IUnknown *cb, const uint8_t *cv, size_t cvSize)
+    {
+        if (m) return E_UNEXPECTED;
+        std::shared_ptr<Model> found;
+        auto tryPdb = [&](const std::wstring &path, const CvInfo &info) -> HRESULT {
+            if (GetFileAttributesW(path.c_str()) == INVALID_FILE_ATTRIBUTES) return E_PDB_NOT_FOUND;
+            std::string e;
+            auto model = Model::open(fromW(path.c_str()), e);
+            if (!model) return E_PDB_FORMAT;
+            Model::GUID70 g;
+            uint32_t sig = 0, age = 0;
+            if (!model->identity(g, sig, age)) return E_PDB_FORMAT;
+            bool sigOk = info.rsds ? memcmp(&info.guid, g.b, 16) == 0 : sig == info.sig;
+            if (!sigOk) return E_PDB_INVALID_SIG;
+            if (age != info.age) return E_PDB_INVALID_AGE;
+            found = std::move(model);
+            return S_OK;
+        };
+        std::wstring last;
+        HRESULT hr = findPdb(exe, search, cb, cv, cvSize, tryPdb, last);
+        if (hr != S_OK) {
+            err = fromW(last.c_str());
+            return hr;
+        }
+        m = std::move(found);
+        err.clear();
+        return S_OK;
+    }
+    HRESULT STDMETHODCALLTYPE loadDataForExe(LPWSTR exe, LPWSTR search, IUnknown *cb) override
+    {
+        if (!exe) return E_INVALIDARG;
+        return forExe(exe, search, cb, nullptr, 0);
+    }
+    HRESULT STDMETHODCALLTYPE loadDataForExeEx(LPWSTR exe, LPWSTR search, IUnknown *cb, LONG) override
+    {
+        return loadDataForExe(exe, search, cb);
+    }
+    HRESULT STDMETHODCALLTYPE loadDataFromCodeViewInfo(LPWSTR exe, LPWSTR search, ULONG cb, BYTE *data,
+                                                       IUnknown *callback) override
+    {
+        if (!data || !cb) return E_INVALIDARG;
+        return forExe(exe, search, callback, data, cb);
+    }
 
     // Error codes as observed: E_PDB_INVALID_SIG for a GUID or signature
     // mismatch, E_PDB_INVALID_AGE for an age mismatch.

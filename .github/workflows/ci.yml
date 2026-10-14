@@ -104,6 +104,23 @@ jobs:
           python3 tools/undname_test.py build/names-real.json build/names-ours.json --top 3 \
             --markdown build/names-score.md --json build/names-score.json | tee build/names-score.txt
           cat build/names-score.md >> "$GITHUB_STEP_SUMMARY"
+      - name: loadDataForExe
+        run: |
+          real=$(cygpath -u "$MSDIA_DLL")
+          ours=$(cygpath -m build/msdia140.dll)
+          pairs=()
+          for n in c_basic cpp_more_x86 msvc_c_basic msvc_cpp_more_x86; do
+            [ -f build/corpus/$n.exe ] || continue
+            for w in real ours; do
+              dll=$real; [ $w = ours ] && dll=$ours
+              rm -rf /c/ep; mkdir -p /c/ep
+              build/exe_probe.exe "$dll" build/corpus/$n.exe build/corpus/$n.pdb build/corpus/c_more.pdb C:/ep \
+                > build/exeload-$w-$n.json || echo '{}' > build/exeload-$w-$n.json
+            done
+            pairs+=(build/exeload-real-$n.json build/exeload-ours-$n.json)
+          done
+          python3 tools/exeload_test.py --markdown build/exeload-score.md "${pairs[@]}" | tee build/exeload-score.txt
+          cat build/exeload-score.md >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -116,4 +133,5 @@ jobs:
             build/ours/
             build/score.*
             build/names-*
+            build/exeload-*
             build/names/*.pdb

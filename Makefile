@@ -18,12 +18,12 @@ DLL_CXXFLAGS := -std=c++17 -O2 -g -Wall -Wno-unused-function -Iinclude/openmsdia
 	-DLLVM_BUILD_STATIC -D_FILE_OFFSET_BITS=64 -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS \
 	-fno-exceptions -ffunction-sections -fdata-sections
 DLL_LDFLAGS := -shared -static -Wl,--gc-sections -Wl,--no-insert-timestamp -Wl,-Map=$(B)/msdia140.map
-DLL_SRCS := src/dllmain.cpp src/com.cpp src/model.cpp src/types.cpp src/pdb.cpp src/undname.cpp
+DLL_SRCS := src/dllmain.cpp src/com.cpp src/model.cpp src/types.cpp src/pdb.cpp src/undname.cpp src/exeload.cpp
 DLL_OBJS := $(DLL_SRCS:src/%.cpp=$(B)/obj/%.o)
 
-all: $(B)/msdia140.dll $(B)/dia_walk.exe $(B)/name_probe.exe $(B)/test_vtables.exe
+all: $(B)/msdia140.dll $(B)/dia_walk.exe $(B)/name_probe.exe $(B)/exe_probe.exe $(B)/test_vtables.exe
 
-$(B)/obj/%.o: src/%.cpp src/model.h src/pdb.h src/cvutil.h src/undname.h $(GEN)
+$(B)/obj/%.o: src/%.cpp src/model.h src/pdb.h src/cvutil.h src/undname.h src/exeload.h include/openmsdia/dia2_extra.h $(GEN)
 	@mkdir -p $(B)/obj
 	$(CXX) $(DLL_CXXFLAGS) -c $< -o $@
 
@@ -72,6 +72,10 @@ undname-test: src/undname.cpp src/undname.h tests/undname_cli.cpp
 	$(PYTHON) -c 'import json,sys; print("\n".join(json.load(open(sys.argv[1]))))' $(UNDNAME_ORACLE) > $(B)/undname_names.txt
 	$(B)/undname_cli < $(B)/undname_names.txt > $(B)/undname_ours.json
 	$(PYTHON) tools/undname_test.py $(UNDNAME_ORACLE) $(B)/undname_ours.json --top 2
+
+$(B)/exe_probe.exe: walker/exe_probe.cpp $(GEN)
+	@mkdir -p $(B)
+	$(CXX) $(WALK_CXXFLAGS) $< -loleaut32 -lole32 -luuid -o $@
 
 corpus:
 	corpus/build.sh $(B)/corpus
