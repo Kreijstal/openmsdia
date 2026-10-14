@@ -227,6 +227,45 @@ tool ──COM──▶ COM objects (src/com.cpp; declarations generated from th
   S_FILESTATIC symbols, which are listed there and in no findChildren.
   Found by enumerating the real table (`IDiaTable` as
   `IDiaEnumSymbols`): its count is the same right after loading.
+- **Observed in the C runtime's PDB** (the PGO build, `corpus/pgo`):
+  - an LF_NESTTYPE entry is a nested UDT/Enum only when its target has
+    the nested flag; any other entry (a typedef of a namespace-scope
+    class, of an enum, a base type, a pointer, a lambda's
+    `<lambda_typedef_cdecl>`) is a Typedef whose type is the target and
+    which otherwise answers as the target, with `nested` set (no
+    unmodified type for base types); a class reached through it lists
+    its members as through the class;
+  - S_UDT outside functions is a Typedef child of its compiland,
+    S_LABEL32 outside functions a Label child of its compiland, S_COMPILE2
+    (linker-written import modules) a CompilandDetails without QFE numbers;
+  - S_FRAMEPROC flag bit 21 is `hasControlFlowCheck`, bit 23 `noexcept`; a
+    function without S_FRAMEPROC (assembler) has no frame properties;
+  - two definitions of one class (same unique name): forward references
+    resolve to the last; a method implementation belongs to the
+    definition that lists a method of its exact type;
+  - a decorated public names a function (`undecoratedName`) only when its
+    NAME_ONLY form spells the function's name exactly, else the name is
+    built from the type: HRESULT, nothing for a function type, an array
+    as `elem[n]` (no element for pointers, arrays, functions), a
+    pointer's volatile kept and const dropped;
+  - a callee binds to a function of its name only with the same type,
+    then reports its class parent and COFF group;
+  - globals-stream data are one symbol per address, name and type;
+    const `std::nullptr_t` (LF_MODIFIER of simple type 0x0103) is a
+    pointer symbol of its own; a forward declaration nothing defines is
+    listed as a type with `exportIsForwarder`; simple pointer types have
+    no pointer-kind properties; LF_USHORT constants are VT_UI2;
+  - findSymbolByRVA with SymTagData skips unnamed module data and data
+    whose section contribution belongs to another module; without a tag
+    it returns the holder starting last (data, then function, thunk,
+    public at equal starts; data at a function's address wins over the
+    function's whole range); getSymbolsByAddr lists one symbol per
+    address, data first, and ends with the absolute symbols by offset;
+  - symbols in section 0 or in the section map's absolute entry report
+    `hasAbsoluteAddress` and their offset as virtual address, and no RVA
+    past the section headers; their publics measure up to the next of
+    them, after all publics with an RVA (the last of which measures 0);
+  - lines at one address keep their line-table order in findLinesByRVA.
 - **Frame data** (x86 NEWFPO): the FrameData table's rows, by
   `IDiaTable::Item` or `IEnumUnknown::Next`, are `IDiaFrameData` objects;
   `get_functionParent` fails with E_UNEXPECTED for every row and
@@ -304,11 +343,13 @@ tool ──COM──▶ COM objects (src/com.cpp; declarations generated from th
   Block, FuncDebugStart/End, Data (globals, file statics, static locals,
   TLS, members, bit fields, static members, constants, enumerators,
   register-relative and enregistered locals and parameters), PublicSymbol,
-  UDT, Enum, nested types, PointerType, ArrayType, BaseType, FunctionType,
-  FunctionArgType, Typedef (global and function-local), BaseClass (incl.
-  virtual bases), VTable, InlineSite, CoffGroup, UsingNamespace, CallSite,
-  Callee (S_CALLEES), Caller (S_CALLERS, written but not in any corpus
-  PDB), Thunk.
+  UDT, Enum (also forward declarations nothing defines), nested types,
+  PointerType, ArrayType, BaseType, FunctionType, FunctionArgType,
+  Typedef (global, compiland-level, function-local, member typedefs),
+  BaseClass (incl. virtual bases), VTable, InlineSite, CoffGroup,
+  UsingNamespace, CallSite, Callee (S_CALLEES), Caller (S_CALLERS,
+  written but not in any corpus PDB), Thunk, Label (in functions and at
+  module level), HeapAllocationSite (S_HEAPALLOCSITE).
 - Enumerators: `IDiaEnumSymbols`, `IDiaEnumLineNumbers`,
   `IDiaEnumSourceFiles`, `IDiaEnumSectionContribs`, `IDiaEnumTables`,
   `IDiaEnumSymbolsByAddr` (`symbolByAddr/RVA/VA`, `Next`, `Prev`),
@@ -332,11 +373,11 @@ tool ──COM──▶ COM objects (src/com.cpp; declarations generated from th
 - Symbol: `get_types`/`get_typeIds` (S_FALSE), `get_dataBytes`,
   `findInlineFrames*`, `findInlineeLines*`, `getSrcLineOnTypeDefn`,
   `get_sourceLink`, the 14.51 tagged-union methods.
-- Symbol kinds: Label, Caller, Friend, CustomType,
-  ManagedType, Dimension, HeapAllocationSite, Export, Annotation; S_LOCAL
-  variables are deliberately not listed (the real DLL does not either).
+- Symbol kinds: Friend, CustomType, ManagedType, Dimension, Export,
+  Annotation; S_LOCAL variables are deliberately not listed (the real
+  DLL does not either).
 - Injected sources, stack walking (`IDiaStackWalker`), x86 and arm64
-  builds of the DLL (x86 PDBs are read), HeapAllocationSite symbols.
+  builds of the DLL (x86 PDBs are read).
 
 ### Score
 
@@ -345,14 +386,15 @@ tool ──COM──▶ COM objects (src/com.cpp; declarations generated from th
 line, source file, address lookup, table or debug stream is one
 comparison; getters that return S_FALSE count too, so the second line
 (fields where the real DLL returned a value) is the stricter number.
-See the README for the current numbers (CI run 38577421642: 17 PDBs,
-1255651/1255651 fields, 276256/276256 value fields).
+See the README for the current numbers (CI run 38587995801: 18 PDBs,
+1307074/1307074 fields, 286524/286524 value fields).
 
 Further tests in CI: the undecorator on 2170 names times 26 option sets
 (`tools/undname_test.py`; every name matches for every documented
 option), `loadDataForExe` in 44 scenarios on 4 executables
 (`tools/exeload_test.py`), and the PGO build that links the C runtime
-(`corpus/pgo`, 97.6% of 14.2 million fields).
+(`corpus/pgo`, 14246519/14246519 fields, 3750578/3750578 value fields;
+97.6% in the previous release).
 
 Not covered by the corpus at all: managed code, injected sources,
 OMAP-mapped (optimized/instrumented) images, S_CALLERS, S_SEPCODE,
