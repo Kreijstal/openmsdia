@@ -657,7 +657,7 @@ public:
             if (fn) return M->get(fn, P_typeId, v);
             v = Val::sym(M->typeSym(type));
             return true;
-        case P_isStatic: case P_classParent: case P_classParentId: case P_coffGroup:
+        case P_isStatic:
             return false;
         default:
             return fn && M->get(fn, p, v);
@@ -1079,7 +1079,6 @@ SymIndexId Model::funcIdTarget(TypeIndex id, std::string &nm, TypeIndex &type)
         auto *fn = dynamic_cast<OmFunction *>(ours(f));
         if (!fn) continue;
         if (fn->ps.FunctionType == type) return f;
-        if (!any) any = f;
     }
     return any;
 }
