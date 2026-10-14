@@ -740,7 +740,8 @@ public:
     }
 };
 
-// S_UDT inside a function: a local typedef (lambda closure types).
+// S_UDT of a module stream: a typedef local to its function (lambda
+// closure types) or, outside functions, to its compiland.
 class OmLocalTypedef : public Sym {
 public:
     explicit OmLocalTypedef(UDTSym u) : Sym(SymTag::Typedef), u(std::move(u)) {}
@@ -1332,7 +1333,7 @@ void Model::moduleChildren(uint16_t modi, SymIndexId parent, uint32_t begin, uin
             out.push_back(id);
             continue;
         }
-        if (func && k == S_UDT) {
+        if (k == S_UDT) {
             UDTSym u(SymbolRecordKind::UDTSym);
             if (!deser(*I, u)) continue;
             auto it = recordSyms.find(key);
