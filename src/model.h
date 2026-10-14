@@ -191,6 +191,9 @@ public:
     // Lines and files.
     const std::vector<LineEntry> &lines(uint16_t modi);
     std::vector<LineEntry> linesByRVA(uint32_t rva, uint32_t len);
+    std::vector<std::pair<uint32_t, LineEntry>> allLines;
+    uint32_t allLinesMaxLen = 0;
+    bool allLinesBuilt = false;
     const std::vector<SourceFile> &files();
     std::vector<uint32_t> filesOfModule(uint16_t modi);
     uint32_t moduleCount() const { return pdb->moduleCount(); }

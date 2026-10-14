@@ -87,6 +87,23 @@ Prop idPropOf(Prop p)
     return map[p];
 }
 
+// S_INLINESITE, or S_INLINESITE2 (no LLVM record class: parent, end,
+// inlinee, invocation count, then the binary annotations).
+bool readInlineSite(const CVSymbol &r, InlineSiteSym &is, uint32_t *invocations = nullptr)
+{
+    if (invocations) *invocations = 0;
+    if (r.kind() == S_INLINESITE) return deser(r, is);
+    if (r.kind() != S_INLINESITE2) return false;
+    auto c = r.content();
+    if (c.size() < 16) return false;
+    is.Parent = llvm::support::endian::read32le(c.data());
+    is.End = llvm::support::endian::read32le(c.data() + 4);
+    is.Inlinee = TypeIndex(llvm::support::endian::read32le(c.data() + 8));
+    if (invocations) *invocations = llvm::support::endian::read32le(c.data() + 12);
+    is.AnnotationData.assign(c.begin() + 16, c.end());
+    return true;
+}
+
 bool isProc(SymbolKind k)
 {
     return k == S_GPROC32 || k == S_LPROC32 || k == S_GPROC32_ID || k == S_LPROC32_ID ||
@@ -111,7 +128,7 @@ uint32_t scopeEnd(const CVSymbol &r)
     }
     case S_INLINESITE: case S_INLINESITE2: {
         InlineSiteSym is(SymbolRecordKind::InlineSiteSym);
-        return deser(r, is) ? is.End : 0;
+        return readInlineSite(r, is) ? is.End : 0;
     }
     case S_SEPCODE: {
         // No LLVM record class: pParent, pEnd, ... (CodeView layout).
@@ -225,6 +242,22 @@ public:
         case P_hasSetJump: case P_inlSpec: case P_isNaked: case P_isSafeBuffers: case P_noStackOrdering:
         case P_strictGSCheck: case P_localBasePointerRegisterId: case P_paramBasePointerRegisterId:
             return frameProp(p, v);
+        // PGO builds: the counters are 0 for functions S_FRAMEPROC marks as
+        // PGO; the phase is the part of the COFF group name after "$lp"
+        // (".text$lp00SPGO": 00SPGO), as observed in combase.
+        case P_PGOEntryCount: case P_PGODynamicInstructionCount: case P_staticSize: case P_finalLiveStaticSize:
+            if (!hasFrame || !has(fp.Flags, FrameProcedureOptions::ProfileGuidedOptimization)) return false;
+            v = Val::u_(0);
+            return true;
+        case P_phaseName: {
+            Val g;
+            if (!M->get(getSymIndexId(), P_coffGroup, g) || g.kind != Val::Sym) return false;
+            std::string n = M->name((SymIndexId)g.u);
+            size_t lp = n.find("$lp");
+            if (lp == std::string::npos) return false;
+            v = Val::str(n.substr(lp + 3));
+            return true;
+        }
         case P_access: if (!isMethod) return false; v = Val::u_((uint32_t)access); return true;
         case P_virtual: if (!isMethod) return false;
             v = Val::b_(mkind == MethodKind::Virtual || mkind == MethodKind::IntroducingVirtual ||
@@ -691,12 +724,13 @@ public:
     TypeIndex type;
     SymIndexId fn;
     int index;
+    uint32_t edgeCount = 0;  // the record's invocation count for this entry
     bool prop(Prop p, Val &v) const override
     {
         switch (p) {
         case P_name: v = Val::str(nm); return true;
         case P_lexicalParent: case P_lexicalParentId: v = Val::sym(lexParent); return true;
-        case P_PGOEdgeCount: v = Val::u_(0); return true;
+        case P_PGOEdgeCount: v = Val::u_(edgeCount); return true;
         case P_undecoratedName: case P_undecoratedNameEx0: {
             std::string u;
             if (!fn || !M->publicSignature(fn, p == P_undecoratedNameEx0 ? g_exOptions : UND_NO_PTR64, u)) u.clear();
@@ -1406,9 +1440,10 @@ void Model::moduleChildren(uint16_t modi, SymIndexId parent, uint32_t begin, uin
             }
             continue;
         }
-        if (k == S_INLINESITE && func) {
+        if ((k == S_INLINESITE || k == S_INLINESITE2) && func) {
             InlineSiteSym is(SymbolRecordKind::InlineSiteSym);
-            if (!deser(*I, is)) continue;
+            uint32_t invocations = 0;
+            if (!readInlineSite(*I, is, &invocations)) continue;
             auto it = recordSyms.find(key);
             SymIndexId id;
             if (it != recordSyms.end()) {
@@ -1622,6 +1657,12 @@ void Model::moduleChildren(uint16_t modi, SymIndexId parent, uint32_t begin, uin
                     TypeIndex type;
                     SymIndexId fn = funcIdTarget(cs.Indices[i], nm, type);
                     id = make<OmCallee>(nm, type, fn, (int)i, k == S_CALLEES ? SymTag::Callee : SymTag::Caller);
+                    // After the indices: one invocation count per entry
+                    // (PGO builds; LLVM's record class does not read them).
+                    auto c = I->content();
+                    size_t at = 4 + 4 * cs.Indices.size() + 4 * i;
+                    if (c.size() >= at + 4)
+                        static_cast<OmCallee *>(ours(id))->edgeCount = llvm::support::endian::read32le(c.data() + at);
                     ours(id)->lexParent = parent;
                     calleeSyms[ckey] = id;
                 }
@@ -2242,8 +2283,15 @@ void Model::compilandChildren(uint16_t modi, SymIndexId c, std::vector<SymIndexI
             env.push_back(id);
         }
     }
+    // The object file name (S_OBJNAME, "obj") comes first, the build
+    // environment last (as Dia2Dump lists a compiland's children).
+    size_t rest = 0;
+    if (!env.empty() && name(env[0]) == "obj") {
+        out.push_back(env[0]);
+        rest = 1;
+    }
     moduleChildren(modi, c, 0, 0, out, 0);
-    out.insert(out.end(), env.begin(), env.end());
+    out.insert(out.end(), env.begin() + rest, env.end());
 }
 
 void Model::buildGlobalChildren(std::vector<SymIndexId> &out)
@@ -2562,6 +2610,10 @@ const std::vector<LineEntry> &Model::lines(uint16_t modi)
     }
     files();
     const PDBStringTable *strings = pdb->strings();
+    // Line subsections by start address: folded functions leave several at
+    // one address, and the real DLL keeps one of them (the same choice as
+    // for the functions, see preferredProc).
+    std::map<std::pair<uint32_t, uint32_t>, std::vector<std::vector<LineEntry>>> byStart;
     for (const auto &ss : ms->subsections()) {
         if (ss.kind() != DebugSubsectionKind::Lines) continue;
         DebugLinesSubsectionRef lines;
@@ -2571,6 +2623,9 @@ const std::vector<LineEntry> &Model::lines(uint16_t modi)
             continue;
         }
         const auto &hdr = *lines.header();
+        auto &group = byStart[{hdr.RelocSegment, hdr.RelocOffset}];
+        group.emplace_back();
+        auto &sub = group.back();
         for (const auto &block : lines) {
             uint32_t file = 0;
             auto ci = checksums->getArray().at(block.NameIndex);
@@ -2600,9 +2655,19 @@ const std::vector<LineEntry> &Model::lines(uint16_t modi)
                 }
                 e.modi = modi;
                 e.file = file;
-                out.push_back(e);
+                sub.push_back(e);
             }
         }
+    }
+    for (auto &kv : byStart) {
+        auto &group = kv.second;
+        size_t pick = 0;
+        if (group.size() > 1) {
+            std::vector<uint32_t> order;
+            for (size_t i = 0; i < group.size(); i++) order.push_back((uint32_t)i);
+            pick = preferredProc(modi, order);
+        }
+        out.insert(out.end(), group[pick].begin(), group[pick].end());
     }
     // In address order (MSVC writes one line block per COMDAT function, in
     // no particular order).
@@ -2614,12 +2679,29 @@ const std::vector<LineEntry> &Model::lines(uint16_t modi)
 
 std::vector<LineEntry> Model::linesByRVA(uint32_t r, uint32_t len)
 {
+    // All modules' lines by address, built once (module order kept for
+    // equal addresses).
+    if (!allLinesBuilt) {
+        allLinesBuilt = true;
+        for (uint32_t i = 0, n = moduleCount(); i < n; i++)
+            for (auto &e : lines((uint16_t)i)) {
+                allLines.push_back({rva(e.sect, e.off), e});
+                allLinesMaxLen = std::max(allLinesMaxLen, e.len);
+            }
+        std::stable_sort(allLines.begin(), allLines.end(),
+                         [](const std::pair<uint32_t, LineEntry> &a, const std::pair<uint32_t, LineEntry> &b) {
+                             return a.first < b.first;
+                         });
+    }
     std::vector<LineEntry> out;
-    for (uint32_t i = 0, n = moduleCount(); i < n; i++)
-        for (auto &e : lines((uint16_t)i)) {
-            uint32_t a = rva(e.sect, e.off);
-            if ((a + e.len > r && a < r + len) || (e.len == 0 && a == r)) out.push_back(e);
-        }
+    uint64_t lo = r > allLinesMaxLen ? (uint64_t)r - allLinesMaxLen : 0;
+    auto it = std::lower_bound(allLines.begin(), allLines.end(), lo,
+                               [](const std::pair<uint32_t, LineEntry> &a, uint64_t v) { return a.first < v; });
+    for (; it != allLines.end() && it->first < (uint64_t)r + len + (len == 0); ++it) {
+        uint32_t a = it->first;
+        const LineEntry &e = it->second;
+        if (((uint64_t)a + e.len > r && a < (uint64_t)r + len) || (e.len == 0 && a == r)) out.push_back(e);
+    }
     // Lines at one address stay in line-table order.
     std::stable_sort(out.begin(), out.end(), [&](const LineEntry &a, const LineEntry &b) {
         return rva(a.sect, a.off) < rva(b.sect, b.off);
