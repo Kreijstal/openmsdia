@@ -431,6 +431,13 @@ void Model::init()
     for (uint32_t i = 0, n = moduleCount(); i < n; i++) compilands.push_back(make<SymCompiland>((uint16_t)i));
 }
 
+bool Model::is64()
+{
+    // CV_CFL / IMAGE_FILE_MACHINE: x64, ARM64, IA64.
+    uint32_t m = pdb->dbi() ? (uint32_t)pdb->dbi()->getMachineType() : 0;
+    return m == 0x8664 || m == 0xAA64 || m == 0x200;
+}
+
 SymIndexId Model::compiland(uint16_t modi) { return modi < compilands.size() ? compilands[modi] : 0; }
 
 int Model::moduleOf(SymIndexId id) const

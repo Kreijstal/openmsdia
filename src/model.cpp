@@ -51,7 +51,7 @@ const char *propName(Prop p)
 }
 
 std::string undecorate(const std::string &n);
-std::string undecorateComplete(const std::string &n);
+std::string undecorateComplete(const std::string &n, bool ptr64);
 
 namespace {
 
@@ -452,7 +452,7 @@ public:
         case P_undecoratedNameEx0: {
             std::string n = ps.Name.str();
             if (!n.empty() && n[0] == '.') n = n.substr(1);
-            v = Val::str(undecorateComplete(n));
+            v = Val::str(undecorateComplete(n, M->is64()));
             return true;
         }
         case P_addressSection: v = Val::u_(ps.Segment); return true;
@@ -707,6 +707,35 @@ public:
         case P_length: v = Val::u_(t.Length); return true;
         case P_locationType: v = Val::u_((uint32_t)LocType::Static); return true;
         case P_thunkOrdinal: v = Val::u_((uint32_t)t.Thunk); return true;
+        default: return false;
+        }
+    }
+};
+
+// S_LABEL32.
+class OmLabel : public Sym {
+public:
+    explicit OmLabel(LabelSym l) : Sym(SymTag::Label), l(std::move(l)) {}
+    LabelSym l;
+    bool prop(Prop p, Val &v) const override
+    {
+        uint32_t rva = M->rva(l.Segment, l.CodeOffset);
+        switch (p) {
+        case P_name: v = Val::str(l.Name.str()); return true;
+        case P_lexicalParent: case P_lexicalParentId: v = Val::sym(lexParent); return true;
+        case P_addressSection: v = Val::u_(l.Segment); return true;
+        case P_addressOffset: v = Val::u_(l.CodeOffset); return true;
+        case P_relativeVirtualAddress: v = Val::u_(rva); return true;
+        case P_virtualAddress: v = Val::u_(rva + M->loadAddress); return true;
+        case P_locationType: v = Val::u_((uint32_t)LocType::Static); return true;
+        case P_framePointerPresent: v = Val::b_(has(l.Flags, ProcSymFlags::HasFP)); return true;
+        case P_interruptReturn: v = Val::b_(has(l.Flags, ProcSymFlags::HasIRET)); return true;
+        case P_farReturn: v = Val::b_(has(l.Flags, ProcSymFlags::HasFRET)); return true;
+        case P_noReturn: v = Val::b_(has(l.Flags, ProcSymFlags::IsNoReturn)); return true;
+        case P_notReached: v = Val::b_(has(l.Flags, ProcSymFlags::IsUnreachable)); return true;
+        case P_customCallingConvention: v = Val::b_(has(l.Flags, ProcSymFlags::HasCustomCallingConv)); return true;
+        case P_noInline: v = Val::b_(has(l.Flags, ProcSymFlags::IsNoInline)); return true;
+        case P_optimizedCodeDebugInfo: v = Val::b_(has(l.Flags, ProcSymFlags::HasOptimizedDebugInfo)); return true;
         default: return false;
         }
     }
@@ -1099,8 +1128,23 @@ SymIndexId Model::procSym(uint16_t modi, uint32_t off)
         std::string nm = ps.Name.str();
         std::string shortName = nm;
         if (!qual.empty() && nm.size() > qual.size() + 2 && nm.compare(0, qual.size(), qual) == 0 &&
-            nm.compare(qual.size(), 2, "::") == 0)
+            nm.compare(qual.size(), 2, "::") == 0) {
             shortName = nm.substr(qual.size() + 2);
+        } else {
+            // The function may be named after a different spelling of the
+            // class (MSVC lambdas: `<lambda_...>::operator()` of the class
+            // `start::__l2::<lambda_...>`): the last component, outside
+            // template arguments.
+            int depth = 0;
+            for (size_t i = nm.size(); i-- > 1;) {
+                if (nm[i] == '>') depth++;
+                else if (nm[i] == '<') depth--;
+                else if (!depth && nm[i] == ':' && nm[i - 1] == ':') {
+                    shortName = nm.substr(i + 1);
+                    break;
+                }
+            }
+        }
         // Walk the class field list.
         CVType ct = pdb->type(fullDecl(mf.getClassType()));
         TypeIndex fl;
@@ -1268,6 +1312,16 @@ void Model::moduleChildren(uint16_t modi, SymIndexId parent, uint32_t begin, uin
             }
             continue;
         }
+        if (func && k == S_LABEL32) {
+            LabelSym l(SymbolRecordKind::LabelSym);
+            if (!deser(*I, l)) continue;
+            auto it = recordSyms.find(key);
+            SymIndexId id = it != recordSyms.end() ? it->second : make<OmLabel>(l);
+            ours(id)->lexParent = parent;
+            recordSyms[key] = id;
+            out.push_back(id);
+            continue;
+        }
         if (func && k == S_UDT) {
             UDTSym u(SymbolRecordKind::UDTSym);
             if (!deser(*I, u)) continue;
@@ -1314,15 +1368,23 @@ void Model::moduleChildren(uint16_t modi, SymIndexId parent, uint32_t begin, uin
             out.push_back(id);
             continue;
         }
-        if (func && (k == S_REGREL32 || k == S_REGISTER)) {
+        if (func && (k == S_REGREL32 || k == S_REGISTER || k == S_BPREL32)) {
             auto it = recordSyms.find(key);
             SymIndexId id;
             if (it != recordSyms.end()) {
                 id = it->second;
             } else {
-                id = make<OmData>(k == S_REGREL32 ? OmData::RegRel : OmData::Register);
+                id = make<OmData>(k == S_REGISTER ? OmData::Register : OmData::RegRel);
                 auto *d = static_cast<OmData *>(ours(id));
-                if (k == S_REGREL32) {
+                if (k == S_BPREL32) {
+                    // x86 frame-relative: register CV_ALLREG_VFRAME.
+                    BPRelativeSym bp(SymbolRecordKind::BPRelativeSym);
+                    if (!deser(*I, bp)) continue;
+                    d->nm = bp.Name.str();
+                    d->type = bp.Type;
+                    d->reg = 30006;
+                    d->regOffset = bp.Offset;
+                } else if (k == S_REGREL32) {
                     RegRelativeSym rr(SymbolRecordKind::RegRelativeSym);
                     if (!deser(*I, rr)) continue;
                     d->nm = rr.Name.str();
@@ -2111,14 +2173,22 @@ uint32_t Model::paramCount(SymIndexId func)
     auto *f = dynamic_cast<OmFunction *>(ours(func));
     if (!f) return 0;
     CVType ft = pdb->type(f->ps.FunctionType);
+    // The "..." of a variadic function (a T_NOTYPE argument) has no record.
+    auto declared = [&](TypeIndex argList, uint32_t n) {
+        ArgListRecord al(TypeRecordKind::ArgList);
+        if (n && deserType(pdb->type(argList), al) && !al.getIndices().empty() &&
+            al.getIndices().back() == TypeIndex::None())
+            n--;
+        return n;
+    };
     if (ft.kind() == LF_PROCEDURE) {
         ProcedureRecord pr(TypeRecordKind::Procedure);
-        return deserType(ft, pr) ? pr.getParameterCount() : 0;
+        return deserType(ft, pr) ? declared(pr.getArgumentList(), pr.getParameterCount()) : 0;
     }
     if (ft.kind() == LF_MFUNCTION) {
         MemberFunctionRecord mr(TypeRecordKind::MemberFunction);
         if (!deserType(ft, mr)) return 0;
-        return mr.getParameterCount() + (mr.getThisType().isNoneType() ? 0 : 1);
+        return declared(mr.getArgumentList(), mr.getParameterCount()) + (mr.getThisType().isNoneType() ? 0 : 1);
     }
     return 0;
 }
@@ -2212,6 +2282,11 @@ const std::vector<LineEntry> &Model::lines(uint16_t modi)
             }
         }
     }
+    // In address order (MSVC writes one line block per COMDAT function, in
+    // no particular order).
+    std::stable_sort(out.begin(), out.end(), [&](const LineEntry &a, const LineEntry &b) {
+        return rva(a.sect, a.off) < rva(b.sect, b.off);
+    });
     return out;
 }
 
@@ -2674,7 +2749,16 @@ std::string undecorate(const std::string &n)
     for (const char *cc : {"__cdecl", "__stdcall", "__fastcall", "__thiscall", "__vectorcall", "__clrcall"}) {
         replaceAll(std::string("(") + cc + " *)", std::string("(") + cc + "*)");
         replaceAll(std::string("(") + cc + " &)", std::string("(") + cc + "&)");
+        // A named pointer to function: "(__cdecl* p)".
+        replaceAll(std::string("(") + cc + " *", std::string("(") + cc + "* ");
     }
+    // Thunks: "[thunk]:public: ... `adjustor{16}' (unsigned int)".
+    replaceAll("[thunk]: ", "[thunk]:");
+    for (const char *t : {"`adjustor{", "`vtordisp{", "`vtordispex{"})
+        for (size_t at = out.find(t); at != std::string::npos; at = out.find(t, at + 1)) {
+            size_t q = out.find("}'(", at);
+            if (q != std::string::npos) out.insert(q + 2, " ");
+        }
     size_t close = out.rfind(')');
     if (close != std::string::npos && close + 1 < out.size() && out[close + 1] == ' ') {
         std::string quals = out.substr(close + 2);
@@ -2684,15 +2768,28 @@ std::string undecorate(const std::string &n)
     return out;
 }
 
-// undecoratedNameEx(0) (UNDNAME_COMPLETE): as above, plus the x64
-// "__ptr64" qualifiers on data pointers, references and `this`.
-std::string undecorateComplete(const std::string &n)
+// undecoratedNameEx(0) (UNDNAME_COMPLETE): as above, plus, in 64-bit
+// images, the "__ptr64" qualifiers on data pointers, references and
+// `this`.
+std::string undecorateComplete(const std::string &n, bool ptr64)
 {
     std::string s = undecorate(n);
-    if (n.empty() || n[0] != '?' || s == n) return s;
+    if (n.empty() || n[0] != '?' || s == n || !ptr64) return s;
     std::string out;
     for (size_t i = 0; i < s.size(); i++) {
         out += s[i];
+        // "(__cdecl* p)": a named pointer to function.
+        if (s[i] == '*' && i + 1 < s.size() && s[i + 1] == ' ') {
+            bool cc = false;
+            for (const char *c : {"(__cdecl", "(__stdcall", "(__fastcall", "(__thiscall", "(__vectorcall", "(__clrcall"}) {
+                size_t l = strlen(c);
+                if (i >= l && s.compare(i - l, l, c) == 0) cc = true;
+            }
+            if (cc) {
+                out += " __ptr64";
+                continue;
+            }
+        }
         if ((s[i] == '*' || s[i] == '&') && i > 0 && s[i - 1] == ' ') {
             // Not a "(* name)" declarator; "(__cdecl*)" has no space before.
             bool decl = i >= 2 && s[i - 2] == '(';
@@ -2702,8 +2799,9 @@ std::string undecorateComplete(const std::string &n)
             }
         }
     }
-    bool member = (out.rfind("public: ", 0) == 0 || out.rfind("protected: ", 0) == 0 ||
-                   out.rfind("private: ", 0) == 0) && out.find(": static ") == std::string::npos;
+    std::string body = out.rfind("[thunk]:", 0) == 0 ? out.substr(8) : out;
+    bool member = (body.rfind("public: ", 0) == 0 || body.rfind("protected: ", 0) == 0 ||
+                   body.rfind("private: ", 0) == 0) && body.find(": static ") == std::string::npos;
     if (member && !out.empty() && (out.back() == ')' || out.back() == ' ')) {
         if (out.back() == ' ') out.pop_back();
         out += " __ptr64";
@@ -2735,7 +2833,7 @@ bool Model::publicSignature(SymIndexId fn, bool complete, std::string &out)
             return true;
         }
         if (!pub->ps.Name.starts_with("?")) continue;
-        std::string u = complete ? undecorateComplete(pub->ps.Name.str()) : undecorate(pub->ps.Name.str());
+        std::string u = complete ? undecorateComplete(pub->ps.Name.str(), is64()) : undecorate(pub->ps.Name.str());
         if (u.find(nm) != std::string::npos) {
             out = u;
             return true;

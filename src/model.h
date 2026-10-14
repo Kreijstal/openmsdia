@@ -181,7 +181,8 @@ public:
     int moduleOf(SymIndexId compilandId) const;
     const std::vector<SectionContrib> &sectionContribs();
     std::vector<DebugStream> debugStreams();
-    uint32_t frameDataCount();  // records of the x86 frame data (NEWFPO) stream
+    uint32_t frameDataCount();
+    bool is64();  // a 64-bit image (pointers print as __ptr64 in complete undecorated names)  // records of the x86 frame data (NEWFPO) stream
     uint32_t segmentCount();
 
     // Types: the symbol of a type index (forward references resolved to
