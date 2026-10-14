@@ -276,6 +276,11 @@ public:
         if (common(p, v)) return true;
         PointerOptions o = rec ? pr.getOptions() : PointerOptions::None;
         PointerMode m = rec ? pr.getMode() : PointerMode::Pointer;
+        // A simple pointer type (void * as 0x0603) has none of the
+        // pointer-kind properties (as observed).
+        if (!rec && (p == P_RValueReference || p == P_isPointerToDataMember || p == P_isPointerToMemberFunction ||
+                     p == P_isWinRTPointer || p == P_restrictedType))
+            return false;
         switch (p) {
         case P_type: case P_typeId: v = Val::sym(M->typeSym(rec ? pr.getReferentType() : ti.makeDirect())); return true;
         case P_length: v = Val::u_(length()); return true;
