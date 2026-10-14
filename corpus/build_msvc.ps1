@@ -42,5 +42,6 @@ if ($Names) {
     Build 'msvc_cpp_classes_O2' 'cxx' '/O2' @('cpp_classes\main.cpp', 'cpp_classes\shapes.cpp', 'cpp_classes\templates.cpp')
     Build 'msvc_cpp_more' 'cxx' '/Od' @('cpp_more\more.cpp')
     Build 'msvc_cpp_more_O2' 'cxx' '/O2' @('cpp_more\more.cpp')
+    Build 'msvc_features' 'cxx' @('/Od', '/guard:cf') @('msvc_features\features.cpp')
 }
 Write-Output "MSVC corpus built in $Out"
