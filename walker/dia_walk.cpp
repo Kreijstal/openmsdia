@@ -421,6 +421,18 @@ struct Walker {
             HRESULT hr = s->get_undecoratedNameEx(0, &b);
             props["undecoratedNameEx(0)"] = hr == S_OK ? jstr(bstr_take(b)) : jstr("!" + hrstr(hr));
             if (hr != S_OK && b) SysFreeString(b);
+            if (hr == S_OK) {
+                // Two more option sets: UNDNAME_NAME_ONLY and the set
+                // Breakpad's dump_syms uses.
+                for (ULONG o : {0x1000ul, 0x87FEul}) {
+                    b = nullptr;
+                    HRESULT h2 = s->get_undecoratedNameEx(o, &b);
+                    char k[40];
+                    snprintf(k, sizeof k, "undecoratedNameEx(0x%lX)", o);
+                    props[k] = h2 == S_OK ? jstr(bstr_take(b)) : jstr("!" + hrstr(h2));
+                    if (h2 != S_OK && b) SysFreeString(b);
+                }
+            }
             ULONG n = 0;
             hr = s->get_types(0, &n, nullptr);
             if (hr == S_OK && n > 0 && n < 4096) {

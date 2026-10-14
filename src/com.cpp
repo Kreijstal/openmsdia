@@ -961,12 +961,10 @@ public:
     {
         if (!out) return E_POINTER;
         *out = nullptr;
-        if (options == 0) {
-            Val v;
-            if (s->m->get(id, P_undecoratedNameEx0, v) && v.kind == Val::Str) {
-                *out = toBSTR(v.s);
-                return S_OK;
-            }
+        std::string u;
+        if (s->m->undecoratedNameEx(id, options, u)) {
+            *out = toBSTR(u);
+            return S_OK;
         }
         return getBSTR(P_undecoratedName, out);
     }

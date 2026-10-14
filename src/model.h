@@ -194,10 +194,14 @@ public:
     std::map<std::string, llvm::codeview::TypeIndex> fullByName;
     SymIndexId noType();
     std::string typeName(SymIndexId id);  // C-like spelling, for undecorated names
-    std::string functionSignature(SymIndexId fn, bool isStatic, bool complete = false);
+    // options: get_undecoratedNameEx's (UND_NO_PTR64 for get_undecoratedName)
+    std::string functionSignature(SymIndexId fn, bool isStatic, unsigned options);
     // The undecorated name of the public symbol at a function's address
     // (its own name for a C public); false when there is none.
-    bool publicSignature(SymIndexId fn, bool complete, std::string &out);
+    bool publicSignature(SymIndexId fn, unsigned options, std::string &out);
+    // get_undecoratedNameEx(options); false when the symbol has no
+    // options-dependent form (get_undecoratedName then applies).
+    bool undecoratedNameEx(SymIndexId id, unsigned options, std::string &out);
     // Callees: the position in their S_CALLEES record (-1 for others).
     int calleeIndex(SymIndexId id);
     // The function of an IPI function id (LF_FUNC_ID / LF_MFUNC_ID): its

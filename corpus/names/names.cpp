@@ -41,6 +41,13 @@ extern "C" const void *openmsdia_type_info_vft[2] = {0, 0};
 #pragma comment(linker, "/alternatename:??_7type_info@@6B@=openmsdia_type_info_vft")
 #endif
 
+// MSVC rejects __unaligned on x86.
+#if defined(_M_IX86) && !defined(__clang__)
+#define UNALIGNED
+#else
+#define UNALIGNED __unaligned
+#endif
+
 // ------------------------------------------------------------ basic types
 int g_int;
 extern const int g_cint = 3;
@@ -71,7 +78,7 @@ int (*g_parr)[5];
 int (&g_rarr)[3][4] = g_arr;
 int &g_ref = g_int;
 int *__restrict g_rptr;
-__unaligned int *g_uptr;
+UNALIGNED int *g_uptr;
 void (*g_fp)(int, ...);
 int (*(*g_fpfp)(char))(double);
 nullptr_t g_null;
@@ -94,7 +101,7 @@ int (*f_retfp())(int) { return nullptr; }
 int (*f_retparr())[3] { return nullptr; }
 void f_noexcept() noexcept {}
 void f_restrict(int *__restrict, char *__restrict) {}
-void f_unaligned(__unaligned int *) {}
+void f_unaligned(UNALIGNED int *) {}
 
 #if defined(_M_IX86)
 int __stdcall f_stdcall(int a, int b) { return a + b; }

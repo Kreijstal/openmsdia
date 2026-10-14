@@ -1,5 +1,6 @@
 // OpenMSDIA symbol model: see model.h.
 #include "model.h"
+#include "undname.h"
 
 #include <algorithm>
 #include <bitset>
@@ -30,7 +31,6 @@
 #include "llvm/DebugInfo/PDB/Native/RawTypes.h"
 #include "llvm/DebugInfo/PDB/Native/SymbolStream.h"
 #include "llvm/DebugInfo/PDB/Native/TpiStream.h"
-#include "llvm/Demangle/Demangle.h"
 #include "llvm/Support/BinaryStreamReader.h"
 #include "llvm/Support/MemoryBuffer.h"
 
@@ -50,8 +50,9 @@ const char *propName(Prop p)
     return p < P_COUNT ? names[p] : "?";
 }
 
-std::string undecorate(const std::string &n);
-std::string undecorateComplete(const std::string &n, bool ptr64);
+// get_undecoratedNameEx's options while P_undecoratedNameEx0 is computed
+// (Model::undecoratedNameEx).
+static thread_local unsigned g_exOptions = 0;
 
 namespace {
 
@@ -178,8 +179,8 @@ public:
         bool isStatic = kind == S_LPROC32 || kind == S_LPROC32_ID || kind == S_LPROC32_DPC || kind == S_LPROC32_DPC_ID;
         switch (p) {
         case P_name: v = Val::str(ps.Name.str()); return true;
-        case P_undecoratedName: v = Val::str(M->functionSignature(getSymIndexId(), isStatic)); return true;
-        case P_undecoratedNameEx0: v = Val::str(M->functionSignature(getSymIndexId(), isStatic, true)); return true;
+        case P_undecoratedName: v = Val::str(M->functionSignature(getSymIndexId(), isStatic, UND_NO_PTR64)); return true;
+        case P_undecoratedNameEx0: v = Val::str(M->functionSignature(getSymIndexId(), isStatic, g_exOptions)); return true;
         case P_lexicalParent: case P_lexicalParentId: v = Val::sym(lexParent); return true;
         case P_classParent: case P_classParentId:
             if (!classParent) return false;
@@ -443,18 +444,8 @@ public:
         bool code = has(ps.Flags, PublicSymFlags::Code) || has(ps.Flags, PublicSymFlags::Function);
         switch (p) {
         case P_name: v = Val::str(ps.Name.str()); return true;
-        case P_undecoratedName: {
-            std::string n = ps.Name.str();
-            if (!n.empty() && n[0] == '.') n = n.substr(1);
-            v = Val::str(undecorate(n));
-            return true;
-        }
-        case P_undecoratedNameEx0: {
-            std::string n = ps.Name.str();
-            if (!n.empty() && n[0] == '.') n = n.substr(1);
-            v = Val::str(undecorateComplete(n, M->is64()));
-            return true;
-        }
+        case P_undecoratedName: v = Val::str(diaUndecorate(ps.Name.str(), UND_NO_PTR64)); return true;
+        case P_undecoratedNameEx0: v = Val::str(diaUndecorate(ps.Name.str(), g_exOptions)); return true;
         case P_addressSection: v = Val::u_(ps.Segment); return true;
         case P_addressOffset: v = Val::u_(ps.Offset); return true;
         case P_relativeVirtualAddress: v = Val::u_(rva); return true;
@@ -650,7 +641,7 @@ public:
         case P_PGOEdgeCount: v = Val::u_(0); return true;
         case P_undecoratedName: case P_undecoratedNameEx0: {
             std::string u;
-            if (!fn || !M->publicSignature(fn, p == P_undecoratedNameEx0, u)) u.clear();
+            if (!fn || !M->publicSignature(fn, p == P_undecoratedNameEx0 ? g_exOptions : UND_NO_PTR64, u)) u.clear();
             v = Val::str(u);
             return true;
         }
@@ -824,7 +815,7 @@ public:
         MethodKind mk = m.getMethodKind();
         switch (p) {
         case P_name: v = Val::str(m.getName().str()); return true;
-        case P_undecoratedName: v = Val::str(M->functionSignature(getSymIndexId(), false)); return true;
+        case P_undecoratedName: v = Val::str(M->functionSignature(getSymIndexId(), false, UND_NO_PTR64)); return true;
         case P_lexicalParent: case P_lexicalParentId: v = Val::sym(lexParent); return true;
         case P_classParent: case P_classParentId: v = Val::sym(classParent); return true;
         case P_type: case P_typeId: v = Val::sym(M->typeSym(m.getType())); return true;
@@ -2702,117 +2693,21 @@ std::string Model::typeName(SymIndexId id)
     }
 }
 
-// Microsoft-style undecoration of a decorated name, in the spelling of
-// the real DLL: no space after commas, cv-qualifiers of member functions
-// as ")const ".
-std::string undecorate(const std::string &n)
+bool Model::undecoratedNameEx(SymIndexId id, unsigned options, std::string &out)
 {
-    if (n.empty() || n[0] != '?') return n;
-    if (n.rfind("??_C@", 0) == 0) return "`string'";
-    size_t used = 0;
-    int status = 0;
-    char *d = microsoftDemangle(n, &used, &status);
-    if (!d || status != 0) {
-        free(d);
-        return n;
-    }
-    std::string s = d;
-    free(d);
-    std::string out;
-    for (size_t i = 0; i < s.size(); i++) {
-        if (s[i] == ',' && i + 1 < s.size() && s[i + 1] == ' ') {
-            out += ',';
-            i++;
-        } else {
-            out += s[i];
-        }
-    }
-    // LLVM abbreviates the special member names and glues cv-qualifiers
-    // to pointers.
-    auto replaceAll = [&](const std::string &from, const std::string &to) {
-        for (size_t at = out.find(from); at != std::string::npos; at = out.find(from, at + to.size()))
-            out.replace(at, from.size(), to);
-    };
-    replaceAll(" dtor'", " destructor'");
-    replaceAll(" ctor'", " constructor'");
-    replaceAll(" ctor iterator'", " constructor iterator'");
-    replaceAll(" dtor iterator'", " destructor iterator'");
-    // undname puts a space between a declarator's '*' and the name:
-    // "int (* p)[2]", "int C::* p".
-    for (size_t at = 0; (at = out.find('*', at)) != std::string::npos; at++)
-        if (at > 0 && (out[at - 1] == '(' || out[at - 1] == ':') && at + 1 < out.size() &&
-            (isalpha((unsigned char)out[at + 1]) || out[at + 1] == '_'))
-            out.insert(at + 1, " ");
-    replaceAll("*const", "* const");
-    replaceAll("*volatile", "* volatile");
-    replaceAll("&const", "& const");
-    for (const char *cc : {"__cdecl", "__stdcall", "__fastcall", "__thiscall", "__vectorcall", "__clrcall"}) {
-        replaceAll(std::string("(") + cc + " *)", std::string("(") + cc + "*)");
-        replaceAll(std::string("(") + cc + " &)", std::string("(") + cc + "&)");
-        // A named pointer to function: "(__cdecl* p)".
-        replaceAll(std::string("(") + cc + " *", std::string("(") + cc + "* ");
-    }
-    // Thunks: "[thunk]:public: ... `adjustor{16}' (unsigned int)".
-    replaceAll("[thunk]: ", "[thunk]:");
-    for (const char *t : {"`adjustor{", "`vtordisp{", "`vtordispex{"})
-        for (size_t at = out.find(t); at != std::string::npos; at = out.find(t, at + 1)) {
-            size_t q = out.find("}'(", at);
-            if (q != std::string::npos) out.insert(q + 2, " ");
-        }
-    size_t close = out.rfind(')');
-    if (close != std::string::npos && close + 1 < out.size() && out[close + 1] == ' ') {
-        std::string quals = out.substr(close + 2);
-        if (quals == "const" || quals == "volatile" || quals == "const volatile")
-            out = out.substr(0, close + 1) + quals + " ";
-    }
-    return out;
-}
-
-// undecoratedNameEx(0) (UNDNAME_COMPLETE): as above, plus, in 64-bit
-// images, the "__ptr64" qualifiers on data pointers, references and
-// `this`.
-std::string undecorateComplete(const std::string &n, bool ptr64)
-{
-    std::string s = undecorate(n);
-    if (n.empty() || n[0] != '?' || s == n || !ptr64) return s;
-    std::string out;
-    for (size_t i = 0; i < s.size(); i++) {
-        out += s[i];
-        // "(__cdecl* p)": a named pointer to function.
-        if (s[i] == '*' && i + 1 < s.size() && s[i + 1] == ' ') {
-            bool cc = false;
-            for (const char *c : {"(__cdecl", "(__stdcall", "(__fastcall", "(__thiscall", "(__vectorcall", "(__clrcall"}) {
-                size_t l = strlen(c);
-                if (i >= l && s.compare(i - l, l, c) == 0) cc = true;
-            }
-            if (cc) {
-                out += " __ptr64";
-                continue;
-            }
-        }
-        if ((s[i] == '*' || s[i] == '&') && i > 0 && s[i - 1] == ' ') {
-            // Not a "(* name)" declarator; "(__cdecl*)" has no space before.
-            bool decl = i >= 2 && s[i - 2] == '(';
-            if (!decl) {
-                out += " __ptr64";
-                if (i + 1 < s.size() && s[i + 1] != ' ' && s[i + 1] != ',' && s[i + 1] != ')') out += ' ';
-            }
-        }
-    }
-    std::string body = out.rfind("[thunk]:", 0) == 0 ? out.substr(8) : out;
-    bool member = (body.rfind("public: ", 0) == 0 || body.rfind("protected: ", 0) == 0 ||
-                   body.rfind("private: ", 0) == 0) && body.find(": static ") == std::string::npos;
-    if (member && !out.empty() && (out.back() == ')' || out.back() == ' ')) {
-        if (out.back() == ' ') out.pop_back();
-        out += " __ptr64";
-    }
-    return out;
+    unsigned saved = g_exOptions;
+    g_exOptions = options;
+    Val v;
+    bool ok = get(id, P_undecoratedNameEx0, v) && v.kind == Val::Str;
+    g_exOptions = saved;
+    if (ok) out = v.s;
+    return ok;
 }
 
 // A function with a public symbol at its address: an undecorated
 // Microsoft name (the one naming this function when several publics share
 // the address), or its own name for an undecorated (C) public.
-bool Model::publicSignature(SymIndexId fn, bool complete, std::string &out)
+bool Model::publicSignature(SymIndexId fn, unsigned options, std::string &out)
 {
     auto *f = dynamic_cast<OmFunction *>(ours(fn));
     if (!f) return false;
@@ -2833,22 +2728,22 @@ bool Model::publicSignature(SymIndexId fn, bool complete, std::string &out)
             return true;
         }
         if (!pub->ps.Name.starts_with("?")) continue;
-        std::string u = complete ? undecorateComplete(pub->ps.Name.str(), is64()) : undecorate(pub->ps.Name.str());
+        std::string u = undname(pub->ps.Name.str(), UND_NO_PTR64);
         if (u.find(nm) != std::string::npos) {
-            out = u;
+            out = undname(pub->ps.Name.str(), options);
             return true;
         }
-        if (first.empty()) first = u;
+        if (first.empty()) first = undname(pub->ps.Name.str(), options);
     }
     out = first;
     return !first.empty();
 }
 
-std::string Model::functionSignature(SymIndexId fn, bool isStatic, bool complete)
+std::string Model::functionSignature(SymIndexId fn, bool isStatic, unsigned options)
 {
     std::string nm = name(fn);
     std::string pub;
-    if (publicSignature(fn, complete, pub)) return pub;
+    if (publicSignature(fn, options, pub)) return pub;
     Val ty;
     if (!get(fn, P_type, ty)) return nm;
     SymIndexId sig = (SymIndexId)ty.u;
