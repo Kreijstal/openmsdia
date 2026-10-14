@@ -503,10 +503,27 @@ class OmCompilandDetails : public Sym {
 public:
     OmCompilandDetails(Compile3Sym cs)
         : Sym(SymTag::CompilandDetails), cs(std::move(cs)) {}
-    Compile3Sym cs;
+    // S_COMPILE2 (import modules written by the linker): the same fields
+    // without QFE numbers, flags at the same bits; no isSdl or isPGO.
+    explicit OmCompilandDetails(const Compile2Sym &c2)
+        : Sym(SymTag::CompilandDetails), v2(true)
+    {
+        cs.Flags = (CompileSym3Flags)(uint32_t)c2.Flags;
+        cs.Machine = c2.Machine;
+        cs.VersionFrontendMajor = c2.VersionFrontendMajor;
+        cs.VersionFrontendMinor = c2.VersionFrontendMinor;
+        cs.VersionFrontendBuild = c2.VersionFrontendBuild;
+        cs.VersionBackendMajor = c2.VersionBackendMajor;
+        cs.VersionBackendMinor = c2.VersionBackendMinor;
+        cs.VersionBackendBuild = c2.VersionBackendBuild;
+        cs.Version = c2.Version;
+    }
+    Compile3Sym cs{SymbolRecordKind::Compile3Sym};
+    bool v2 = false;
     bool prop(Prop p, Val &v) const override
     {
         auto F = [&](CompileSym3Flags f) { return has(cs.getFlags(), f); };
+        if (v2 && (p == P_isSdl || p == P_isPGO)) return false;
         switch (p) {
         case P_lexicalParent: case P_lexicalParentId: v = Val::sym(lexParent); return true;
         case P_compilerName: v = Val::str(cs.Version.str()); return true;
@@ -1545,6 +1562,15 @@ void Model::moduleChildren(uint16_t modi, SymIndexId parent, uint32_t begin, uin
         }
         if (k == S_COMPILE3) {
             Compile3Sym cs(SymbolRecordKind::Compile3Sym);
+            if (!deser(*I, cs)) continue;
+            auto it = recordSyms.find(key);
+            SymIndexId id = it != recordSyms.end() ? it->second : make<OmCompilandDetails>(cs);
+            ours(id)->lexParent = parent;
+            recordSyms[key] = id;
+            out.push_back(id);
+        }
+        if (k == S_COMPILE2) {
+            Compile2Sym cs(SymbolRecordKind::Compile2Sym);
             if (!deser(*I, cs)) continue;
             auto it = recordSyms.find(key);
             SymIndexId id = it != recordSyms.end() ? it->second : make<OmCompilandDetails>(cs);
