@@ -790,6 +790,21 @@ int wmain(int argc, wchar_t **argv)
                     }
                     sc->Release();
                 }
+                // Frame data rows: IDiaTable::Item, as IDiaFrameData.
+                if (items.empty() && hc == S_OK && cnt > 0) {
+                    for (LONG k = 0; k < cnt && k < 4096; k++) {
+                        IUnknown *u = nullptr;
+                        if (t->Item(k, &u) != S_OK || !u) break;
+                        IDiaFrameData *fd = nullptr;
+                        if (u->QueryInterface(IID_IDiaFrameData, (void **)&fd) == S_OK && fd) {
+                            JObj o;
+                            collect_props(fd, "IDiaFrameData", o);
+                            items.push_back(jobj_inline(o));
+                            fd->Release();
+                        }
+                        u->Release();
+                    }
+                }
                 static const IID *known[] = {&IID_IDiaEnumSymbols, &IID_IDiaEnumSourceFiles,
                                              &IID_IDiaEnumLineNumbers, &IID_IDiaEnumSectionContribs,
                                              &IID_IDiaEnumInjectedSources, &IID_IDiaEnumInputAssemblyFiles};

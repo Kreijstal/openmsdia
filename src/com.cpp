@@ -5,6 +5,7 @@
 #include <oleauto.h>
 
 #include <atomic>
+#include <functional>
 #include <memory>
 #include <string>
 #include <vector>
@@ -312,6 +313,47 @@ public:
     HRESULT STDMETHODCALLTYPE get_code16bit(LONG *p) override { return flag(p, 0x00020000); }
 };
 
+// A row of the frame data table (x86 NEWFPO).
+class DiaFrameData : public Stub_IDiaFrameData<IDiaFrameData>, Counted {
+public:
+    OM_IUNKNOWN(&IID_IDiaFrameData)
+    DiaFrameData(DiaSession *s, size_t i);
+    ~DiaFrameData();
+    DiaSession *s;
+    size_t i;
+    const FrameRow &r() const;
+    static HRESULT put(ULONG *p, uint32_t v)
+    {
+        if (!p) return E_POINTER;
+        *p = v;
+        return S_OK;
+    }
+    static HRESULT putB(LONG *p, bool v)
+    {
+        if (!p) return E_POINTER;
+        *p = v ? 1 : 0;
+        return S_OK;
+    }
+    HRESULT STDMETHODCALLTYPE get_addressSection(ULONG *p) override;
+    HRESULT STDMETHODCALLTYPE get_addressOffset(ULONG *p) override;
+    HRESULT STDMETHODCALLTYPE get_relativeVirtualAddress(ULONG *p) override { return put(p, r().rva); }
+    HRESULT STDMETHODCALLTYPE get_virtualAddress(ULONGLONG *p) override;
+    HRESULT STDMETHODCALLTYPE get_lengthBlock(ULONG *p) override { return put(p, r().codeSize); }
+    HRESULT STDMETHODCALLTYPE get_lengthLocals(ULONG *p) override { return put(p, r().localSize); }
+    HRESULT STDMETHODCALLTYPE get_lengthParams(ULONG *p) override { return put(p, r().paramsSize); }
+    HRESULT STDMETHODCALLTYPE get_maxStack(ULONG *p) override { return put(p, r().maxStack); }
+    HRESULT STDMETHODCALLTYPE get_lengthProlog(ULONG *p) override { return put(p, r().prologSize); }
+    HRESULT STDMETHODCALLTYPE get_lengthSavedRegisters(ULONG *p) override { return put(p, r().savedRegsSize); }
+    HRESULT STDMETHODCALLTYPE get_program(BSTR *p) override;
+    HRESULT STDMETHODCALLTYPE get_systemExceptionHandling(LONG *p) override { return putB(p, r().flags & 1); }
+    HRESULT STDMETHODCALLTYPE get_cplusplusExceptionHandling(LONG *p) override { return putB(p, r().flags & 2); }
+    HRESULT STDMETHODCALLTYPE get_functionStart(LONG *p) override { return putB(p, r().flags & 4); }
+    HRESULT STDMETHODCALLTYPE get_type(ULONG *p) override { return put(p, 4); }  // FrameTypeFrameData
+    HRESULT STDMETHODCALLTYPE get_functionParent(IDiaFrameData **p) override;
+};
+
+IUnknown *newFrameData(DiaSession *s, size_t i);
+
 // A table: IDiaTable plus, optionally, the matching enumerator interface.
 // Rows are produced by `item`.
 class DiaTable : public Stub_IDiaTable<IDiaTable>, Counted {
@@ -348,6 +390,32 @@ public:
     IUnknown *inner;  // the enumerator, delegating its IUnknown to us
     IID innerIid;
     size_t pos = 0;
+    // Rows by index for Item and IEnumUnknown::Next (frame data only).
+    std::function<IUnknown *(ULONG)> row;
+    HRESULT STDMETHODCALLTYPE Item(ULONG index, IUnknown **out) override
+    {
+        if (!out) return E_POINTER;
+        *out = nullptr;
+        if (!row || index >= (ULONG)count) return E_INVALIDARG;
+        *out = row(index);
+        return *out ? S_OK : E_FAIL;
+    }
+    HRESULT STDMETHODCALLTYPE Next(ULONG celt, IUnknown **rgelt, ULONG *fetched) override
+    {
+        ULONG n = 0;
+        while (row && n < celt && pos < (size_t)count) rgelt[n++] = row((ULONG)pos++);
+        if (fetched) *fetched = n;
+        return n == celt ? S_OK : S_FALSE;
+    }
+    HRESULT STDMETHODCALLTYPE Skip(ULONG celt) override
+    {
+        pos += celt;
+        if (pos > (size_t)count) {
+            pos = (size_t)count;
+            return S_FALSE;
+        }
+        return S_OK;
+    }
     HRESULT STDMETHODCALLTYPE get_name(BSTR *p) override
     {
         if (!p) return E_POINTER;
@@ -1202,6 +1270,53 @@ DiaTable::~DiaTable()
     s->Release();
 }
 
+DiaFrameData::DiaFrameData(DiaSession *s, size_t i) : s(s), i(i) { s->AddRef(); }
+DiaFrameData::~DiaFrameData() { s->Release(); }
+const FrameRow &DiaFrameData::r() const { return s->m->frameRows()[i]; }
+HRESULT DiaFrameData::get_addressSection(ULONG *p)
+{
+    uint32_t sect = 0, off = 0;
+    if (!s->m->sectOff(r().rva, sect, off)) return S_FALSE;
+    return put(p, sect);
+}
+HRESULT DiaFrameData::get_addressOffset(ULONG *p)
+{
+    uint32_t sect = 0, off = 0;
+    if (!s->m->sectOff(r().rva, sect, off)) return S_FALSE;
+    return put(p, off);
+}
+HRESULT DiaFrameData::get_virtualAddress(ULONGLONG *p)
+{
+    if (!p) return E_POINTER;
+    *p = s->m->loadAddress + r().rva;
+    return S_OK;
+}
+HRESULT DiaFrameData::get_program(BSTR *p)
+{
+    if (!p) return E_POINTER;
+    *p = toBSTR(s->m->frameProgram(r().frameFunc));
+    return S_OK;
+}
+// The frame data of the function this block belongs to: the function-start
+// row whose range holds it.
+HRESULT DiaFrameData::get_functionParent(IDiaFrameData **p)
+{
+    if (!p) return E_POINTER;
+    *p = nullptr;
+    const auto &rows = s->m->frameRows();
+    const FrameRow &me = r();
+    if (me.flags & 4) return S_FALSE;
+    for (size_t k = 0; k < rows.size(); k++) {
+        const FrameRow &f = rows[k];
+        if ((f.flags & 4) && me.rva >= f.rva && me.rva < f.rva + f.codeSize) {
+            *p = new DiaFrameData(s, k);
+            return S_OK;
+        }
+    }
+    return S_FALSE;
+}
+IUnknown *newFrameData(DiaSession *s, size_t i) { return static_cast<IDiaFrameData *>(new DiaFrameData(s, i)); }
+
 DiaEnumTables::DiaEnumTables(DiaSession *s) : s(s) { s->AddRef(); }
 DiaEnumTables::~DiaEnumTables() { s->Release(); }
 
@@ -1237,7 +1352,13 @@ HRESULT DiaEnumTables::make(size_t i, IDiaTable **out)
     case 5:
         *out = new DiaTable(s, "InjectedSource", 0, new DiaEnumInjectedSources(), IID_IDiaEnumInjectedSources);
         return S_OK;
-    case 6: *out = new DiaTable(s, "FrameData", (LONG)m.frameDataCount(), nullptr, IID_IUnknown); return S_OK;
+    case 6: {
+        auto *t = new DiaTable(s, "FrameData", (LONG)m.frameRows().size(), nullptr, IID_IUnknown);
+        DiaSession *ses = s;
+        t->row = [ses](ULONG i) -> IUnknown * { return newFrameData(ses, i); };
+        *out = t;
+        return S_OK;
+    }
     case 7:
         *out = new DiaTable(s, "InputAssemblyFiles", 0, new DiaEnumInputAssemblyFiles(), IID_IDiaEnumInputAssemblyFiles);
         return S_OK;

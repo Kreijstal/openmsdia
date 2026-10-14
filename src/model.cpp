@@ -2430,6 +2430,34 @@ uint32_t Model::frameDataCount()
     return 0;
 }
 
+const std::vector<FrameRow> &Model::frameRows()
+{
+    if (frameRowsRead) return frameRowCache;
+    frameRowsRead = true;
+    for (auto &d : debugStreams()) {
+        if (d.name != "NEWFPO") continue;
+        for (size_t at = 0; at + 32 <= d.data.size(); at += 32) {
+            const uint8_t *p = &d.data[at];
+            auto u32 = [&](int o) { uint32_t v; memcpy(&v, p + o, 4); return v; };
+            auto u16 = [&](int o) { uint16_t v; memcpy(&v, p + o, 2); return v; };
+            frameRowCache.push_back({u32(0), u32(4), u32(8), u32(12), u32(16), u32(20), u16(24), u16(26), u32(28)});
+        }
+    }
+    return frameRowCache;
+}
+
+std::string Model::frameProgram(uint32_t frameFunc)
+{
+    const PDBStringTable *st = pdb->strings();
+    if (!st) return "";
+    auto e = st->getStringForID(frameFunc);
+    if (!e) {
+        consumeError(e.takeError());
+        return "";
+    }
+    return e->str();
+}
+
 std::vector<DebugStream> Model::debugStreams()
 {
     std::vector<DebugStream> out;

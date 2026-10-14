@@ -132,6 +132,13 @@ struct SectionContrib {
     uint16_t modi = 0;
 };
 
+// A row of the x86 frame data (NEWFPO) stream.
+struct FrameRow {
+    uint32_t rva, codeSize, localSize, paramsSize, maxStack, frameFunc;
+    uint16_t prologSize, savedRegsSize;
+    uint32_t flags;  // 1 SEH, 2 C++ EH, 4 function start
+};
+
 struct DebugStream {
     std::string name;
     uint32_t recordSize = 1;
@@ -173,6 +180,8 @@ public:
     // The Symbols table: the exe, the compilands and everything below them,
     // then the rest of the exe's children.
     std::vector<SymIndexId> allSymbols();
+    std::vector<FrameRow> frameRowCache;
+    bool frameRowsRead = false;
     uint32_t hiddenLocalCount();
 
     // Lines and files.
@@ -186,6 +195,8 @@ public:
     const std::vector<SectionContrib> &sectionContribs();
     std::vector<DebugStream> debugStreams();
     uint32_t frameDataCount();
+    const std::vector<FrameRow> &frameRows();
+    std::string frameProgram(uint32_t frameFunc);  // from the PDB string table
     bool is64();  // a 64-bit image (pointers print as __ptr64 in complete undecorated names)  // records of the x86 frame data (NEWFPO) stream
     uint32_t segmentCount();
 
