@@ -2753,14 +2753,22 @@ SymIndexId Model::findByRVA(uint32_t r, SymTag want, int32_t *disp)
         break;
     case SymTag::Data: hit = preceding(dataMap); break;
     case SymTag::PublicSymbol: hit = preceding(publicMap); break;
-    case SymTag::None:
-        if (auto *f = containing(funcMap)) {
+    case SymTag::None: {
+        // Of the function, thunk, data and public symbols holding the
+        // address, the one starting last; at equal starts data before
+        // functions, functions before thunks and publics (as observed: a
+        // data symbol at a function's address, a string literal's public
+        // inside a vtable).
+        const AddrEntry *f = containing(funcMap), *t = containing(thunkMap), *d = containing(dataMap);
+        const AddrEntry *pub = containing(publicMap);
+        const AddrEntry *best = nullptr;
+        for (const AddrEntry *e : {d, f, t, pub})
+            if (e && (!best || e->rva > best->rva)) best = e;
+        if (best && best == f) {
             hit = innermostBlock(f->id);
             if (!hit) hit = f;
-        } else if (auto *t = containing(thunkMap)) {
-            hit = t;
-        } else if (auto *d = containing(dataMap)) {
-            hit = d;
+        } else if (best && (best != pub || f || t || d)) {
+            hit = best;
         } else {
             // The nearest preceding function, data or public symbol, in that
             // order of preference at equal addresses.
@@ -2770,6 +2778,7 @@ SymIndexId Model::findByRVA(uint32_t r, SymTag want, int32_t *disp)
             }
         }
         break;
+    }
     default:
         break;
     }
