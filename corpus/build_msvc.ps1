@@ -3,8 +3,9 @@
 # Build the C and C++ corpus with MSVC (cl/link from a Visual Studio
 # developer shell) into PDBs, freestanding like corpus/build.sh. Used by
 # CI only: the PDBs contain machine paths and stay build artifacts.
-# With -X86 (from an x86 developer shell) it builds the 32-bit PDBs.
-param([Parameter(Mandatory = $true)][string]$Out, [switch]$X86)
+# With -X86 (from an x86 developer shell) it builds the 32-bit PDBs; with
+# -Names, the name corpus (corpus/names/names.cpp) instead.
+param([Parameter(Mandatory = $true)][string]$Out, [switch]$X86, [switch]$Names)
 $ErrorActionPreference = 'Stop'
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
 New-Item -ItemType Directory -Force -Path $Out | Out-Null
@@ -18,6 +19,7 @@ function Build($name, $lang, $opt, $sources) {
         $obj = Join-Path $objdir ((Split-Path -Leaf $src) + '.obj')
         $flags = $common + @($opt)
         if ($lang -eq 'cxx') { $flags += @('/std:c++17', '/GR-', '/EHs-c-', '/Zc:threadSafeInit-', '/TP') }
+        elseif ($lang -eq 'names') { $flags += @('/std:c++20', '/GR', '/EHs-c-', '/Zc:threadSafeInit-', '/TP') }
         else { $flags += @('/std:c11', '/TC') }
         & cl.exe @flags (Join-Path $here $src) "/Fo$obj"
         if ($LASTEXITCODE) { throw "cl failed: $src" }
@@ -27,7 +29,10 @@ function Build($name, $lang, $opt, $sources) {
         /SUBSYSTEM:CONSOLE /NODEFAULTLIB /Brepro /INCREMENTAL:NO @objs
     if ($LASTEXITCODE) { throw "link failed: $name" }
 }
-if ($X86) {
+if ($Names) {
+    if ($X86) { Build 'names_msvc_x86' 'names' '/Od' @('names\names.cpp') }
+    else { Build 'names_msvc' 'names' '/Od' @('names\names.cpp') }
+} elseif ($X86) {
     Build 'msvc_c_basic_x86' 'c' '/Od' @('c_basic\main.c', 'c_basic\util.c', 'x86\rt.c')
     Build 'msvc_cpp_more_x86' 'cxx' '/Od' @('cpp_more\more.cpp', 'x86\rt.c')
 } else {

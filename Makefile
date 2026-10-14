@@ -21,7 +21,7 @@ DLL_LDFLAGS := -shared -static -Wl,--gc-sections -Wl,--no-insert-timestamp -Wl,-
 DLL_SRCS := src/dllmain.cpp src/com.cpp src/model.cpp src/types.cpp src/pdb.cpp
 DLL_OBJS := $(DLL_SRCS:src/%.cpp=$(B)/obj/%.o)
 
-all: $(B)/msdia140.dll $(B)/dia_walk.exe $(B)/test_vtables.exe
+all: $(B)/msdia140.dll $(B)/dia_walk.exe $(B)/name_probe.exe $(B)/test_vtables.exe
 
 $(B)/obj/%.o: src/%.cpp src/model.h src/pdb.h src/cvutil.h $(GEN)
 	@mkdir -p $(B)/obj
@@ -57,6 +57,10 @@ $(GEN): tools/gen_dia.py $(SNAPSHOT)
 $(B)/dia_walk.exe: walker/dia_walk.cpp $(GEN)
 	@mkdir -p $(B)
 	$(CXX) $(WALK_CXXFLAGS) $< -loleaut32 -lole32 -luuid -lshlwapi -o $@
+
+$(B)/name_probe.exe: walker/name_probe.cpp $(GEN)
+	@mkdir -p $(B)
+	$(CXX) $(WALK_CXXFLAGS) $< -loleaut32 -lole32 -luuid -ldbghelp -o $@
 
 corpus:
 	corpus/build.sh $(B)/corpus
