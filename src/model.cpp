@@ -2194,12 +2194,12 @@ const std::vector<SymIndexId> &Model::publics()
     // section, but not past the end of the section contribution holding
     // the symbol; 0 for the last one.
     std::vector<OmPublic *> sorted = pubs;
-    auto rvaOf = [&](OmPublic *p) { return rva(p->ps.Segment, p->ps.Offset); };
+    auto rvaOf = [&](OmPublic *p) -> uint64_t { return rva(p->ps.Segment, p->ps.Offset); };
     std::stable_sort(sorted.begin(), sorted.end(), [&](OmPublic *a, OmPublic *b) { return rvaOf(a) < rvaOf(b); });
     const auto &sc = sectionContribs();
     for (size_t i = 0; i < sorted.size(); i++) {
         OmPublic *p = sorted[i];
-        uint32_t r = rvaOf(p);
+        uint64_t r = rvaOf(p);
         uint64_t end = 0;
         for (size_t j = i + 1; j < sorted.size(); j++)
             if (rvaOf(sorted[j]) > r) {
@@ -2703,14 +2703,12 @@ void Model::buildAddressMap()
     };
     for (auto *m : {&funcMap, &blockMap, &dataMap, &publicMap, &thunkMap})
         std::stable_sort(m->begin(), m->end(), byAddr);
-    // Symbols by address: functions, thunks and data, and publics where
-    // none of them is.
+    // Symbols by address: one per address, data before functions before
+    // thunks, publics where none of them is (as observed).
     std::set<uint32_t> covered;
-    for (auto *m : {&funcMap, &thunkMap, &dataMap})
-        for (auto &e : *m) {
-            addrMap.push_back(e);
-            covered.insert(e.rva);
-        }
+    for (auto *m : {&dataMap, &funcMap, &thunkMap})
+        for (auto &e : *m)
+            if (covered.insert(e.rva).second) addrMap.push_back(e);
     for (auto &e : publicMap)
         if (!covered.count(e.rva)) {
             addrMap.push_back(e);
@@ -2761,6 +2759,14 @@ SymIndexId Model::findByRVA(uint32_t r, SymTag want, int32_t *disp)
         // inside a vtable).
         const AddrEntry *f = containing(funcMap), *t = containing(thunkMap), *d = containing(dataMap);
         const AddrEntry *pub = containing(publicMap);
+        // A data symbol starting at the function's address counts whatever
+        // its length.
+        if (f && (!d || d->rva < f->rva))
+            for (auto &e : dataMap)
+                if (e.rva == f->rva) {
+                    d = &e;
+                    break;
+                }
         const AddrEntry *best = nullptr;
         for (const AddrEntry *e : {d, f, t, pub})
             if (e && (!best || e->rva > best->rva)) best = e;
@@ -2770,9 +2776,9 @@ SymIndexId Model::findByRVA(uint32_t r, SymTag want, int32_t *disp)
         } else if (best && (best != pub || f || t || d)) {
             hit = best;
         } else {
-            // The nearest preceding function, data or public symbol, in that
-            // order of preference at equal addresses.
-            for (auto *m : {&funcMap, &thunkMap, &dataMap, &publicMap}) {
+            // The nearest preceding data, function, thunk or public symbol,
+            // in that order of preference at equal addresses.
+            for (auto *m : {&dataMap, &funcMap, &thunkMap, &publicMap}) {
                 const AddrEntry *e = preceding(*m);
                 if (e && (!hit || e->rva > hit->rva)) hit = e;
             }
