@@ -369,6 +369,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "void geo::Shape::Shape(geo::Kind)",
    "undecoratedNameEx(0)": "void geo::Shape::Shape(geo::Kind)",
+   "undecoratedNameEx(0x1000)": "void geo::Shape::Shape(geo::Kind)",
+   "undecoratedNameEx(0x87FE)": "void geo::Shape::Shape(geo::Kind)",
    "virtual": 0,
    "virtualAddress": 5568,
    "virtualBaseOffset": 0,
@@ -447,6 +449,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "double area()",
    "undecoratedNameEx(0)": "double area()",
+   "undecoratedNameEx(0x1000)": "double area()",
+   "undecoratedNameEx(0x87FE)": "double area()",
    "virtual": 1,
    "virtualBaseOffset": 0
   },
@@ -516,6 +520,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "int geo::Shape::id()",
    "undecoratedNameEx(0)": "int geo::Shape::id()",
+   "undecoratedNameEx(0x1000)": "int geo::Shape::id()",
+   "undecoratedNameEx(0x87FE)": "int geo::Shape::id()",
    "virtual": 0,
    "virtualAddress": 5328,
    "virtualBaseOffset": 0,
@@ -594,6 +600,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "geo::Kind kind()",
    "undecoratedNameEx(0)": "geo::Kind kind()",
+   "undecoratedNameEx(0x1000)": "geo::Kind kind()",
+   "undecoratedNameEx(0x87FE)": "geo::Kind kind()",
    "virtual": 0,
    "virtualBaseOffset": 0
   },
@@ -663,6 +671,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "const char * geo::Shape::name()",
    "undecoratedNameEx(0)": "const char * geo::Shape::name()",
+   "undecoratedNameEx(0x1000)": "const char * geo::Shape::name()",
+   "undecoratedNameEx(0x87FE)": "const char * geo::Shape::name()",
    "virtual": 1,
    "virtualAddress": 5728,
    "virtualBaseOffset": 0,
@@ -784,6 +794,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "void geo::Shape::~Shape()",
    "undecoratedNameEx(0)": "void geo::Shape::~Shape()",
+   "undecoratedNameEx(0x1000)": "void geo::Shape::~Shape()",
+   "undecoratedNameEx(0x87FE)": "void geo::Shape::~Shape()",
    "virtual": 1,
    "virtualAddress": 5840,
    "virtualBaseOffset": 0,
@@ -951,6 +963,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "void geo::Circle::Circle(double)",
    "undecoratedNameEx(0)": "void geo::Circle::Circle(double)",
+   "undecoratedNameEx(0x1000)": "void geo::Circle::Circle(double)",
+   "undecoratedNameEx(0x87FE)": "void geo::Circle::Circle(double)",
    "virtual": 0,
    "virtualAddress": 5024,
    "virtualBaseOffset": 0,
@@ -1072,6 +1086,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "double geo::Circle::area()",
    "undecoratedNameEx(0)": "double geo::Circle::area()",
+   "undecoratedNameEx(0x1000)": "double geo::Circle::area()",
+   "undecoratedNameEx(0x87FE)": "double geo::Circle::area()",
    "virtual": 1,
    "virtualAddress": 5872,
    "virtualBaseOffset": 0,
@@ -1193,6 +1209,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "const char * geo::Circle::name()",
    "undecoratedNameEx(0)": "const char * geo::Circle::name()",
+   "undecoratedNameEx(0x1000)": "const char * geo::Circle::name()",
+   "undecoratedNameEx(0x87FE)": "const char * geo::Circle::name()",
    "virtual": 1,
    "virtualAddress": 6096,
    "virtualBaseOffset": 0,
@@ -1387,6 +1405,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "void geo::Named::rename(const char *)",
    "undecoratedNameEx(0)": "void geo::Named::rename(const char *)",
+   "undecoratedNameEx(0x1000)": "void geo::Named::rename(const char *)",
+   "undecoratedNameEx(0x87FE)": "void geo::Named::rename(const char *)",
    "virtual": 1,
    "virtualAddress": 5296,
    "virtualBaseOffset": 0,
@@ -2342,6 +2362,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "static void _GLOBAL__sub_I_main.cpp()",
    "undecoratedNameEx(0)": "static void _GLOBAL__sub_I_main.cpp()",
+   "undecoratedNameEx(0x1000)": "static void _GLOBAL__sub_I_main.cpp()",
+   "undecoratedNameEx(0x87FE)": "static void _GLOBAL__sub_I_main.cpp()",
    "virtualAddress": 4880,
    "wasInlined": 0
   },
@@ -2453,6 +2475,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__cxa_pure_virtual",
    "undecoratedNameEx(0)": "__cxa_pure_virtual",
+   "undecoratedNameEx(0x1000)": "__cxa_pure_virtual",
+   "undecoratedNameEx(0x87FE)": "__cxa_pure_virtual",
    "virtualAddress": 4096,
    "wasInlined": 0
   },
@@ -2565,6 +2589,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "static void `dynamic initializer for 'diamond'()",
    "undecoratedNameEx(0)": "static void `dynamic initializer for 'diamond'()",
+   "undecoratedNameEx(0x1000)": "static void `dynamic initializer for 'diamond'()",
+   "undecoratedNameEx(0x87FE)": "static void `dynamic initializer for 'diamond'()",
    "virtualAddress": 4384,
    "wasInlined": 0
   },
@@ -2683,6 +2709,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "void geo::Circle::~Circle()",
    "undecoratedNameEx(0)": "void geo::Circle::~Circle()",
+   "undecoratedNameEx(0x1000)": "void geo::Circle::~Circle()",
+   "undecoratedNameEx(0x87FE)": "void geo::Circle::~Circle()",
    "virtualAddress": 5408,
    "wasInlined": 0
   },
@@ -2796,6 +2824,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "void geo::Diamond::Diamond()",
    "undecoratedNameEx(0)": "void geo::Diamond::Diamond()",
+   "undecoratedNameEx(0x1000)": "void geo::Diamond::Diamond()",
+   "undecoratedNameEx(0x87FE)": "void geo::Diamond::Diamond()",
    "virtualAddress": 4896,
    "wasInlined": 0
   },
@@ -2915,6 +2945,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "void geo::LabelledCircle::LabelledCircle(double, const char *)",
    "undecoratedNameEx(0)": "void geo::LabelledCircle::LabelledCircle(double, const char *)",
+   "undecoratedNameEx(0x1000)": "void geo::LabelledCircle::LabelledCircle(double, const char *)",
+   "undecoratedNameEx(0x87FE)": "void geo::LabelledCircle::LabelledCircle(double, const char *)",
    "virtual": 0,
    "virtualAddress": 5184,
    "virtualBaseOffset": 0,
@@ -3036,6 +3068,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "const char * geo::LabelledCircle::name()",
    "undecoratedNameEx(0)": "const char * geo::LabelledCircle::name()",
+   "undecoratedNameEx(0x1000)": "const char * geo::LabelledCircle::name()",
+   "undecoratedNameEx(0x87FE)": "const char * geo::LabelledCircle::name()",
    "virtual": 1,
    "virtualAddress": 5824,
    "virtualBaseOffset": 0,
@@ -3151,6 +3185,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "void geo::LabelledCircle::~LabelledCircle()",
    "undecoratedNameEx(0)": "void geo::LabelledCircle::~LabelledCircle()",
+   "undecoratedNameEx(0x1000)": "void geo::LabelledCircle::~LabelledCircle()",
+   "undecoratedNameEx(0x87FE)": "void geo::LabelledCircle::~LabelledCircle()",
    "virtualAddress": 5344,
    "wasInlined": 0
   },
@@ -3264,6 +3300,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "void geo::LabelledCircle::~LabelledCircle()",
    "undecoratedNameEx(0)": "void geo::LabelledCircle::~LabelledCircle()",
+   "undecoratedNameEx(0x1000)": "void geo::LabelledCircle::~LabelledCircle()",
+   "undecoratedNameEx(0x87FE)": "void geo::LabelledCircle::~LabelledCircle()",
    "virtualAddress": 5776,
    "wasInlined": 0
   },
@@ -3377,6 +3415,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "void geo::Named::Named()",
    "undecoratedNameEx(0)": "void geo::Named::Named()",
+   "undecoratedNameEx(0x1000)": "void geo::Named::Named()",
+   "undecoratedNameEx(0x87FE)": "void geo::Named::Named()",
    "virtualAddress": 5744,
    "wasInlined": 0
   },
@@ -3508,6 +3548,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "void geo::Square::Square(double)",
    "undecoratedNameEx(0)": "void geo::Square::Square(double)",
+   "undecoratedNameEx(0x1000)": "void geo::Square::Square(double)",
+   "undecoratedNameEx(0x87FE)": "void geo::Square::Square(double)",
    "virtual": 0,
    "virtualAddress": 5104,
    "virtualBaseOffset": 0,
@@ -3629,6 +3671,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "double geo::Square::area()",
    "undecoratedNameEx(0)": "double geo::Square::area()",
+   "undecoratedNameEx(0x1000)": "double geo::Square::area()",
+   "undecoratedNameEx(0x87FE)": "double geo::Square::area()",
    "virtual": 1,
    "virtualAddress": 5696,
    "virtualBaseOffset": 0,
@@ -3744,6 +3788,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "void geo::Square::~Square()",
    "undecoratedNameEx(0)": "void geo::Square::~Square()",
+   "undecoratedNameEx(0x1000)": "void geo::Square::~Square()",
+   "undecoratedNameEx(0x87FE)": "void geo::Square::~Square()",
    "virtualAddress": 5376,
    "wasInlined": 0
   },
@@ -3857,6 +3903,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "void geo::Square::~Square()",
    "undecoratedNameEx(0)": "void geo::Square::~Square()",
+   "undecoratedNameEx(0x1000)": "void geo::Square::~Square()",
+   "undecoratedNameEx(0x87FE)": "void geo::Square::~Square()",
    "virtualAddress": 5648,
    "wasInlined": 0
   },
@@ -3970,6 +4018,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "void geo::VBase::VBase()",
    "undecoratedNameEx(0)": "void geo::VBase::VBase()",
+   "undecoratedNameEx(0x1000)": "void geo::VBase::VBase()",
+   "undecoratedNameEx(0x87FE)": "void geo::VBase::VBase()",
    "virtualAddress": 5440,
    "wasInlined": 0
   },
@@ -4083,6 +4133,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "void geo::VLeft::VLeft()",
    "undecoratedNameEx(0)": "void geo::VLeft::VLeft()",
+   "undecoratedNameEx(0x1000)": "void geo::VLeft::VLeft()",
+   "undecoratedNameEx(0x87FE)": "void geo::VLeft::VLeft()",
    "virtualAddress": 5472,
    "wasInlined": 0
   },
@@ -4196,6 +4248,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "void geo::VRight::VRight()",
    "undecoratedNameEx(0)": "void geo::VRight::VRight()",
+   "undecoratedNameEx(0x1000)": "void geo::VRight::VRight()",
+   "undecoratedNameEx(0x87FE)": "void geo::VRight::VRight()",
    "virtualAddress": 5520,
    "wasInlined": 0
   },
@@ -4307,6 +4361,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "memcpy",
    "undecoratedNameEx(0)": "memcpy",
+   "undecoratedNameEx(0x1000)": "memcpy",
+   "undecoratedNameEx(0x87FE)": "memcpy",
    "virtualAddress": 4208,
    "wasInlined": 0
   },
@@ -4418,6 +4474,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "memset",
    "undecoratedNameEx(0)": "memset",
+   "undecoratedNameEx(0x1000)": "memset",
+   "undecoratedNameEx(0x87FE)": "memset",
    "virtualAddress": 4112,
    "wasInlined": 0
   },
@@ -4529,6 +4587,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "void operator delete(void *)",
    "undecoratedNameEx(0)": "void operator delete(void *)",
+   "undecoratedNameEx(0x1000)": "void operator delete(void *)",
+   "undecoratedNameEx(0x87FE)": "void operator delete(void *)",
    "virtualAddress": 4320,
    "wasInlined": 0
   },
@@ -4640,6 +4700,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "void operator delete(void *, unsigned __int64)",
    "undecoratedNameEx(0)": "void operator delete(void *, unsigned __int64)",
+   "undecoratedNameEx(0x1000)": "void operator delete(void *, unsigned __int64)",
+   "undecoratedNameEx(0x87FE)": "void operator delete(void *, unsigned __int64)",
    "virtualAddress": 4336,
    "wasInlined": 0
   },
@@ -4749,6 +4811,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "int & const ref_to_global()",
    "undecoratedNameEx(0)": "int & const ref_to_global()",
+   "undecoratedNameEx(0x1000)": "int & const ref_to_global()",
+   "undecoratedNameEx(0x87FE)": "int & const ref_to_global()",
    "virtualAddress": 4368,
    "wasInlined": 0
   },
@@ -4861,6 +4925,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "static __int64 square(int)",
    "undecoratedNameEx(0)": "static __int64 square(int)",
+   "undecoratedNameEx(0x1000)": "static __int64 square(int)",
+   "undecoratedNameEx(0x87FE)": "static __int64 square(int)",
    "virtualAddress": 4848,
    "wasInlined": 0
   },
@@ -4974,6 +5040,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "start",
    "undecoratedNameEx(0)": "start",
+   "undecoratedNameEx(0x1000)": "start",
+   "undecoratedNameEx(0x87FE)": "start",
    "virtualAddress": 4416,
    "wasInlined": 0
   },
@@ -5226,6 +5294,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "void geo::Circle::~Circle()",
    "undecoratedNameEx(0)": "void geo::Circle::~Circle()",
+   "undecoratedNameEx(0x1000)": "void geo::Circle::~Circle()",
+   "undecoratedNameEx(0x87FE)": "void geo::Circle::~Circle()",
    "virtualAddress": 6048,
    "wasInlined": 0
   },
@@ -5348,6 +5418,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "void geo::Shape::~Shape()",
    "undecoratedNameEx(0)": "void geo::Shape::~Shape()",
+   "undecoratedNameEx(0x1000)": "void geo::Shape::~Shape()",
+   "undecoratedNameEx(0x87FE)": "void geo::Shape::~Shape()",
    "virtual": 1,
    "virtualAddress": 5856,
    "virtualBaseOffset": 0,
@@ -5461,6 +5533,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "double geo::total_area(class geo::Shape * *, int)",
    "undecoratedNameEx(0)": "double geo::total_area(class geo::Shape * *, int)",
+   "undecoratedNameEx(0x1000)": "double geo::total_area(class geo::Shape * *, int)",
+   "undecoratedNameEx(0x87FE)": "double geo::total_area(class geo::Shape * *, int)",
    "virtualAddress": 5936,
    "wasInlined": 0
   },
@@ -5772,6 +5846,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "struct geo::Vec2 & const geo::FixedArray<geo::Vec2,2>::operator[](int)",
    "undecoratedNameEx(0)": "struct geo::Vec2 & const geo::FixedArray<geo::Vec2,2>::operator[](int)",
+   "undecoratedNameEx(0x1000)": "struct geo::Vec2 & const geo::FixedArray<geo::Vec2,2>::operator[](int)",
+   "undecoratedNameEx(0x87FE)": "struct geo::Vec2 & const geo::FixedArray<geo::Vec2,2>::operator[](int)",
    "virtual": 0,
    "virtualAddress": 6448,
    "virtualBaseOffset": 0,
@@ -5893,6 +5969,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "struct geo::Vec2 geo::FixedArray<geo::Vec2,2>::sum()",
    "undecoratedNameEx(0)": "struct geo::Vec2 geo::FixedArray<geo::Vec2,2>::sum()",
+   "undecoratedNameEx(0x1000)": "struct geo::Vec2 geo::FixedArray<geo::Vec2,2>::sum()",
+   "undecoratedNameEx(0x87FE)": "struct geo::Vec2 geo::FixedArray<geo::Vec2,2>::sum()",
    "virtual": 0,
    "virtualAddress": 6496,
    "virtualBaseOffset": 0,
@@ -6033,6 +6111,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "int geo::FixedArray<int,4>::size()",
    "undecoratedNameEx(0)": "int geo::FixedArray<int,4>::size()",
+   "undecoratedNameEx(0x1000)": "int geo::FixedArray<int,4>::size()",
+   "undecoratedNameEx(0x87FE)": "int geo::FixedArray<int,4>::size()",
    "virtual": 0,
    "virtualAddress": 6816,
    "virtualBaseOffset": 0,
@@ -6154,6 +6234,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "int geo::FixedArray<int,4>::sum()",
    "undecoratedNameEx(0)": "int geo::FixedArray<int,4>::sum()",
+   "undecoratedNameEx(0x1000)": "int geo::FixedArray<int,4>::sum()",
+   "undecoratedNameEx(0x87FE)": "int geo::FixedArray<int,4>::sum()",
    "virtual": 0,
    "virtualAddress": 6720,
    "virtualBaseOffset": 0,
@@ -6294,6 +6376,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "void geo::Vec2::Vec2(double, double)",
    "undecoratedNameEx(0)": "void geo::Vec2::Vec2(double, double)",
+   "undecoratedNameEx(0x1000)": "void geo::Vec2::Vec2(double, double)",
+   "undecoratedNameEx(0x87FE)": "void geo::Vec2::Vec2(double, double)",
    "virtual": 0,
    "virtualAddress": 6384,
    "virtualBaseOffset": 0,
@@ -6415,6 +6499,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "void geo::Vec2::Vec2()",
    "undecoratedNameEx(0)": "void geo::Vec2::Vec2()",
+   "undecoratedNameEx(0x1000)": "void geo::Vec2::Vec2()",
+   "undecoratedNameEx(0x87FE)": "void geo::Vec2::Vec2()",
    "virtual": 0,
    "virtualAddress": 6912,
    "virtualBaseOffset": 0,
@@ -6536,6 +6622,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "struct geo::Vec2 geo::Vec2::operator+(const struct geo::Vec2 & const)",
    "undecoratedNameEx(0)": "struct geo::Vec2 geo::Vec2::operator+(const struct geo::Vec2 & const)",
+   "undecoratedNameEx(0x1000)": "struct geo::Vec2 geo::Vec2::operator+(const struct geo::Vec2 & const)",
+   "undecoratedNameEx(0x87FE)": "struct geo::Vec2 geo::Vec2::operator+(const struct geo::Vec2 & const)",
    "virtual": 0,
    "virtualAddress": 6944,
    "virtualBaseOffset": 0,
@@ -6650,6 +6738,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "static int geo::`anonymous namespace'::bump_hidden(int)",
    "undecoratedNameEx(0)": "static int geo::`anonymous namespace'::bump_hidden(int)",
+   "undecoratedNameEx(0x1000)": "static int geo::`anonymous namespace'::bump_hidden(int)",
+   "undecoratedNameEx(0x87FE)": "static int geo::`anonymous namespace'::bump_hidden(int)",
    "virtualAddress": 6352,
    "wasInlined": 0
   },
@@ -6763,6 +6853,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "double geo::max_of<double>(double, double)",
    "undecoratedNameEx(0)": "double geo::max_of<double>(double, double)",
+   "undecoratedNameEx(0x1000)": "double geo::max_of<double>(double, double)",
+   "undecoratedNameEx(0x87FE)": "double geo::max_of<double>(double, double)",
    "virtualAddress": 6832,
    "wasInlined": 0
   },
@@ -6874,6 +6966,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "int geo::max_of<int>(int, int)",
    "undecoratedNameEx(0)": "int geo::max_of<int>(int, int)",
+   "undecoratedNameEx(0x1000)": "int geo::max_of<int>(int, int)",
+   "undecoratedNameEx(0x87FE)": "int geo::max_of<int>(int, int)",
    "virtualAddress": 6656,
    "wasInlined": 0
   },
@@ -6985,6 +7079,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "int geo::use_templates()",
    "undecoratedNameEx(0)": "int geo::use_templates()",
+   "undecoratedNameEx(0x1000)": "int geo::use_templates()",
+   "undecoratedNameEx(0x87FE)": "int geo::use_templates()",
    "virtualAddress": 6112,
    "wasInlined": 0
   },
@@ -8114,6 +8210,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "double dot(const struct geo::Vec2 & const)",
    "undecoratedNameEx(0)": "double dot(const struct geo::Vec2 & const)",
+   "undecoratedNameEx(0x1000)": "double dot(const struct geo::Vec2 & const)",
+   "undecoratedNameEx(0x87FE)": "double dot(const struct geo::Vec2 & const)",
    "virtual": 0,
    "virtualBaseOffset": 0
   },
@@ -8299,6 +8397,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "int & const operator[](int)",
    "undecoratedNameEx(0)": "int & const operator[](int)",
+   "undecoratedNameEx(0x1000)": "int & const operator[](int)",
+   "undecoratedNameEx(0x87FE)": "int & const operator[](int)",
    "virtual": 0,
    "virtualBaseOffset": 0
   },
@@ -8340,6 +8440,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "int size()",
    "undecoratedNameEx(0)": "int size()",
+   "undecoratedNameEx(0x1000)": "int size()",
+   "undecoratedNameEx(0x87FE)": "int size()",
    "virtual": 0,
    "virtualBaseOffset": 0
   },
@@ -11265,6 +11367,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "refptr._ZN3geo5Shape7next_idE",
    "undecoratedNameEx(0)": "refptr._ZN3geo5Shape7next_idE",
+   "undecoratedNameEx(0x1000)": "refptr._ZN3geo5Shape7next_idE",
+   "undecoratedNameEx(0x87FE)": "refptr._ZN3geo5Shape7next_idE",
    "virtualAddress": 8512
   },
   "Exe/PublicSymbol:.refptr._ZTVN3geo5ShapeE": {
@@ -11288,6 +11392,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "refptr._ZTVN3geo5ShapeE",
    "undecoratedNameEx(0)": "refptr._ZTVN3geo5ShapeE",
+   "undecoratedNameEx(0x1000)": "refptr._ZTVN3geo5ShapeE",
+   "undecoratedNameEx(0x87FE)": "refptr._ZTVN3geo5ShapeE",
    "virtualAddress": 8520
   },
   "Exe/PublicSymbol:.refptr._ZTVN3geo6CircleE": {
@@ -11311,6 +11417,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "refptr._ZTVN3geo6CircleE",
    "undecoratedNameEx(0)": "refptr._ZTVN3geo6CircleE",
+   "undecoratedNameEx(0x1000)": "refptr._ZTVN3geo6CircleE",
+   "undecoratedNameEx(0x87FE)": "refptr._ZTVN3geo6CircleE",
    "virtualAddress": 8528
   },
   "Exe/PublicSymbol:Outer_member_ptr_target": {
@@ -11334,6 +11442,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "Outer_member_ptr_target",
    "undecoratedNameEx(0)": "Outer_member_ptr_target",
+   "undecoratedNameEx(0x1000)": "Outer_member_ptr_target",
+   "undecoratedNameEx(0x87FE)": "Outer_member_ptr_target",
    "virtualAddress": 16496
   },
   "Exe/PublicSymbol:_Z13ref_to_globalv": {
@@ -11357,6 +11467,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_Z13ref_to_globalv",
    "undecoratedNameEx(0)": "_Z13ref_to_globalv",
+   "undecoratedNameEx(0x1000)": "_Z13ref_to_globalv",
+   "undecoratedNameEx(0x87FE)": "_Z13ref_to_globalv",
    "virtualAddress": 4368
   },
   "Exe/PublicSymbol:_ZN3geo10FixedArrayINS_4Vec2ELi2EEixEi": {
@@ -11380,6 +11492,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_ZN3geo10FixedArrayINS_4Vec2ELi2EEixEi",
    "undecoratedNameEx(0)": "_ZN3geo10FixedArrayINS_4Vec2ELi2EEixEi",
+   "undecoratedNameEx(0x1000)": "_ZN3geo10FixedArrayINS_4Vec2ELi2EEixEi",
+   "undecoratedNameEx(0x87FE)": "_ZN3geo10FixedArrayINS_4Vec2ELi2EEixEi",
    "virtualAddress": 6448
   },
   "Exe/PublicSymbol:_ZN3geo10total_areaEPKPNS_5ShapeEi": {
@@ -11403,6 +11517,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_ZN3geo10total_areaEPKPNS_5ShapeEi",
    "undecoratedNameEx(0)": "_ZN3geo10total_areaEPKPNS_5ShapeEi",
+   "undecoratedNameEx(0x1000)": "_ZN3geo10total_areaEPKPNS_5ShapeEi",
+   "undecoratedNameEx(0x87FE)": "_ZN3geo10total_areaEPKPNS_5ShapeEi",
    "virtualAddress": 5936
   },
   "Exe/PublicSymbol:_ZN3geo13use_templatesEv": {
@@ -11426,6 +11542,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_ZN3geo13use_templatesEv",
    "undecoratedNameEx(0)": "_ZN3geo13use_templatesEv",
+   "undecoratedNameEx(0x1000)": "_ZN3geo13use_templatesEv",
+   "undecoratedNameEx(0x87FE)": "_ZN3geo13use_templatesEv",
    "virtualAddress": 6112
   },
   "Exe/PublicSymbol:_ZN3geo14LabelledCircleC2EdPKc": {
@@ -11449,6 +11567,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_ZN3geo14LabelledCircleC2EdPKc",
    "undecoratedNameEx(0)": "_ZN3geo14LabelledCircleC2EdPKc",
+   "undecoratedNameEx(0x1000)": "_ZN3geo14LabelledCircleC2EdPKc",
+   "undecoratedNameEx(0x87FE)": "_ZN3geo14LabelledCircleC2EdPKc",
    "virtualAddress": 5184
   },
   "Exe/PublicSymbol:_ZN3geo14LabelledCircleD0Ev": {
@@ -11472,6 +11592,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_ZN3geo14LabelledCircleD0Ev",
    "undecoratedNameEx(0)": "_ZN3geo14LabelledCircleD0Ev",
+   "undecoratedNameEx(0x1000)": "_ZN3geo14LabelledCircleD0Ev",
+   "undecoratedNameEx(0x87FE)": "_ZN3geo14LabelledCircleD0Ev",
    "virtualAddress": 5776
   },
   "Exe/PublicSymbol:_ZN3geo14LabelledCircleD2Ev": {
@@ -11495,6 +11617,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_ZN3geo14LabelledCircleD2Ev",
    "undecoratedNameEx(0)": "_ZN3geo14LabelledCircleD2Ev",
+   "undecoratedNameEx(0x1000)": "_ZN3geo14LabelledCircleD2Ev",
+   "undecoratedNameEx(0x87FE)": "_ZN3geo14LabelledCircleD2Ev",
    "virtualAddress": 5344
   },
   "Exe/PublicSymbol:_ZN3geo4Vec2C2Edd": {
@@ -11518,6 +11642,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_ZN3geo4Vec2C2Edd",
    "undecoratedNameEx(0)": "_ZN3geo4Vec2C2Edd",
+   "undecoratedNameEx(0x1000)": "_ZN3geo4Vec2C2Edd",
+   "undecoratedNameEx(0x87FE)": "_ZN3geo4Vec2C2Edd",
    "virtualAddress": 6384
   },
   "Exe/PublicSymbol:_ZN3geo4Vec2C2Ev": {
@@ -11541,6 +11667,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_ZN3geo4Vec2C2Ev",
    "undecoratedNameEx(0)": "_ZN3geo4Vec2C2Ev",
+   "undecoratedNameEx(0x1000)": "_ZN3geo4Vec2C2Ev",
+   "undecoratedNameEx(0x87FE)": "_ZN3geo4Vec2C2Ev",
    "virtualAddress": 6912
   },
   "Exe/PublicSymbol:_ZN3geo5Named6renameEPKc": {
@@ -11564,6 +11692,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_ZN3geo5Named6renameEPKc",
    "undecoratedNameEx(0)": "_ZN3geo5Named6renameEPKc",
+   "undecoratedNameEx(0x1000)": "_ZN3geo5Named6renameEPKc",
+   "undecoratedNameEx(0x87FE)": "_ZN3geo5Named6renameEPKc",
    "virtualAddress": 5296
   },
   "Exe/PublicSymbol:_ZN3geo5NamedC2Ev": {
@@ -11587,6 +11717,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_ZN3geo5NamedC2Ev",
    "undecoratedNameEx(0)": "_ZN3geo5NamedC2Ev",
+   "undecoratedNameEx(0x1000)": "_ZN3geo5NamedC2Ev",
+   "undecoratedNameEx(0x87FE)": "_ZN3geo5NamedC2Ev",
    "virtualAddress": 5744
   },
   "Exe/PublicSymbol:_ZN3geo5Shape7next_idE": {
@@ -11610,6 +11742,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_ZN3geo5Shape7next_idE",
    "undecoratedNameEx(0)": "_ZN3geo5Shape7next_idE",
+   "undecoratedNameEx(0x1000)": "_ZN3geo5Shape7next_idE",
+   "undecoratedNameEx(0x87FE)": "_ZN3geo5Shape7next_idE",
    "virtualAddress": 16416
   },
   "Exe/PublicSymbol:_ZN3geo5ShapeC2ENS_4KindE": {
@@ -11633,6 +11767,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_ZN3geo5ShapeC2ENS_4KindE",
    "undecoratedNameEx(0)": "_ZN3geo5ShapeC2ENS_4KindE",
+   "undecoratedNameEx(0x1000)": "_ZN3geo5ShapeC2ENS_4KindE",
+   "undecoratedNameEx(0x87FE)": "_ZN3geo5ShapeC2ENS_4KindE",
    "virtualAddress": 5568
   },
   "Exe/PublicSymbol:_ZN3geo5ShapeD0Ev": {
@@ -11656,6 +11792,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_ZN3geo5ShapeD0Ev",
    "undecoratedNameEx(0)": "_ZN3geo5ShapeD0Ev",
+   "undecoratedNameEx(0x1000)": "_ZN3geo5ShapeD0Ev",
+   "undecoratedNameEx(0x87FE)": "_ZN3geo5ShapeD0Ev",
    "virtualAddress": 5856
   },
   "Exe/PublicSymbol:_ZN3geo5ShapeD1Ev": {
@@ -11679,6 +11817,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_ZN3geo5ShapeD1Ev",
    "undecoratedNameEx(0)": "_ZN3geo5ShapeD1Ev",
+   "undecoratedNameEx(0x1000)": "_ZN3geo5ShapeD1Ev",
+   "undecoratedNameEx(0x87FE)": "_ZN3geo5ShapeD1Ev",
    "virtualAddress": 5840
   },
   "Exe/PublicSymbol:_ZN3geo5ShapeD2Ev": {
@@ -11702,6 +11842,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_ZN3geo5ShapeD2Ev",
    "undecoratedNameEx(0)": "_ZN3geo5ShapeD2Ev",
+   "undecoratedNameEx(0x1000)": "_ZN3geo5ShapeD2Ev",
+   "undecoratedNameEx(0x87FE)": "_ZN3geo5ShapeD2Ev",
    "virtualAddress": 5840
   },
   "Exe/PublicSymbol:_ZN3geo5VBaseC2Ev": {
@@ -11725,6 +11867,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_ZN3geo5VBaseC2Ev",
    "undecoratedNameEx(0)": "_ZN3geo5VBaseC2Ev",
+   "undecoratedNameEx(0x1000)": "_ZN3geo5VBaseC2Ev",
+   "undecoratedNameEx(0x87FE)": "_ZN3geo5VBaseC2Ev",
    "virtualAddress": 5440
   },
   "Exe/PublicSymbol:_ZN3geo5VLeftC2Ev": {
@@ -11748,6 +11892,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_ZN3geo5VLeftC2Ev",
    "undecoratedNameEx(0)": "_ZN3geo5VLeftC2Ev",
+   "undecoratedNameEx(0x1000)": "_ZN3geo5VLeftC2Ev",
+   "undecoratedNameEx(0x87FE)": "_ZN3geo5VLeftC2Ev",
    "virtualAddress": 5472
   },
   "Exe/PublicSymbol:_ZN3geo6CircleC2Ed": {
@@ -11771,6 +11917,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_ZN3geo6CircleC2Ed",
    "undecoratedNameEx(0)": "_ZN3geo6CircleC2Ed",
+   "undecoratedNameEx(0x1000)": "_ZN3geo6CircleC2Ed",
+   "undecoratedNameEx(0x87FE)": "_ZN3geo6CircleC2Ed",
    "virtualAddress": 5024
   },
   "Exe/PublicSymbol:_ZN3geo6CircleD0Ev": {
@@ -11794,6 +11942,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_ZN3geo6CircleD0Ev",
    "undecoratedNameEx(0)": "_ZN3geo6CircleD0Ev",
+   "undecoratedNameEx(0x1000)": "_ZN3geo6CircleD0Ev",
+   "undecoratedNameEx(0x87FE)": "_ZN3geo6CircleD0Ev",
    "virtualAddress": 6048
   },
   "Exe/PublicSymbol:_ZN3geo6CircleD2Ev": {
@@ -11817,6 +11967,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_ZN3geo6CircleD2Ev",
    "undecoratedNameEx(0)": "_ZN3geo6CircleD2Ev",
+   "undecoratedNameEx(0x1000)": "_ZN3geo6CircleD2Ev",
+   "undecoratedNameEx(0x87FE)": "_ZN3geo6CircleD2Ev",
    "virtualAddress": 5408
   },
   "Exe/PublicSymbol:_ZN3geo6SquareC2Ed": {
@@ -11840,6 +11992,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_ZN3geo6SquareC2Ed",
    "undecoratedNameEx(0)": "_ZN3geo6SquareC2Ed",
+   "undecoratedNameEx(0x1000)": "_ZN3geo6SquareC2Ed",
+   "undecoratedNameEx(0x87FE)": "_ZN3geo6SquareC2Ed",
    "virtualAddress": 5104
   },
   "Exe/PublicSymbol:_ZN3geo6SquareD0Ev": {
@@ -11863,6 +12017,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_ZN3geo6SquareD0Ev",
    "undecoratedNameEx(0)": "_ZN3geo6SquareD0Ev",
+   "undecoratedNameEx(0x1000)": "_ZN3geo6SquareD0Ev",
+   "undecoratedNameEx(0x87FE)": "_ZN3geo6SquareD0Ev",
    "virtualAddress": 5648
   },
   "Exe/PublicSymbol:_ZN3geo6SquareD2Ev": {
@@ -11886,6 +12042,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_ZN3geo6SquareD2Ev",
    "undecoratedNameEx(0)": "_ZN3geo6SquareD2Ev",
+   "undecoratedNameEx(0x1000)": "_ZN3geo6SquareD2Ev",
+   "undecoratedNameEx(0x87FE)": "_ZN3geo6SquareD2Ev",
    "virtualAddress": 5376
   },
   "Exe/PublicSymbol:_ZN3geo6VRightC2Ev": {
@@ -11909,6 +12067,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_ZN3geo6VRightC2Ev",
    "undecoratedNameEx(0)": "_ZN3geo6VRightC2Ev",
+   "undecoratedNameEx(0x1000)": "_ZN3geo6VRightC2Ev",
+   "undecoratedNameEx(0x87FE)": "_ZN3geo6VRightC2Ev",
    "virtualAddress": 5520
   },
   "Exe/PublicSymbol:_ZN3geo6max_ofIdEET_S1_S1_": {
@@ -11932,6 +12092,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_ZN3geo6max_ofIdEET_S1_S1_",
    "undecoratedNameEx(0)": "_ZN3geo6max_ofIdEET_S1_S1_",
+   "undecoratedNameEx(0x1000)": "_ZN3geo6max_ofIdEET_S1_S1_",
+   "undecoratedNameEx(0x87FE)": "_ZN3geo6max_ofIdEET_S1_S1_",
    "virtualAddress": 6832
   },
   "Exe/PublicSymbol:_ZN3geo6max_ofIiEET_S1_S1_": {
@@ -11955,6 +12117,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_ZN3geo6max_ofIiEET_S1_S1_",
    "undecoratedNameEx(0)": "_ZN3geo6max_ofIiEET_S1_S1_",
+   "undecoratedNameEx(0x1000)": "_ZN3geo6max_ofIiEET_S1_S1_",
+   "undecoratedNameEx(0x87FE)": "_ZN3geo6max_ofIiEET_S1_S1_",
    "virtualAddress": 6656
   },
   "Exe/PublicSymbol:_ZN3geo7DiamondC1Ev": {
@@ -11978,6 +12142,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_ZN3geo7DiamondC1Ev",
    "undecoratedNameEx(0)": "_ZN3geo7DiamondC1Ev",
+   "undecoratedNameEx(0x1000)": "_ZN3geo7DiamondC1Ev",
+   "undecoratedNameEx(0x87FE)": "_ZN3geo7DiamondC1Ev",
    "virtualAddress": 4896
   },
   "Exe/PublicSymbol:_ZN3geo9int_arrayE": {
@@ -12001,6 +12167,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_ZN3geo9int_arrayE",
    "undecoratedNameEx(0)": "_ZN3geo9int_arrayE",
+   "undecoratedNameEx(0x1000)": "_ZN3geo9int_arrayE",
+   "undecoratedNameEx(0x87FE)": "_ZN3geo9int_arrayE",
    "virtualAddress": 16420
   },
   "Exe/PublicSymbol:_ZN3geo9vec_arrayE": {
@@ -12024,6 +12192,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_ZN3geo9vec_arrayE",
    "undecoratedNameEx(0)": "_ZN3geo9vec_arrayE",
+   "undecoratedNameEx(0x1000)": "_ZN3geo9vec_arrayE",
+   "undecoratedNameEx(0x87FE)": "_ZN3geo9vec_arrayE",
    "virtualAddress": 16520
   },
   "Exe/PublicSymbol:_ZNK3geo10FixedArrayINS_4Vec2ELi2EE3sumEv": {
@@ -12047,6 +12217,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_ZNK3geo10FixedArrayINS_4Vec2ELi2EE3sumEv",
    "undecoratedNameEx(0)": "_ZNK3geo10FixedArrayINS_4Vec2ELi2EE3sumEv",
+   "undecoratedNameEx(0x1000)": "_ZNK3geo10FixedArrayINS_4Vec2ELi2EE3sumEv",
+   "undecoratedNameEx(0x87FE)": "_ZNK3geo10FixedArrayINS_4Vec2ELi2EE3sumEv",
    "virtualAddress": 6496
   },
   "Exe/PublicSymbol:_ZNK3geo10FixedArrayIiLi4EE3sumEv": {
@@ -12070,6 +12242,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_ZNK3geo10FixedArrayIiLi4EE3sumEv",
    "undecoratedNameEx(0)": "_ZNK3geo10FixedArrayIiLi4EE3sumEv",
+   "undecoratedNameEx(0x1000)": "_ZNK3geo10FixedArrayIiLi4EE3sumEv",
+   "undecoratedNameEx(0x87FE)": "_ZNK3geo10FixedArrayIiLi4EE3sumEv",
    "virtualAddress": 6720
   },
   "Exe/PublicSymbol:_ZNK3geo10FixedArrayIiLi4EE4sizeEv": {
@@ -12093,6 +12267,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_ZNK3geo10FixedArrayIiLi4EE4sizeEv",
    "undecoratedNameEx(0)": "_ZNK3geo10FixedArrayIiLi4EE4sizeEv",
+   "undecoratedNameEx(0x1000)": "_ZNK3geo10FixedArrayIiLi4EE4sizeEv",
+   "undecoratedNameEx(0x87FE)": "_ZNK3geo10FixedArrayIiLi4EE4sizeEv",
    "virtualAddress": 6816
   },
   "Exe/PublicSymbol:_ZNK3geo14LabelledCircle4nameEv": {
@@ -12116,6 +12292,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_ZNK3geo14LabelledCircle4nameEv",
    "undecoratedNameEx(0)": "_ZNK3geo14LabelledCircle4nameEv",
+   "undecoratedNameEx(0x1000)": "_ZNK3geo14LabelledCircle4nameEv",
+   "undecoratedNameEx(0x87FE)": "_ZNK3geo14LabelledCircle4nameEv",
    "virtualAddress": 5824
   },
   "Exe/PublicSymbol:_ZNK3geo4Vec2plERKS0_": {
@@ -12139,6 +12317,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_ZNK3geo4Vec2plERKS0_",
    "undecoratedNameEx(0)": "_ZNK3geo4Vec2plERKS0_",
+   "undecoratedNameEx(0x1000)": "_ZNK3geo4Vec2plERKS0_",
+   "undecoratedNameEx(0x87FE)": "_ZNK3geo4Vec2plERKS0_",
    "virtualAddress": 6944
   },
   "Exe/PublicSymbol:_ZNK3geo5Shape2idEv": {
@@ -12162,6 +12342,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_ZNK3geo5Shape2idEv",
    "undecoratedNameEx(0)": "_ZNK3geo5Shape2idEv",
+   "undecoratedNameEx(0x1000)": "_ZNK3geo5Shape2idEv",
+   "undecoratedNameEx(0x87FE)": "_ZNK3geo5Shape2idEv",
    "virtualAddress": 5328
   },
   "Exe/PublicSymbol:_ZNK3geo5Shape4nameEv": {
@@ -12185,6 +12367,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_ZNK3geo5Shape4nameEv",
    "undecoratedNameEx(0)": "_ZNK3geo5Shape4nameEv",
+   "undecoratedNameEx(0x1000)": "_ZNK3geo5Shape4nameEv",
+   "undecoratedNameEx(0x87FE)": "_ZNK3geo5Shape4nameEv",
    "virtualAddress": 5728
   },
   "Exe/PublicSymbol:_ZNK3geo6Circle4areaEv": {
@@ -12208,6 +12392,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_ZNK3geo6Circle4areaEv",
    "undecoratedNameEx(0)": "_ZNK3geo6Circle4areaEv",
+   "undecoratedNameEx(0x1000)": "_ZNK3geo6Circle4areaEv",
+   "undecoratedNameEx(0x87FE)": "_ZNK3geo6Circle4areaEv",
    "virtualAddress": 5872
   },
   "Exe/PublicSymbol:_ZNK3geo6Circle4nameEv": {
@@ -12231,6 +12417,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_ZNK3geo6Circle4nameEv",
    "undecoratedNameEx(0)": "_ZNK3geo6Circle4nameEv",
+   "undecoratedNameEx(0x1000)": "_ZNK3geo6Circle4nameEv",
+   "undecoratedNameEx(0x87FE)": "_ZNK3geo6Circle4nameEv",
    "virtualAddress": 6096
   },
   "Exe/PublicSymbol:_ZNK3geo6Square4areaEv": {
@@ -12254,6 +12442,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_ZNK3geo6Square4areaEv",
    "undecoratedNameEx(0)": "_ZNK3geo6Square4areaEv",
+   "undecoratedNameEx(0x1000)": "_ZNK3geo6Square4areaEv",
+   "undecoratedNameEx(0x87FE)": "_ZNK3geo6Square4areaEv",
    "virtualAddress": 5696
   },
   "Exe/PublicSymbol:_ZTCN3geo7DiamondE0_NS_5VLeftE": {
@@ -12277,6 +12467,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_ZTCN3geo7DiamondE0_NS_5VLeftE",
    "undecoratedNameEx(0)": "_ZTCN3geo7DiamondE0_NS_5VLeftE",
+   "undecoratedNameEx(0x1000)": "_ZTCN3geo7DiamondE0_NS_5VLeftE",
+   "undecoratedNameEx(0x87FE)": "_ZTCN3geo7DiamondE0_NS_5VLeftE",
    "virtualAddress": 8320
   },
   "Exe/PublicSymbol:_ZTCN3geo7DiamondE16_NS_6VRightE": {
@@ -12300,6 +12492,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_ZTCN3geo7DiamondE16_NS_6VRightE",
    "undecoratedNameEx(0)": "_ZTCN3geo7DiamondE16_NS_6VRightE",
+   "undecoratedNameEx(0x1000)": "_ZTCN3geo7DiamondE16_NS_6VRightE",
+   "undecoratedNameEx(0x87FE)": "_ZTCN3geo7DiamondE16_NS_6VRightE",
    "virtualAddress": 8344
   },
   "Exe/PublicSymbol:_ZTTN3geo7DiamondE": {
@@ -12323,6 +12517,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_ZTTN3geo7DiamondE",
    "undecoratedNameEx(0)": "_ZTTN3geo7DiamondE",
+   "undecoratedNameEx(0x1000)": "_ZTTN3geo7DiamondE",
+   "undecoratedNameEx(0x87FE)": "_ZTTN3geo7DiamondE",
    "virtualAddress": 8288
   },
   "Exe/PublicSymbol:_ZTVN3geo14LabelledCircleE": {
@@ -12346,6 +12542,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_ZTVN3geo14LabelledCircleE",
    "undecoratedNameEx(0)": "_ZTVN3geo14LabelledCircleE",
+   "undecoratedNameEx(0x1000)": "_ZTVN3geo14LabelledCircleE",
+   "undecoratedNameEx(0x87FE)": "_ZTVN3geo14LabelledCircleE",
    "virtualAddress": 8416
   },
   "Exe/PublicSymbol:_ZTVN3geo5NamedE": {
@@ -12369,6 +12567,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_ZTVN3geo5NamedE",
    "undecoratedNameEx(0)": "_ZTVN3geo5NamedE",
+   "undecoratedNameEx(0x1000)": "_ZTVN3geo5NamedE",
+   "undecoratedNameEx(0x87FE)": "_ZTVN3geo5NamedE",
    "virtualAddress": 8488
   },
   "Exe/PublicSymbol:_ZTVN3geo5ShapeE": {
@@ -12392,6 +12592,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_ZTVN3geo5ShapeE",
    "undecoratedNameEx(0)": "_ZTVN3geo5ShapeE",
+   "undecoratedNameEx(0x1000)": "_ZTVN3geo5ShapeE",
+   "undecoratedNameEx(0x87FE)": "_ZTVN3geo5ShapeE",
    "virtualAddress": 8544
   },
   "Exe/PublicSymbol:_ZTVN3geo6CircleE": {
@@ -12415,6 +12617,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_ZTVN3geo6CircleE",
    "undecoratedNameEx(0)": "_ZTVN3geo6CircleE",
+   "undecoratedNameEx(0x1000)": "_ZTVN3geo6CircleE",
+   "undecoratedNameEx(0x87FE)": "_ZTVN3geo6CircleE",
    "virtualAddress": 8592
   },
   "Exe/PublicSymbol:_ZTVN3geo6SquareE": {
@@ -12438,6 +12642,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_ZTVN3geo6SquareE",
    "undecoratedNameEx(0)": "_ZTVN3geo6SquareE",
+   "undecoratedNameEx(0x1000)": "_ZTVN3geo6SquareE",
+   "undecoratedNameEx(0x87FE)": "_ZTVN3geo6SquareE",
    "virtualAddress": 8368
   },
   "Exe/PublicSymbol:_ZTVN3geo7DiamondE": {
@@ -12461,6 +12667,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_ZTVN3geo7DiamondE",
    "undecoratedNameEx(0)": "_ZTVN3geo7DiamondE",
+   "undecoratedNameEx(0x1000)": "_ZTVN3geo7DiamondE",
+   "undecoratedNameEx(0x87FE)": "_ZTVN3geo7DiamondE",
    "virtualAddress": 8240
   },
   "Exe/PublicSymbol:_ZdlPv": {
@@ -12484,6 +12692,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_ZdlPv",
    "undecoratedNameEx(0)": "_ZdlPv",
+   "undecoratedNameEx(0x1000)": "_ZdlPv",
+   "undecoratedNameEx(0x87FE)": "_ZdlPv",
    "virtualAddress": 4320
   },
   "Exe/PublicSymbol:_ZdlPvy": {
@@ -12507,6 +12717,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_ZdlPvy",
    "undecoratedNameEx(0)": "_ZdlPvy",
+   "undecoratedNameEx(0x1000)": "_ZdlPvy",
+   "undecoratedNameEx(0x87FE)": "_ZdlPvy",
    "virtualAddress": 4336
   },
   "Exe/PublicSymbol:__CTOR_LIST__": {
@@ -12530,6 +12742,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__CTOR_LIST__",
    "undecoratedNameEx(0)": "__CTOR_LIST__",
+   "undecoratedNameEx(0x1000)": "__CTOR_LIST__",
+   "undecoratedNameEx(0x87FE)": "__CTOR_LIST__",
    "virtualAddress": 8688
   },
   "Exe/PublicSymbol:__DTOR_LIST__": {
@@ -12553,6 +12767,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__DTOR_LIST__",
    "undecoratedNameEx(0)": "__DTOR_LIST__",
+   "undecoratedNameEx(0x1000)": "__DTOR_LIST__",
+   "undecoratedNameEx(0x87FE)": "__DTOR_LIST__",
    "virtualAddress": 8712
   },
   "Exe/PublicSymbol:__RUNTIME_PSEUDO_RELOC_LIST_END__": {
@@ -12576,6 +12792,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__RUNTIME_PSEUDO_RELOC_LIST_END__",
    "undecoratedNameEx(0)": "__RUNTIME_PSEUDO_RELOC_LIST_END__",
+   "undecoratedNameEx(0x1000)": "__RUNTIME_PSEUDO_RELOC_LIST_END__",
+   "undecoratedNameEx(0x87FE)": "__RUNTIME_PSEUDO_RELOC_LIST_END__",
    "virtualAddress": 8688
   },
   "Exe/PublicSymbol:__RUNTIME_PSEUDO_RELOC_LIST__": {
@@ -12599,6 +12817,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__RUNTIME_PSEUDO_RELOC_LIST__",
    "undecoratedNameEx(0)": "__RUNTIME_PSEUDO_RELOC_LIST__",
+   "undecoratedNameEx(0x1000)": "__RUNTIME_PSEUDO_RELOC_LIST__",
+   "undecoratedNameEx(0x87FE)": "__RUNTIME_PSEUDO_RELOC_LIST__",
    "virtualAddress": 8688
   },
   "Exe/PublicSymbol:__bss_end__": {
@@ -12622,6 +12842,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__bss_end__",
    "undecoratedNameEx(0)": "__bss_end__",
+   "undecoratedNameEx(0x1000)": "__bss_end__",
+   "undecoratedNameEx(0x87FE)": "__bss_end__",
    "virtualAddress": 16556
   },
   "Exe/PublicSymbol:__bss_start__": {
@@ -12645,6 +12867,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__bss_start__",
    "undecoratedNameEx(0)": "__bss_start__",
+   "undecoratedNameEx(0x1000)": "__bss_start__",
+   "undecoratedNameEx(0x87FE)": "__bss_start__",
    "virtualAddress": 16440
   },
   "Exe/PublicSymbol:__cxa_pure_virtual": {
@@ -12668,6 +12892,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__cxa_pure_virtual",
    "undecoratedNameEx(0)": "__cxa_pure_virtual",
+   "undecoratedNameEx(0x1000)": "__cxa_pure_virtual",
+   "undecoratedNameEx(0x87FE)": "__cxa_pure_virtual",
    "virtualAddress": 4096
   },
   "Exe/PublicSymbol:__data_end__": {
@@ -12691,6 +12917,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__data_end__",
    "undecoratedNameEx(0)": "__data_end__",
+   "undecoratedNameEx(0x1000)": "__data_end__",
+   "undecoratedNameEx(0x87FE)": "__data_end__",
    "virtualAddress": 16436
   },
   "Exe/PublicSymbol:__data_start__": {
@@ -12714,6 +12942,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__data_start__",
    "undecoratedNameEx(0)": "__data_start__",
+   "undecoratedNameEx(0x1000)": "__data_start__",
+   "undecoratedNameEx(0x87FE)": "__data_start__",
    "virtualAddress": 16384
   },
   "Exe/PublicSymbol:diamond": {
@@ -12737,6 +12967,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "diamond",
    "undecoratedNameEx(0)": "diamond",
+   "undecoratedNameEx(0x1000)": "diamond",
+   "undecoratedNameEx(0x87FE)": "diamond",
    "virtualAddress": 16456
   },
   "Exe/PublicSymbol:global_value": {
@@ -12760,6 +12992,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "global_value",
    "undecoratedNameEx(0)": "global_value",
+   "undecoratedNameEx(0x1000)": "global_value",
+   "undecoratedNameEx(0x87FE)": "global_value",
    "virtualAddress": 16384
   },
   "Exe/PublicSymbol:identity": {
@@ -12783,6 +13017,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "identity",
    "undecoratedNameEx(0)": "identity",
+   "undecoratedNameEx(0x1000)": "identity",
+   "undecoratedNameEx(0x87FE)": "identity",
    "virtualAddress": 16400
   },
   "Exe/PublicSymbol:member_ptr": {
@@ -12806,6 +13042,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "member_ptr",
    "undecoratedNameEx(0)": "member_ptr",
+   "undecoratedNameEx(0x1000)": "member_ptr",
+   "undecoratedNameEx(0x87FE)": "member_ptr",
    "virtualAddress": 16504
   },
   "Exe/PublicSymbol:memcpy": {
@@ -12829,6 +13067,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "memcpy",
    "undecoratedNameEx(0)": "memcpy",
+   "undecoratedNameEx(0x1000)": "memcpy",
+   "undecoratedNameEx(0x87FE)": "memcpy",
    "virtualAddress": 4208
   },
   "Exe/PublicSymbol:memset": {
@@ -12852,6 +13092,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "memset",
    "undecoratedNameEx(0)": "memset",
+   "undecoratedNameEx(0x1000)": "memset",
+   "undecoratedNameEx(0x87FE)": "memset",
    "virtualAddress": 4112
   },
   "Exe/PublicSymbol:outer_global": {
@@ -12875,6 +13117,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "outer_global",
    "undecoratedNameEx(0)": "outer_global",
+   "undecoratedNameEx(0x1000)": "outer_global",
+   "undecoratedNameEx(0x87FE)": "outer_global",
    "virtualAddress": 16440
   },
   "Exe/PublicSymbol:start": {
@@ -12898,6 +13142,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "start",
    "undecoratedNameEx(0)": "start",
+   "undecoratedNameEx(0x1000)": "start",
+   "undecoratedNameEx(0x87FE)": "start",
    "virtualAddress": 4416
   },
   "Exe/Typedef:Callback": {

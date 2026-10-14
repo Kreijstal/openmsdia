@@ -113,6 +113,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "int left()",
    "undecoratedNameEx(0)": "int left()",
+   "undecoratedNameEx(0x1000)": "int left()",
+   "undecoratedNameEx(0x87FE)": "int left()",
    "virtual": 1,
    "virtualBaseOffset": 0
   },
@@ -139,6 +141,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "void ~Left()",
    "undecoratedNameEx(0)": "void ~Left()",
+   "undecoratedNameEx(0x1000)": "void ~Left()",
+   "undecoratedNameEx(0x87FE)": "void ~Left()",
    "virtual": 1,
    "virtualBaseOffset": 0
   },
@@ -256,6 +260,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "int both()",
    "undecoratedNameEx(0)": "int both()",
+   "undecoratedNameEx(0x1000)": "int both()",
+   "undecoratedNameEx(0x87FE)": "int both()",
    "virtual": 1,
    "virtualBaseOffset": 0
   },
@@ -282,6 +288,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "int right()",
    "undecoratedNameEx(0)": "int right()",
+   "undecoratedNameEx(0x1000)": "int right()",
+   "undecoratedNameEx(0x87FE)": "int right()",
    "virtual": 1,
    "virtualBaseOffset": 0
   },
@@ -308,6 +316,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "void ~Right()",
    "undecoratedNameEx(0)": "void ~Right()",
+   "undecoratedNameEx(0x1000)": "void ~Right()",
+   "undecoratedNameEx(0x87FE)": "void ~Right()",
    "virtual": 1,
    "virtualBaseOffset": 0
   },
@@ -640,6 +650,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__cxa_pure_virtual",
    "undecoratedNameEx(0)": "__cxa_pure_virtual",
+   "undecoratedNameEx(0x1000)": "__cxa_pure_virtual",
+   "undecoratedNameEx(0x87FE)": "__cxa_pure_virtual",
    "virtualAddress": 4096,
    "wasInlined": 0
   },
@@ -757,6 +769,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "int ns::Counter::add(int)",
    "undecoratedNameEx(0)": "int ns::Counter::add(int)",
+   "undecoratedNameEx(0x1000)": "int ns::Counter::add(int)",
+   "undecoratedNameEx(0x87FE)": "int ns::Counter::add(int)",
    "virtual": 0,
    "virtualAddress": 4592,
    "virtualBaseOffset": 0,
@@ -868,6 +882,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "void operator delete(void *)",
    "undecoratedNameEx(0)": "void operator delete(void *)",
+   "undecoratedNameEx(0x1000)": "void operator delete(void *)",
+   "undecoratedNameEx(0x87FE)": "void operator delete(void *)",
    "virtualAddress": 4112,
    "wasInlined": 0
   },
@@ -977,6 +993,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "void operator delete(void *, unsigned __int64)",
    "undecoratedNameEx(0)": "void operator delete(void *, unsigned __int64)",
+   "undecoratedNameEx(0x1000)": "void operator delete(void *, unsigned __int64)",
+   "undecoratedNameEx(0x87FE)": "void operator delete(void *, unsigned __int64)",
    "virtualAddress": 4128,
    "wasInlined": 0
   },
@@ -1088,6 +1106,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "start",
    "undecoratedNameEx(0)": "start",
+   "undecoratedNameEx(0x1000)": "start",
+   "undecoratedNameEx(0x87FE)": "start",
    "virtualAddress": 4480,
    "wasInlined": 0
   },
@@ -1198,6 +1218,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "",
    "undecoratedNameEx(0)": "",
+   "undecoratedNameEx(0x1000)": "",
+   "undecoratedNameEx(0x87FE)": "",
    "virtualAddress": 4485
   },
   "Exe/Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o/Function:start/InlineSite:ns::Counter::bump": {
@@ -1221,6 +1243,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "",
    "undecoratedNameEx(0)": "",
+   "undecoratedNameEx(0x1000)": "",
+   "undecoratedNameEx(0x87FE)": "",
    "virtualAddress": 4552
   },
   "Exe/Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o/Function:start/InlineSite:ns::Counter::count": {
@@ -1244,6 +1268,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "",
    "undecoratedNameEx(0)": "",
+   "undecoratedNameEx(0x1000)": "",
+   "undecoratedNameEx(0x87FE)": "",
    "virtualAddress": 4561
   },
   "Exe/Compiland:C:\\corpus\\cpp_more_O2.obj\\more.cpp.o/Function:sum_ints": {
@@ -1305,6 +1331,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "static int sum_ints(int, <NoType>)",
    "undecoratedNameEx(0)": "static int sum_ints(int, <NoType>)",
+   "undecoratedNameEx(0x1000)": "static int sum_ints(int, <NoType>)",
+   "undecoratedNameEx(0x87FE)": "static int sum_ints(int, <NoType>)",
    "virtualAddress": 4144,
    "wasInlined": 0
   },
@@ -1799,6 +1827,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "void Counter()",
    "undecoratedNameEx(0)": "void Counter()",
+   "undecoratedNameEx(0x1000)": "void Counter()",
+   "undecoratedNameEx(0x87FE)": "void Counter()",
    "virtual": 0,
    "virtualBaseOffset": 0
   },
@@ -1837,6 +1867,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "int both()",
    "undecoratedNameEx(0)": "int both()",
+   "undecoratedNameEx(0x1000)": "int both()",
+   "undecoratedNameEx(0x87FE)": "int both()",
    "virtual": 1,
    "virtualBaseOffset": 0
   },
@@ -1866,6 +1898,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "int bump(ns::Counter::Step)",
    "undecoratedNameEx(0)": "int bump(ns::Counter::Step)",
+   "undecoratedNameEx(0x1000)": "int bump(ns::Counter::Step)",
+   "undecoratedNameEx(0x87FE)": "int bump(ns::Counter::Step)",
    "virtual": 0,
    "virtualBaseOffset": 0
   },
@@ -1895,6 +1929,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "int count()",
    "undecoratedNameEx(0)": "int count()",
+   "undecoratedNameEx(0x1000)": "int count()",
+   "undecoratedNameEx(0x87FE)": "int count()",
    "virtual": 0,
    "virtualBaseOffset": 0
   },
@@ -1924,6 +1960,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "int get()",
    "undecoratedNameEx(0)": "int get()",
+   "undecoratedNameEx(0x1000)": "int get()",
+   "undecoratedNameEx(0x87FE)": "int get()",
    "virtual": 0,
    "virtualBaseOffset": 0
   },
@@ -1965,6 +2003,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "int right()",
    "undecoratedNameEx(0)": "int right()",
+   "undecoratedNameEx(0x1000)": "int right()",
+   "undecoratedNameEx(0x87FE)": "int right()",
    "virtual": 1,
    "virtualBaseOffset": 0
   },
@@ -2813,6 +2853,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_ZN2ns7Counter3addEi",
    "undecoratedNameEx(0)": "_ZN2ns7Counter3addEi",
+   "undecoratedNameEx(0x1000)": "_ZN2ns7Counter3addEi",
+   "undecoratedNameEx(0x87FE)": "_ZN2ns7Counter3addEi",
    "virtualAddress": 4592
   },
   "Exe/PublicSymbol:_ZN2ns7Counter9instancesE": {
@@ -2836,6 +2878,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_ZN2ns7Counter9instancesE",
    "undecoratedNameEx(0)": "_ZN2ns7Counter9instancesE",
+   "undecoratedNameEx(0x1000)": "_ZN2ns7Counter9instancesE",
+   "undecoratedNameEx(0x87FE)": "_ZN2ns7Counter9instancesE",
    "virtualAddress": 16408
   },
   "Exe/PublicSymbol:_ZdlPv": {
@@ -2859,6 +2903,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_ZdlPv",
    "undecoratedNameEx(0)": "_ZdlPv",
+   "undecoratedNameEx(0x1000)": "_ZdlPv",
+   "undecoratedNameEx(0x87FE)": "_ZdlPv",
    "virtualAddress": 4112
   },
   "Exe/PublicSymbol:_ZdlPvy": {
@@ -2882,6 +2928,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_ZdlPvy",
    "undecoratedNameEx(0)": "_ZdlPvy",
+   "undecoratedNameEx(0x1000)": "_ZdlPvy",
+   "undecoratedNameEx(0x87FE)": "_ZdlPvy",
    "virtualAddress": 4128
   },
   "Exe/PublicSymbol:__CTOR_LIST__": {
@@ -2905,6 +2953,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__CTOR_LIST__",
    "undecoratedNameEx(0)": "__CTOR_LIST__",
+   "undecoratedNameEx(0x1000)": "__CTOR_LIST__",
+   "undecoratedNameEx(0x87FE)": "__CTOR_LIST__",
    "virtualAddress": 8192
   },
   "Exe/PublicSymbol:__DTOR_LIST__": {
@@ -2928,6 +2978,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__DTOR_LIST__",
    "undecoratedNameEx(0)": "__DTOR_LIST__",
+   "undecoratedNameEx(0x1000)": "__DTOR_LIST__",
+   "undecoratedNameEx(0x87FE)": "__DTOR_LIST__",
    "virtualAddress": 8208
   },
   "Exe/PublicSymbol:__RUNTIME_PSEUDO_RELOC_LIST_END__": {
@@ -2951,6 +3003,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__RUNTIME_PSEUDO_RELOC_LIST_END__",
    "undecoratedNameEx(0)": "__RUNTIME_PSEUDO_RELOC_LIST_END__",
+   "undecoratedNameEx(0x1000)": "__RUNTIME_PSEUDO_RELOC_LIST_END__",
+   "undecoratedNameEx(0x87FE)": "__RUNTIME_PSEUDO_RELOC_LIST_END__",
    "virtualAddress": 8192
   },
   "Exe/PublicSymbol:__RUNTIME_PSEUDO_RELOC_LIST__": {
@@ -2974,6 +3028,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__RUNTIME_PSEUDO_RELOC_LIST__",
    "undecoratedNameEx(0)": "__RUNTIME_PSEUDO_RELOC_LIST__",
+   "undecoratedNameEx(0x1000)": "__RUNTIME_PSEUDO_RELOC_LIST__",
+   "undecoratedNameEx(0x87FE)": "__RUNTIME_PSEUDO_RELOC_LIST__",
    "virtualAddress": 8192
   },
   "Exe/PublicSymbol:__bss_end__": {
@@ -2997,6 +3053,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__bss_end__",
    "undecoratedNameEx(0)": "__bss_end__",
+   "undecoratedNameEx(0x1000)": "__bss_end__",
+   "undecoratedNameEx(0x87FE)": "__bss_end__",
    "virtualAddress": 16412
   },
   "Exe/PublicSymbol:__bss_start__": {
@@ -3020,6 +3078,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__bss_start__",
    "undecoratedNameEx(0)": "__bss_start__",
+   "undecoratedNameEx(0x1000)": "__bss_start__",
+   "undecoratedNameEx(0x87FE)": "__bss_start__",
    "virtualAddress": 16408
   },
   "Exe/PublicSymbol:__cxa_pure_virtual": {
@@ -3043,6 +3103,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__cxa_pure_virtual",
    "undecoratedNameEx(0)": "__cxa_pure_virtual",
+   "undecoratedNameEx(0x1000)": "__cxa_pure_virtual",
+   "undecoratedNameEx(0x87FE)": "__cxa_pure_virtual",
    "virtualAddress": 4096
   },
   "Exe/PublicSymbol:__data_end__": {
@@ -3066,6 +3128,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__data_end__",
    "undecoratedNameEx(0)": "__data_end__",
+   "undecoratedNameEx(0x1000)": "__data_end__",
+   "undecoratedNameEx(0x87FE)": "__data_end__",
    "virtualAddress": 16408
   },
   "Exe/PublicSymbol:__data_start__": {
@@ -3089,6 +3153,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__data_start__",
    "undecoratedNameEx(0)": "__data_start__",
+   "undecoratedNameEx(0x1000)": "__data_start__",
+   "undecoratedNameEx(0x87FE)": "__data_start__",
    "virtualAddress": 16384
   },
   "Exe/PublicSymbol:g_add": {
@@ -3112,6 +3178,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "g_add",
    "undecoratedNameEx(0)": "g_add",
+   "undecoratedNameEx(0x1000)": "g_add",
+   "undecoratedNameEx(0x87FE)": "g_add",
    "virtualAddress": 16384
   },
   "Exe/PublicSymbol:g_variadic": {
@@ -3135,6 +3203,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "g_variadic",
    "undecoratedNameEx(0)": "g_variadic",
+   "undecoratedNameEx(0x1000)": "g_variadic",
+   "undecoratedNameEx(0x87FE)": "g_variadic",
    "virtualAddress": 16400
   },
   "Exe/PublicSymbol:start": {
@@ -3158,6 +3228,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "start",
    "undecoratedNameEx(0)": "start",
+   "undecoratedNameEx(0x1000)": "start",
+   "undecoratedNameEx(0x87FE)": "start",
    "virtualAddress": 4480
   },
   "Exe/Typedef:AddFn": {

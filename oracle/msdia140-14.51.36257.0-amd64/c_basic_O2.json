@@ -571,6 +571,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "static int add(int, int)",
    "undecoratedNameEx(0)": "static int add(int, int)",
+   "undecoratedNameEx(0x1000)": "static int add(int, int)",
+   "undecoratedNameEx(0x87FE)": "static int add(int, int)",
    "virtualAddress": 4416,
    "wasInlined": 0
   },
@@ -683,6 +685,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "static void bump(struct node *, int)",
    "undecoratedNameEx(0)": "static void bump(struct node *, int)",
+   "undecoratedNameEx(0x1000)": "static void bump(struct node *, int)",
+   "undecoratedNameEx(0x87FE)": "static void bump(struct node *, int)",
    "virtualAddress": 4448,
    "wasInlined": 0
   },
@@ -795,6 +799,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "static int mul(int, int)",
    "undecoratedNameEx(0)": "static int mul(int, int)",
+   "undecoratedNameEx(0x1000)": "static int mul(int, int)",
+   "undecoratedNameEx(0x87FE)": "static int mul(int, int)",
    "virtualAddress": 4432,
    "wasInlined": 0
   },
@@ -908,6 +914,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "start",
    "undecoratedNameEx(0)": "start",
+   "undecoratedNameEx(0x1000)": "start",
+   "undecoratedNameEx(0x87FE)": "start",
    "virtualAddress": 4112,
    "wasInlined": 0
   },
@@ -1040,6 +1048,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "",
    "undecoratedNameEx(0)": "",
+   "undecoratedNameEx(0x1000)": "",
+   "undecoratedNameEx(0x87FE)": "",
    "virtualAddress": 4192
   },
   "Exe/Compiland:C:\\corpus\\c_basic_O2.obj\\main.c.o/Function:start/InlineSite:count_up": {
@@ -1063,6 +1073,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "",
    "undecoratedNameEx(0)": "",
+   "undecoratedNameEx(0x1000)": "",
+   "undecoratedNameEx(0x87FE)": "",
    "virtualAddress": 4339
   },
   "Exe/Compiland:C:\\corpus\\c_basic_O2.obj\\main.c.o/Function:start/InlineSite:count_up/Data:total": {
@@ -1139,6 +1151,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "stdcall_fn",
    "undecoratedNameEx(0)": "stdcall_fn",
+   "undecoratedNameEx(0x1000)": "stdcall_fn",
+   "undecoratedNameEx(0x87FE)": "stdcall_fn",
    "virtualAddress": 4096,
    "wasInlined": 0
   },
@@ -1402,6 +1416,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "apply",
    "undecoratedNameEx(0)": "apply",
+   "undecoratedNameEx(0x1000)": "apply",
+   "undecoratedNameEx(0x87FE)": "apply",
    "virtualAddress": 4496,
    "wasInlined": 0
   },
@@ -1511,6 +1527,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "area",
    "undecoratedNameEx(0)": "area",
+   "undecoratedNameEx(0x1000)": "area",
+   "undecoratedNameEx(0x87FE)": "area",
    "virtualAddress": 4464,
    "wasInlined": 0
   },
@@ -1620,6 +1638,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "sum_list",
    "undecoratedNameEx(0)": "sum_list",
+   "undecoratedNameEx(0x1000)": "sum_list",
+   "undecoratedNameEx(0x87FE)": "sum_list",
    "virtualAddress": 4528,
    "wasInlined": 0
   },
@@ -3327,6 +3347,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__CTOR_LIST__",
    "undecoratedNameEx(0)": "__CTOR_LIST__",
+   "undecoratedNameEx(0x1000)": "__CTOR_LIST__",
+   "undecoratedNameEx(0x87FE)": "__CTOR_LIST__",
    "virtualAddress": 8232
   },
   "Exe/PublicSymbol:__DTOR_LIST__": {
@@ -3350,6 +3372,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__DTOR_LIST__",
    "undecoratedNameEx(0)": "__DTOR_LIST__",
+   "undecoratedNameEx(0x1000)": "__DTOR_LIST__",
+   "undecoratedNameEx(0x87FE)": "__DTOR_LIST__",
    "virtualAddress": 8248
   },
   "Exe/PublicSymbol:__RUNTIME_PSEUDO_RELOC_LIST_END__": {
@@ -3373,6 +3397,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__RUNTIME_PSEUDO_RELOC_LIST_END__",
    "undecoratedNameEx(0)": "__RUNTIME_PSEUDO_RELOC_LIST_END__",
+   "undecoratedNameEx(0x1000)": "__RUNTIME_PSEUDO_RELOC_LIST_END__",
+   "undecoratedNameEx(0x87FE)": "__RUNTIME_PSEUDO_RELOC_LIST_END__",
    "virtualAddress": 8232
   },
   "Exe/PublicSymbol:__RUNTIME_PSEUDO_RELOC_LIST__": {
@@ -3396,6 +3422,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__RUNTIME_PSEUDO_RELOC_LIST__",
    "undecoratedNameEx(0)": "__RUNTIME_PSEUDO_RELOC_LIST__",
+   "undecoratedNameEx(0x1000)": "__RUNTIME_PSEUDO_RELOC_LIST__",
+   "undecoratedNameEx(0x87FE)": "__RUNTIME_PSEUDO_RELOC_LIST__",
    "virtualAddress": 8232
   },
   "Exe/PublicSymbol:__bss_end__": {
@@ -3419,6 +3447,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__bss_end__",
    "undecoratedNameEx(0)": "__bss_end__",
+   "undecoratedNameEx(0x1000)": "__bss_end__",
+   "undecoratedNameEx(0x87FE)": "__bss_end__",
    "virtualAddress": 16728
   },
   "Exe/PublicSymbol:__bss_start__": {
@@ -3442,6 +3472,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__bss_start__",
    "undecoratedNameEx(0)": "__bss_start__",
+   "undecoratedNameEx(0x1000)": "__bss_start__",
+   "undecoratedNameEx(0x87FE)": "__bss_start__",
    "virtualAddress": 16448
   },
   "Exe/PublicSymbol:__data_end__": {
@@ -3465,6 +3497,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__data_end__",
    "undecoratedNameEx(0)": "__data_end__",
+   "undecoratedNameEx(0x1000)": "__data_end__",
+   "undecoratedNameEx(0x87FE)": "__data_end__",
    "virtualAddress": 16448
   },
   "Exe/PublicSymbol:__data_start__": {
@@ -3488,6 +3522,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__data_start__",
    "undecoratedNameEx(0)": "__data_start__",
+   "undecoratedNameEx(0x1000)": "__data_start__",
+   "undecoratedNameEx(0x87FE)": "__data_start__",
    "virtualAddress": 16384
   },
   "Exe/PublicSymbol:apply": {
@@ -3511,6 +3547,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "apply",
    "undecoratedNameEx(0)": "apply",
+   "undecoratedNameEx(0x1000)": "apply",
+   "undecoratedNameEx(0x87FE)": "apply",
    "virtualAddress": 4496
   },
   "Exe/PublicSymbol:area": {
@@ -3534,6 +3572,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "area",
    "undecoratedNameEx(0)": "area",
+   "undecoratedNameEx(0x1000)": "area",
+   "undecoratedNameEx(0x87FE)": "area",
    "virtualAddress": 4464
   },
   "Exe/PublicSymbol:global_counter": {
@@ -3557,6 +3597,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "global_counter",
    "undecoratedNameEx(0)": "global_counter",
+   "undecoratedNameEx(0x1000)": "global_counter",
+   "undecoratedNameEx(0x87FE)": "global_counter",
    "virtualAddress": 16384
   },
   "Exe/PublicSymbol:global_flags": {
@@ -3580,6 +3622,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "global_flags",
    "undecoratedNameEx(0)": "global_flags",
+   "undecoratedNameEx(0x1000)": "global_flags",
+   "undecoratedNameEx(0x87FE)": "global_flags",
    "virtualAddress": 16432
   },
   "Exe/PublicSymbol:message": {
@@ -3603,6 +3647,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "message",
    "undecoratedNameEx(0)": "message",
+   "undecoratedNameEx(0x1000)": "message",
+   "undecoratedNameEx(0x87FE)": "message",
    "virtualAddress": 16388
   },
   "Exe/PublicSymbol:ratios": {
@@ -3626,6 +3672,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "ratios",
    "undecoratedNameEx(0)": "ratios",
+   "undecoratedNameEx(0x1000)": "ratios",
+   "undecoratedNameEx(0x87FE)": "ratios",
    "virtualAddress": 16400
   },
   "Exe/PublicSymbol:shared_value": {
@@ -3649,6 +3697,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "shared_value",
    "undecoratedNameEx(0)": "shared_value",
+   "undecoratedNameEx(0x1000)": "shared_value",
+   "undecoratedNameEx(0x87FE)": "shared_value",
    "virtualAddress": 16712
   },
   "Exe/PublicSymbol:start": {
@@ -3672,6 +3722,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "start",
    "undecoratedNameEx(0)": "start",
+   "undecoratedNameEx(0x1000)": "start",
+   "undecoratedNameEx(0x87FE)": "start",
    "virtualAddress": 4112
   },
   "Exe/PublicSymbol:stdcall_fn": {
@@ -3695,6 +3747,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "stdcall_fn",
    "undecoratedNameEx(0)": "stdcall_fn",
+   "undecoratedNameEx(0x1000)": "stdcall_fn",
+   "undecoratedNameEx(0x87FE)": "stdcall_fn",
    "virtualAddress": 4096
   },
   "Exe/PublicSymbol:sum_list": {
@@ -3718,6 +3772,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "sum_list",
    "undecoratedNameEx(0)": "sum_list",
+   "undecoratedNameEx(0x1000)": "sum_list",
+   "undecoratedNameEx(0x87FE)": "sum_list",
    "virtualAddress": 4528
   },
   "Exe/PublicSymbol:unit_rect": {
@@ -3741,6 +3797,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "unit_rect",
    "undecoratedNameEx(0)": "unit_rect",
+   "undecoratedNameEx(0x1000)": "unit_rect",
+   "undecoratedNameEx(0x87FE)": "unit_rect",
    "virtualAddress": 8192
   },
   "Exe/Typedef:binop": {

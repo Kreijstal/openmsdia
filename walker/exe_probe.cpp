@@ -43,16 +43,28 @@ static std::string utf8(const wchar_t *w)
     if (n > 1) WideCharToMultiByte(CP_UTF8, 0, w, -1, &s[0], n, NULL, NULL);
     return s;
 }
-// Paths under the work directory print as <W>, case-insensitively.
-static std::string mapped(std::string s)
+// Paths under the work directory print as <W>, the directory recorded in
+// the executable as <ORIG>, %SystemRoot% as <SYSTEMROOT>, case-insensitively.
+static std::string g_origDir, g_missingDir;
+static std::string mapOne(std::string s, const std::string &from, const char *to)
 {
-    std::string w = utf8(g_work.c_str());
-    for (size_t p = 0; p + w.size() <= s.size(); p++) {
-        if (_strnicmp(s.c_str() + p, w.c_str(), w.size()) == 0) {
-            s.replace(p, w.size(), "<W>");
-            p += 2;
+    if (from.empty()) return s;
+    for (size_t p = 0; p + from.size() <= s.size(); p++) {
+        if (_strnicmp(s.c_str() + p, from.c_str(), from.size()) == 0) {
+            s.replace(p, from.size(), to);
+            p += strlen(to) - 1;
         }
     }
+    return s;
+}
+static std::string mapped(std::string s)
+{
+    char root[MAX_PATH] = "";
+    GetEnvironmentVariableA("SystemRoot", root, MAX_PATH);
+    s = mapOne(s, utf8(g_work.c_str()), "<W>");
+    s = mapOne(s, g_origDir, "<ORIG>");
+    s = mapOne(s, g_missingDir, "<MISSING>");
+    s = mapOne(s, root, "<SYSTEMROOT>");
     for (auto &c : s)
         if (c == '/') c = '\\';
     return s;
@@ -358,10 +370,12 @@ int wmain(int argc, wchar_t **argv)
     std::string orig = rsdsPath(g_exe);
     size_t slash = orig.find_last_of("\\/");
     g_pdbName = slash == std::string::npos ? orig : orig.substr(slash + 1);
+    if (slash != std::string::npos) g_origDir = orig.substr(0, slash);
     std::wstring pdbW(g_pdbName.begin(), g_pdbName.end());
     // A path of the same length that does not exist: Z:\x\x...\name.pdb
     std::string missing = "Z:\\";
     while (missing.size() + 1 + g_pdbName.size() < orig.size()) missing += "x";
+    g_missingDir = missing;
     missing += "\\" + g_pdbName;
     std::vector<uint8_t> exeMissing = g_exe;
     patchPath(exeMissing, missing);

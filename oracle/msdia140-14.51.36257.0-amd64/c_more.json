@@ -461,6 +461,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "static int labels(int)",
    "undecoratedNameEx(0)": "static int labels(int)",
+   "undecoratedNameEx(0x1000)": "static int labels(int)",
+   "undecoratedNameEx(0x87FE)": "static int labels(int)",
    "virtualAddress": 4352,
    "wasInlined": 0
   },
@@ -574,6 +576,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "recurse",
    "undecoratedNameEx(0)": "recurse",
+   "undecoratedNameEx(0x1000)": "recurse",
+   "undecoratedNameEx(0x87FE)": "recurse",
    "virtualAddress": 4096,
    "wasInlined": 0
   },
@@ -723,6 +727,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "start",
    "undecoratedNameEx(0)": "start",
+   "undecoratedNameEx(0x1000)": "start",
+   "undecoratedNameEx(0x87FE)": "start",
    "virtualAddress": 4224,
    "wasInlined": 0
   },
@@ -1987,6 +1993,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__CTOR_LIST__",
    "undecoratedNameEx(0)": "__CTOR_LIST__",
+   "undecoratedNameEx(0x1000)": "__CTOR_LIST__",
+   "undecoratedNameEx(0x87FE)": "__CTOR_LIST__",
    "virtualAddress": 8216
   },
   "Exe/PublicSymbol:__DTOR_LIST__": {
@@ -2010,6 +2018,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__DTOR_LIST__",
    "undecoratedNameEx(0)": "__DTOR_LIST__",
+   "undecoratedNameEx(0x1000)": "__DTOR_LIST__",
+   "undecoratedNameEx(0x87FE)": "__DTOR_LIST__",
    "virtualAddress": 8232
   },
   "Exe/PublicSymbol:__RUNTIME_PSEUDO_RELOC_LIST_END__": {
@@ -2033,6 +2043,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__RUNTIME_PSEUDO_RELOC_LIST_END__",
    "undecoratedNameEx(0)": "__RUNTIME_PSEUDO_RELOC_LIST_END__",
+   "undecoratedNameEx(0x1000)": "__RUNTIME_PSEUDO_RELOC_LIST_END__",
+   "undecoratedNameEx(0x87FE)": "__RUNTIME_PSEUDO_RELOC_LIST_END__",
    "virtualAddress": 8212
   },
   "Exe/PublicSymbol:__RUNTIME_PSEUDO_RELOC_LIST__": {
@@ -2056,6 +2068,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__RUNTIME_PSEUDO_RELOC_LIST__",
    "undecoratedNameEx(0)": "__RUNTIME_PSEUDO_RELOC_LIST__",
+   "undecoratedNameEx(0x1000)": "__RUNTIME_PSEUDO_RELOC_LIST__",
+   "undecoratedNameEx(0x87FE)": "__RUNTIME_PSEUDO_RELOC_LIST__",
    "virtualAddress": 8212
   },
   "Exe/PublicSymbol:__bss_end__": {
@@ -2079,6 +2093,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__bss_end__",
    "undecoratedNameEx(0)": "__bss_end__",
+   "undecoratedNameEx(0x1000)": "__bss_end__",
+   "undecoratedNameEx(0x87FE)": "__bss_end__",
    "virtualAddress": 16560
   },
   "Exe/PublicSymbol:__bss_start__": {
@@ -2102,6 +2118,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__bss_start__",
    "undecoratedNameEx(0)": "__bss_start__",
+   "undecoratedNameEx(0x1000)": "__bss_start__",
+   "undecoratedNameEx(0x87FE)": "__bss_start__",
    "virtualAddress": 16400
   },
   "Exe/PublicSymbol:__data_end__": {
@@ -2125,6 +2143,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__data_end__",
    "undecoratedNameEx(0)": "__data_end__",
+   "undecoratedNameEx(0x1000)": "__data_end__",
+   "undecoratedNameEx(0x87FE)": "__data_end__",
    "virtualAddress": 16396
   },
   "Exe/PublicSymbol:__data_start__": {
@@ -2148,6 +2168,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "__data_start__",
    "undecoratedNameEx(0)": "__data_start__",
+   "undecoratedNameEx(0x1000)": "__data_start__",
+   "undecoratedNameEx(0x87FE)": "__data_start__",
    "virtualAddress": 16384
   },
   "Exe/PublicSymbol:_tls_index": {
@@ -2171,6 +2193,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "_tls_index",
    "undecoratedNameEx(0)": "_tls_index",
+   "undecoratedNameEx(0x1000)": "_tls_index",
+   "undecoratedNameEx(0x87FE)": "_tls_index",
    "virtualAddress": 16556
   },
   "Exe/PublicSymbol:g_anon": {
@@ -2194,6 +2218,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "g_anon",
    "undecoratedNameEx(0)": "g_anon",
+   "undecoratedNameEx(0x1000)": "g_anon",
+   "undecoratedNameEx(0x87FE)": "g_anon",
    "virtualAddress": 16544
   },
   "Exe/PublicSymbol:g_big": {
@@ -2217,6 +2243,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "g_big",
    "undecoratedNameEx(0)": "g_big",
+   "undecoratedNameEx(0x1000)": "g_big",
+   "undecoratedNameEx(0x87FE)": "g_big",
    "virtualAddress": 16392
   },
   "Exe/PublicSymbol:g_many": {
@@ -2240,6 +2268,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "g_many",
    "undecoratedNameEx(0)": "g_many",
+   "undecoratedNameEx(0x1000)": "g_many",
+   "undecoratedNameEx(0x87FE)": "g_many",
    "virtualAddress": 16400
   },
   "Exe/PublicSymbol:g_packed": {
@@ -2263,6 +2293,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "g_packed",
    "undecoratedNameEx(0)": "g_packed",
+   "undecoratedNameEx(0x1000)": "g_packed",
+   "undecoratedNameEx(0x87FE)": "g_packed",
    "virtualAddress": 16384
   },
   "Exe/PublicSymbol:g_small": {
@@ -2286,6 +2318,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "g_small",
    "undecoratedNameEx(0)": "g_small",
+   "undecoratedNameEx(0x1000)": "g_small",
+   "undecoratedNameEx(0x87FE)": "g_small",
    "virtualAddress": 16391
   },
   "Exe/PublicSymbol:recurse": {
@@ -2309,6 +2343,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "recurse",
    "undecoratedNameEx(0)": "recurse",
+   "undecoratedNameEx(0x1000)": "recurse",
+   "undecoratedNameEx(0x87FE)": "recurse",
    "virtualAddress": 4096
   },
   "Exe/PublicSymbol:start": {
@@ -2332,6 +2368,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "start",
    "undecoratedNameEx(0)": "start",
+   "undecoratedNameEx(0x1000)": "start",
+   "undecoratedNameEx(0x87FE)": "start",
    "virtualAddress": 4224
   },
   "Exe/PublicSymbol:tls_counter": {
@@ -2355,6 +2393,8 @@
    "types()": "!S_FALSE",
    "undecoratedName": "tls_counter",
    "undecoratedNameEx(0)": "tls_counter",
+   "undecoratedNameEx(0x1000)": "tls_counter",
+   "undecoratedNameEx(0x87FE)": "tls_counter",
    "virtualAddress": 20480
   },
   "Exe/Typedef:many": {
