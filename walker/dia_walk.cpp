@@ -948,6 +948,23 @@ int wmain(int argc, wchar_t **argv)
                 LONG cnt = -1;
                 HRESULT hc = d->get_count(&cnt);
                 streams[name] = hc == S_OK ? snum(cnt) : jstr("!" + hrstr(hc));
+                // The element size (Item 0) and the elements' bytes as
+                // read by Next, as a hash.
+                ULONG cb = 0;
+                HRESULT hi = d->Item(0, 0, &cb, nullptr);
+                streams[name + ".itemSize"] = hi == S_OK ? num(cb) : jstr("!" + hrstr(hi));
+                uint64_t h = 1469598103934665603ull;
+                ULONG n = 0;
+                std::vector<BYTE> buf(1024);
+                for (;;) {
+                    ULONG got = 0, cbr = 0;
+                    if (d->Next(1, (ULONG)buf.size(), &cbr, buf.data(), &got) != S_OK || got != 1) break;
+                    for (ULONG i = 0; i < cbr && i < buf.size(); i++) h = (h ^ buf[i]) * 1099511628211ull;
+                    n++;
+                }
+                char hb[40];
+                snprintf(hb, sizeof hb, "%u:%016llx", (unsigned)n, (unsigned long long)h);
+                streams[name + ".next"] = jstr(hb);
                 d->Release();
             }
         } else {

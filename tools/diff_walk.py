@@ -101,8 +101,14 @@ class Score:
                 self.valued[0] += 1
         if a == b:
             st[0] += 1
-        elif len(self.examples[(section, field)]) < 3:
-            self.examples[(section, field)].append((where, a, b))
+        else:
+            # Prefer differing values over symbols missing altogether.
+            ex = self.examples[(section, field)]
+            missing = b == "<missing symbol>"
+            if len(ex) < 3 and (not missing or not any(e[2] == b for e in ex)):
+                ex.append((where, a, b))
+            elif not missing and any(e[2] == "<missing symbol>" for e in ex):
+                ex[:] = [e for e in ex if e[2] != "<missing symbol>"] + [(where, a, b)]
 
     def totals(self, section=None):
         m = t = 0
