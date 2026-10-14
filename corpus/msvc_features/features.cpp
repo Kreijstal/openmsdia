@@ -8,6 +8,9 @@
 // so functions carry the control-flow-guard flag. Freestanding.
 
 extern "C" int _fltused = 0;
+// /guard:cf calls through these (the C runtime defines them); never run.
+extern "C" void *__guard_dispatch_icall_fptr = nullptr;
+extern "C" void *__guard_check_icall_fptr = nullptr;
 void operator delete(void *) noexcept {}
 void operator delete(void *, decltype(sizeof 0)) noexcept {}
 
