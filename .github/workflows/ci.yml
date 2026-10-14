@@ -154,3 +154,80 @@ jobs:
             build/pgo-*
             build/pgo/only/*.pdb
             build/names/*.pdb
+
+  # Microsoft's public PDBs of the runner's Windows binaries, fetched from
+  # the public symbol server (cached, never committed), walked with the
+  # runner's real msdia140.dll and with ours. Reported on its own, apart
+  # from the corpus score.
+  mspdb:
+    needs: amd64
+    if: always()
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: CLANG64
+          update: false
+          install: mingw-w64-clang-x86_64-python
+      - uses: actions/download-artifact@v4
+        with:
+          name: openmsdia-amd64
+          path: build
+      - name: Locate the DIA SDK and the binaries
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath
+          $dll = Join-Path $vs "DIA SDK\bin\amd64\msdia140.dll"
+          "MSDIA_DLL=$dll" | Out-File -FilePath $env:GITHUB_ENV -Append
+          $bins = @()
+          foreach ($n in 'ntdll','kernel32','kernelbase','user32','combase','ucrtbase','d3d11','mshtml') { $bins += "$env:SystemRoot\System32\$n.dll" }
+          foreach ($n in 'ntdll','kernel32','user32') { $bins += "$env:SystemRoot\SysWOW64\$n.dll" }
+          $bins = $bins | Where-Object { Test-Path $_ }
+          $vers = $bins | ForEach-Object { "$_=" + (Get-Item $_).VersionInfo.FileVersion }
+          $vers
+          $hash = [BitConverter]::ToString([Security.Cryptography.SHA256]::Create().ComputeHash([Text.Encoding]::UTF8.GetBytes($vers -join ';'))).Replace('-','').Substring(0,16)
+          "MSPDB_KEY=$hash" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "MS_BINARIES=" + (($bins | ForEach-Object { $_ -replace '\\','/' }) -join ' ') | Out-File -FilePath $env:GITHUB_ENV -Append
+      - uses: actions/cache@v4
+        with:
+          path: build/mspdb
+          key: mspdb-${{ env.MSPDB_KEY }}
+      - name: Fetch the public PDBs
+        run: python3 tools/fetch_ms_pdbs.py build/mspdb $MS_BINARIES || true
+      - name: Walk with the real DLL and with ours
+        run: |
+          real=$(cygpath -u "$MSDIA_DLL")
+          ours=$(cygpath -m build/msdia140.dll)
+          mkdir -p build/ms-real build/ms-ours
+          for pdb in build/mspdb/*.pdb; do
+            n=$(basename "$pdb" .pdb)
+            for w in real ours; do
+              dll=$real; [ $w = ours ] && dll=$ours
+              ( build/dia_walk.exe "$dll" "$(cygpath -m "$pdb")" --map "$(cygpath -m build/mspdb)=<CORPUS>" \
+                  > build/ms-$w/$n.json 2> build/ms-$w/$n.err || echo "$n $w: exit $?" ) &
+            done
+          done
+          wait
+          ls -la build/ms-real build/ms-ours
+      - name: Score
+        run: |
+          python3 tools/diff_walk.py --dirs build/ms-real build/ms-ours --top 40 \
+            --json build/ms-score.json --markdown build/ms-score.md | tee build/ms-score.txt
+          for f in build/ms-real/*.json; do
+            n=$(basename "$f" .json)
+            echo "== $n"; python3 tools/diff_walk.py "$f" build/ms-ours/$n.json --top 0 | head -2
+          done | tee build/ms-score-each.txt
+          { echo "### Microsoft public PDBs"; cat build/ms-score.md; echo '```'; cat build/ms-score-each.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: openmsdia-mspdb
+          retention-days: 7
+          path: |
+            build/ms-real/
+            build/ms-ours/
+            build/ms-score*
