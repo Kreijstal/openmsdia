@@ -834,6 +834,10 @@ public:
             if (getSymTag() != SymTag::Typedef) return M->get(target, p, v);
             v = Val::sym(target);
             return true;
+        case P_unmodifiedType: case P_unmodifiedTypeId:
+            // A typedef of a base type has none (as observed).
+            if (getSymTag() == SymTag::Typedef && M->tag(target) == SymTag::BuiltinType) return false;
+            return M->get(target, p, v);
         case P_nested:
             if (getSymTag() != SymTag::Typedef) return M->get(target, p, v);
             v = Val::b_(true);
