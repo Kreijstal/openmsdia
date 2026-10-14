@@ -145,6 +145,7 @@ jobs:
           path: |
             build/msdia140.dll
             build/dia_walk.exe
+            build/call_probe.exe
             build/corpus/*.pdb
             build/real/
             build/ours/
@@ -300,6 +301,19 @@ jobs:
             build/consumers/pdb.exe build/consumers/Dia2Dump.exe -- "${pdbs[@]}"
           python3 tools/consumer_diff.py build/cons pdb Dia2Dump --markdown build/cons/score.md | tee build/cons/score.txt
           { echo "### DIA consumers (real msdia140 vs OpenMSDIA)"; cat build/cons/score.md; } >> "$GITHUB_STEP_SUMMARY"
+      - name: Call patterns of the consumers (call_probe)
+        if: always()
+        run: |
+          mkdir -p build/cons/probe
+          pairs=()
+          for p in build/corpus/*.pdb; do
+            n=$(basename "$p" .pdb)
+            build/call_probe.exe "$(cygpath -u "$MSDIA_DLL")" "$(cygpath -m "$p")" > build/cons/probe/$n.real.json || continue
+            build/call_probe.exe "$(cygpath -m build/msdia140.dll)" "$(cygpath -m "$p")" > build/cons/probe/$n.ours.json || echo '{}' > build/cons/probe/$n.ours.json
+            pairs+=(build/cons/probe/$n.real.json build/cons/probe/$n.ours.json)
+          done
+          python3 tools/probe_diff.py "${pairs[@]}" --top 3 | tee build/cons/probe-score.txt
+          { echo '```'; head -40 build/cons/probe-score.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -308,4 +322,6 @@ jobs:
           path: |
             build/cons/pdb/
             build/cons/Dia2Dump/
+            build/cons/probe/
+            build/cons/probe-score.txt
             build/cons/score.*
