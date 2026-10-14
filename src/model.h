@@ -274,6 +274,11 @@ public:
                         std::vector<SymIndexId> &out, SymIndexId func);
     // S_SEPCODE blocks of a module, per function they were separated from.
     void sepCodes(uint16_t modi);
+    // Of several functions at one address (identical code folding), the
+    // one the real DLL finds: see Model::preferredProc.
+    size_t preferredProc(uint16_t modi, const std::vector<uint32_t> &recordOffsets);
+    std::map<uint16_t, uint32_t> procCounts;
+    int contribModuleAt(uint32_t sect, uint32_t off);
     std::set<uint16_t> sepScanned;
     std::unordered_map<SymIndexId, std::vector<SymIndexId>> sepByFunc;
     bool isSepCode(SymIndexId id);
@@ -329,6 +334,7 @@ private:
         SymIndexId id = 0, parent = 0;
         SymTag tag = SymTag::None;
         std::string name;
+        bool rep = true;  // functions: the one found at its start address
     };
     std::vector<AddrEntry> addrMap, funcMap, blockMap, dataMap, publicMap, thunkMap, sepMap;
     bool addrBuilt = false;

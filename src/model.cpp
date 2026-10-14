@@ -1736,12 +1736,12 @@ void Model::sepCodes(uint16_t modi)
     auto *ms = pdb->module(modi);
     if (!ms) return;
     CVSymbolArray syms = ms->getSymbolArray();
-    std::map<std::pair<uint16_t, uint32_t>, uint32_t> procAt;
+    std::map<std::pair<uint16_t, uint32_t>, std::vector<uint32_t>> procAt;
     std::vector<std::pair<uint32_t, CVSymbol>> seps;
     for (auto I = syms.begin(); I != syms.end(); ++I) {
         if (isProc(I->kind())) {
             ProcSym ps(SymbolRecordKind::ProcSym);
-            if (deser(*I, ps)) procAt.emplace(std::make_pair(ps.Segment, ps.CodeOffset), I.offset());
+            if (deser(*I, ps)) procAt[std::make_pair(ps.Segment, ps.CodeOffset)].push_back(I.offset());
         } else if (I->kind() == S_SEPCODE) {
             seps.push_back({I.offset(), *I});
         }
@@ -1761,7 +1761,7 @@ void Model::sepCodes(uint16_t modi)
         sc->sect = u16(24);
         sc->parentSect = u16(26);
         auto p = procAt.find({sc->parentSect, sc->parentOff});
-        if (p != procAt.end()) sc->func = procSym(modi, p->second);
+        if (p != procAt.end()) sc->func = procSym(modi, p->second[preferredProc(modi, p->second)]);
         sc->lexParent = sc->func;
         if (sc->func) sepByFunc[sc->func].push_back(id);
         recordSyms[{modi, off}] = id;
@@ -2703,6 +2703,49 @@ const std::vector<SectionContrib> &Model::sectionContribs()
     return contribs;
 }
 
+// Folded functions (identical COMDATs) share an address and are all in
+// the module streams. The real DLL finds the one in the module owning the
+// section contribution there; within a module of fewer than 8 functions
+// the first record, in larger ones it was seen to pick any of them (its
+// own sort order, not reproduced): the last record is used there.
+size_t Model::preferredProc(uint16_t modi, const std::vector<uint32_t> &offs)
+{
+    auto it = procCounts.find(modi);
+    if (it == procCounts.end()) {
+        uint32_t n = 0;
+        if (auto *ms = pdb->module(modi)) {
+            CVSymbolArray syms = ms->getSymbolArray();
+            for (auto I = syms.begin(); I != syms.end(); ++I) {
+                if (!isProc(I->kind())) continue;
+                n++;
+                uint32_t e = scopeEnd(*I);
+                if (e > I.offset()) {
+                    I = syms.at(e);
+                    if (I == syms.end()) break;
+                }
+            }
+        }
+        it = procCounts.emplace(modi, n).first;
+    }
+    size_t best = 0;
+    for (size_t i = 1; i < offs.size(); i++)
+        if (it->second < 8 ? offs[i] < offs[best] : offs[i] > offs[best]) best = i;
+    return best;
+}
+
+int Model::contribModuleAt(uint32_t sect, uint32_t off)
+{
+    codeContribution(sect, off);  // sorts the contributions
+    auto it = std::upper_bound(sortedContribs.begin(), sortedContribs.end(), std::make_pair(sect, off),
+                               [](const std::pair<uint32_t, uint32_t> &k, const SectionContrib *c) {
+                                   return k.first != c->sect ? k.first < c->sect : k.second < c->off;
+                               });
+    if (it == sortedContribs.begin()) return -1;
+    const SectionContrib *c = *--it;
+    if (c->sect != sect || off >= c->off + c->size) return -1;
+    return c->modi;
+}
+
 bool Model::codeContribution(uint32_t sect, uint32_t off)
 {
     if (sortedContribs.empty()) {
@@ -2963,6 +3006,38 @@ void Model::buildAddressMap()
     for (auto *m : {&funcMap, &blockMap, &dataMap, &publicMap, &thunkMap, &sepMap})
         std::stable_sort(m->begin(), m->end(), byAddr);
     for (auto &e : blockMap) blocksOf[e.parent].push_back(&e);
+    // One function per start address (folded functions), of the module
+    // owning the section contribution there; none when that module has no
+    // function there (a folded function whose kept copy has no symbol).
+    for (size_t i = 0; i < funcMap.size();) {
+        size_t j = i;
+        while (j < funcMap.size() && funcMap[j].rva == funcMap[i].rva) j++;
+        int owner = -1;
+        if (auto *f0 = dynamic_cast<OmFunction *>(ours(funcMap[i].id)))
+            owner = contribModuleAt(f0->ps.Segment, f0->ps.CodeOffset);
+        std::vector<size_t> idx;
+        for (size_t k = i; k < j; k++) {
+            auto *f = dynamic_cast<OmFunction *>(ours(funcMap[k].id));
+            if (f && (owner < 0 || f->modi == owner)) idx.push_back(k);
+        }
+        if (idx.empty()) {
+            for (size_t k = i; k < j; k++) funcMap[k].rep = false;
+        } else if (j - i > 1) {
+            // Candidates of one module: by record order.
+            uint16_t modi = 0;
+            std::vector<uint32_t> offs;
+            bool oneModule = true;
+            for (size_t n = 0; n < idx.size(); n++) {
+                auto *f = static_cast<OmFunction *>(ours(funcMap[idx[n]].id));
+                if (n == 0) modi = f->modi;
+                else if (f->modi != modi) oneModule = false;
+                offs.push_back(f->off);
+            }
+            size_t pick = oneModule ? idx[preferredProc(modi, offs)] : idx.back();
+            for (size_t k = i; k < j; k++) funcMap[k].rep = k == pick;
+        }
+        i = j;
+    }
     // Symbols by address: one per address, data before functions before
     // thunks, publics where none of them is (as observed).
     std::set<uint32_t> covered;
@@ -2979,7 +3054,7 @@ void Model::buildAddressMap()
     }
     for (auto *m : {&dataMap, &funcMap, &sepFuncs, &thunkMap})
         for (auto &e : *m)
-            if (covered.insert(e.rva).second) addrMap.push_back(e);
+            if (e.rep && covered.insert(e.rva).second) addrMap.push_back(e);
     for (auto &e : publicMap)
         if (!covered.count(e.rva)) {
             addrMap.push_back(e);
@@ -3035,18 +3110,32 @@ SymIndexId Model::findByRVA(uint32_t r, SymTag want, int32_t *disp)
         uint32_t maxLen = maxLenOf(m);
         while (it != m.begin()) {
             --it;
-            if (r < it->rva + it->len) return &*it;
+            if (r < it->rva + it->len) {
+                // A folded function: the one chosen for its address.
+                if (it->rep) return &*it;
+                for (auto j = it; j != m.begin() && std::prev(j)->rva == it->rva;) {
+                    --j;
+                    if (j->rep && r < j->rva + j->len) return &*j;
+                }
+                continue;
+            }
             if ((uint64_t)it->rva + maxLen <= r) break;
         }
         return nullptr;
     };
     // Nearest symbol at or before the address, in any section (as observed):
     // the first of equal starts.
+    // Functions not found at their address (rep false) are skipped.
     auto preceding = [&](const std::vector<AddrEntry> &m) -> const AddrEntry * {
         auto it = std::upper_bound(m.begin(), m.end(), r, [](uint32_t a, const AddrEntry &e) { return a < e.rva; });
-        if (it == m.begin()) return nullptr;
-        uint32_t start = std::prev(it)->rva;
-        return &*std::lower_bound(m.begin(), it, start, [](const AddrEntry &e, uint32_t a) { return e.rva < a; });
+        while (it != m.begin()) {
+            uint32_t start = std::prev(it)->rva;
+            auto first = std::lower_bound(m.begin(), it, start, [](const AddrEntry &e, uint32_t a) { return e.rva < a; });
+            for (auto j = first; j != it; ++j)
+                if (j->rep) return &*j;
+            it = first;
+        }
+        return nullptr;
     };
     // The smallest block of the function holding the address (the last of
     // equal lengths).
