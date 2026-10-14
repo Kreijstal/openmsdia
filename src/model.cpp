@@ -1354,7 +1354,8 @@ void Model::moduleChildren(uint16_t modi, SymIndexId parent, uint32_t begin, uin
             out.push_back(id);
             continue;
         }
-        if (func && k == S_LABEL32) {
+        // Labels: in functions, and at module level in assembler modules.
+        if (k == S_LABEL32) {
             LabelSym l(SymbolRecordKind::LabelSym);
             if (!deser(*I, l)) continue;
             auto it = recordSyms.find(key);
