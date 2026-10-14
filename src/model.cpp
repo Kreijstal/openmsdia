@@ -180,6 +180,10 @@ public:
     MethodOptions mopts = MethodOptions::None;
     int32_t vftableOffset = 0;
     std::string shortName;
+    // The name of the class member a method implementation was found for
+    // when the function itself is not bound to that class (a class defined
+    // twice: the function's class type resolves to the other definition).
+    std::string memberName;
     bool overloaded = false;  // bound to a member of an overload set
 
     uint32_t start() const { return M->rva(ps.Segment, ps.CodeOffset); }
@@ -1928,10 +1932,7 @@ SymIndexId Model::findMethodImpl(SymIndexId udt, StringRef name, TypeIndex type)
         SymIndexId f = procSym(pr.modi(), pr.SymOffset);
         auto *fn = static_cast<OmFunction *>(ours(f));
         if (fn && fn->ps.FunctionType == type) {
-            // Of two definitions of one class, the implementation belongs to
-            // the one its method type's class resolves to (as observed).
-            MemberFunctionRecord mf(TypeRecordKind::MemberFunction);
-            if (!type.isSimple() && deserType(pdb->type(type), mf) && typeSym(mf.getClassType()) != udt) continue;
+            if (!fn->isMethod) fn->memberName = name.str();
             return f;
         }
     }
@@ -2308,8 +2309,8 @@ bool Model::methodOverloaded(SymIndexId id)
 std::string Model::methodShortName(SymIndexId id)
 {
     auto *f = dynamic_cast<OmFunction *>(ours(id));
-    if (!f || !f->isMethod) return "";
-    return f->shortName;
+    if (!f) return "";
+    return f->isMethod ? f->shortName : f->memberName;
 }
 
 // ------------------------------------------------------------------ lines
