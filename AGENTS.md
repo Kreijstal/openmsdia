@@ -29,8 +29,13 @@
 - Build with MSYS2 CLANG64/UCRT64 clang. COM vtables are plain C function-pointer
   tables, so the C++ ABI does not matter here, unlike openmfc. Keep the COM
   surface in C or C-compatible C++ anyway.
-- The PDB parsing comes from LLVM (`LLVMDebugInfoPDB`, `LLVMDebugInfoCodeView`,
-  `LLVMDebugInfoMSF`). Do not write a second parser.
+- The PDB file format comes from LLVM's low-level readers (MSF container,
+  PDB streams, CodeView records, the Microsoft demangler). Do not write a
+  second parser.
+- The DIA object model is ours (`src/model.*`, `src/types.cpp`). Do not
+  use LLVM's high-level DIA emulation (`NativeSession`, `NativeRawSymbol`
+  and subclasses, `SymbolCache`, `NativeEnum*`, `IPDB*`, `PDBSymbol*`,
+  `PDB_*` enums); `tools/check_layers.sh` enforces this.
 - Changes that belong in Wine go to `Kreijstal/wine-kreijstal`, linked back
   here.
 - No unrequested PRs to upstream projects.
