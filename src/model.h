@@ -138,6 +138,8 @@ struct FrameRow {
     uint32_t rva, codeSize, localSize, paramsSize, maxStack, frameFunc;
     uint16_t prologSize, savedRegsSize;
     uint32_t flags;  // 1 SEH, 2 C++ EH, 4 function start
+    bool fpo = false;    // an old FPO_DATA record (FrameTypeFPO)
+    bool useBP = false;  // FPO: allocates EBP
 };
 
 struct DebugStream {

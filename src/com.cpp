@@ -341,15 +341,24 @@ public:
     HRESULT STDMETHODCALLTYPE get_lengthBlock(ULONG *p) override { return put(p, r().codeSize); }
     HRESULT STDMETHODCALLTYPE get_lengthLocals(ULONG *p) override { return put(p, r().localSize); }
     HRESULT STDMETHODCALLTYPE get_lengthParams(ULONG *p) override { return put(p, r().paramsSize); }
-    HRESULT STDMETHODCALLTYPE get_maxStack(ULONG *p) override { return put(p, r().maxStack); }
+    // Old FPO rows have no maximum stack, program, C++ EH or function start
+    // flag, and say whether they allocate EBP (as observed).
+    HRESULT STDMETHODCALLTYPE get_maxStack(ULONG *p) override { return r().fpo ? S_FALSE : put(p, r().maxStack); }
     HRESULT STDMETHODCALLTYPE get_lengthProlog(ULONG *p) override { return put(p, r().prologSize); }
     HRESULT STDMETHODCALLTYPE get_lengthSavedRegisters(ULONG *p) override { return put(p, r().savedRegsSize); }
     HRESULT STDMETHODCALLTYPE get_program(BSTR *p) override;
     HRESULT STDMETHODCALLTYPE get_systemExceptionHandling(LONG *p) override { return putB(p, r().flags & 1); }
-    HRESULT STDMETHODCALLTYPE get_cplusplusExceptionHandling(LONG *p) override { return putB(p, r().flags & 2); }
-    HRESULT STDMETHODCALLTYPE get_functionStart(LONG *p) override { return putB(p, r().flags & 4); }
-    HRESULT STDMETHODCALLTYPE get_type(ULONG *p) override { return put(p, 4); }  // FrameTypeFrameData
-    HRESULT STDMETHODCALLTYPE get_allocatesBasePointer(LONG *) override { return S_FALSE; }
+    HRESULT STDMETHODCALLTYPE get_cplusplusExceptionHandling(LONG *p) override
+    {
+        return r().fpo ? S_FALSE : putB(p, r().flags & 2);
+    }
+    HRESULT STDMETHODCALLTYPE get_functionStart(LONG *p) override { return r().fpo ? S_FALSE : putB(p, r().flags & 4); }
+    // FrameTypeFrameData, FrameTypeFPO for old FPO records.
+    HRESULT STDMETHODCALLTYPE get_type(ULONG *p) override { return put(p, r().fpo ? 0 : 4); }
+    HRESULT STDMETHODCALLTYPE get_allocatesBasePointer(LONG *p) override
+    {
+        return r().fpo ? putB(p, r().useBP) : S_FALSE;
+    }
     HRESULT STDMETHODCALLTYPE get_functionParent(IDiaFrameData **p) override;
     HRESULT STDMETHODCALLTYPE execute(IDiaStackWalkFrame *frame) override;
 };
@@ -1298,6 +1307,8 @@ HRESULT DiaFrameData::get_virtualAddress(ULONGLONG *p)
 HRESULT DiaFrameData::get_program(BSTR *p)
 {
     if (!p) return E_POINTER;
+    *p = nullptr;
+    if (r().fpo) return S_FALSE;
     *p = toBSTR(s->m->frameProgram(r().frameFunc));
     return S_OK;
 }
@@ -1322,6 +1333,7 @@ HRESULT DiaFrameData::get_functionParent(IDiaFrameData **p)
 HRESULT DiaFrameData::execute(IDiaStackWalkFrame *frame)
 {
     if (!frame) return E_INVALIDARG;
+    if (r().fpo) return E_UNEXPECTED;  // without touching the frame (observed)
     enum { EAX = 17, ECX = 18, EDX = 19, EBX = 20, ESP = 21, EBP = 22, ESI = 23, EDI = 24, EIP = 33,
            VFRAME = 30006, PARAMS = 30008 };
     ULONGLONG eax = 0, ebx = 0, ecx = 0, edx = 0, esi = 0, edi = 0, ebp = 0, esp = 0, eip = 0;
@@ -1347,7 +1359,10 @@ HRESULT DiaFrameData::execute(IDiaStackWalkFrame *frame)
     if (eip == start) {
         ULONGLONG ret = 0;
         if (!read32((enum MemoryTypeEnum)2, esp, ret)) return E_FAIL;
-        bool ebpFrame = s->m->frameProgram(row.frameFunc).rfind("$T0 $ebp ", 0) == 0;
+        // An EBP frame: the return address above the saved EBP. Programs
+        // that align the stack through EBX ("$T0 $ebp = $T1 $ebx = $eip
+        // $T1 4 + ^ = ...") count as frames without EBP (observed).
+        bool ebpFrame = s->m->frameProgram(row.frameFunc).rfind("$T0 $ebp = $eip $T0 4 + ^ =", 0) == 0;
         ULONGLONG vframe = ebpFrame ? esp - 4 : esp;
         frame->put_registerValue(EBX, ebx);
         frame->put_registerValue(ESP, esp + 4);

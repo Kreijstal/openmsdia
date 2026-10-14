@@ -892,7 +892,7 @@ int wmain(int argc, wchar_t **argv)
                 }
                 // Frame data rows: IDiaTable::Item, as IDiaFrameData.
                 if (items.empty() && hc == S_OK && cnt > 0) {
-                    for (LONG k = 0; k < cnt && k < 4096; k++) {
+                    for (LONG k = 0; k < cnt && k < 65536; k++) {
                         IUnknown *u = nullptr;
                         if (t->Item(k, &u) != S_OK || !u) break;
                         IDiaFrameData *fd = nullptr;

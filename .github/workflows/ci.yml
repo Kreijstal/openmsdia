@@ -207,7 +207,7 @@ jobs:
             n=$(basename "$pdb" .pdb)
             for w in real ours; do
               dll=$real; [ $w = ours ] && dll=$ours
-              ( build/dia_walk.exe "$dll" "$(cygpath -m "$pdb")" --map "$(cygpath -m build/mspdb)=<CORPUS>" \
+              ( build/dia_walk.exe "$dll" "$(cygpath -m "$pdb")" --map "$(cygpath -m "$PWD/build/mspdb")=<CORPUS>" \
                   > build/ms-$w/$n.json 2> build/ms-$w/$n.err || echo "$n $w: exit $?" ) &
             done
           done

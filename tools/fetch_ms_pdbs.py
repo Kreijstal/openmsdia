@@ -2,6 +2,7 @@
 """Download the public PDBs of Windows binaries from Microsoft's symbol server.
 
 Usage: fetch_ms_pdbs.py OUT_DIR BINARY...
+       fetch_ms_pdbs.py OUT_DIR NAME.pdb:KEY[:x86]...   (a PDB by its symbol server key)
 
 For each PE file, read its CodeView (RSDS) debug record and fetch
 https://msdl.microsoft.com/download/symbols/<pdb>/<GUID><age>/<pdb> into
@@ -65,7 +66,11 @@ def main():
     os.makedirs(out, exist_ok=True)
     rc = 0
     for exe in sys.argv[2:]:
-        cv = codeview(exe) if os.path.isfile(exe) else None
+        parts = exe.split(":")
+        if len(parts) >= 2 and parts[0].lower().endswith(".pdb") and not os.path.isfile(exe):
+            cv = (parts[0], parts[1].upper(), len(parts) > 2 and parts[2] == "x86")
+        else:
+            cv = codeview(exe) if os.path.isfile(exe) else None
         if not cv:
             print(f"{exe}: no CodeView record")
             continue

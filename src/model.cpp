@@ -2790,6 +2790,23 @@ const std::vector<FrameRow> &Model::frameRows()
             frameRowCache.push_back({u32(0), u32(4), u32(8), u32(12), u32(16), u32(20), u16(24), u16(26), u32(28)});
         }
     }
+    // Then the old FPO records (FPO_DATA: start, size, locals and
+    // parameters in dwords, prolog bytes, saved registers, SEH, EBP), as
+    // the real DLL appends them.
+    for (auto &d : debugStreams()) {
+        if (d.name != "FPO") continue;
+        for (size_t at = 0; at + 16 <= d.data.size(); at += 16) {
+            const uint8_t *p = &d.data[at];
+            auto u32 = [&](int o) { uint32_t v; memcpy(&v, p + o, 4); return v; };
+            auto u16 = [&](int o) { uint16_t v; memcpy(&v, p + o, 2); return v; };
+            uint16_t attr = u16(14);
+            FrameRow row{u32(0), u32(4), u32(8) * 4, (uint32_t)u16(12) * 4, 0, 0,
+                         (uint16_t)(attr & 0xff), (uint16_t)(((attr >> 8) & 7) * 4), (attr >> 11) & 1u};
+            row.fpo = true;
+            row.useBP = (attr >> 12) & 1;
+            frameRowCache.push_back(row);
+        }
+    }
     return frameRowCache;
 }
 
@@ -2949,7 +2966,18 @@ void Model::buildAddressMap()
     // Symbols by address: one per address, data before functions before
     // thunks, publics where none of them is (as observed).
     std::set<uint32_t> covered;
-    for (auto *m : {&dataMap, &funcMap, &thunkMap})
+    // Separated code is listed as the function it was separated from, at
+    // its own address (as observed).
+    std::vector<AddrEntry> sepFuncs;
+    for (auto &e : sepMap) {
+        auto *sc = dynamic_cast<OmSepCode *>(ours(e.id));
+        if (!sc || !sc->func) continue;
+        AddrEntry f = e;
+        f.id = sc->func;
+        f.tag = SymTag::Function;
+        sepFuncs.push_back(f);
+    }
+    for (auto *m : {&dataMap, &funcMap, &sepFuncs, &thunkMap})
         for (auto &e : *m)
             if (covered.insert(e.rva).second) addrMap.push_back(e);
     for (auto &e : publicMap)
