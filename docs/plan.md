@@ -33,10 +33,14 @@
   SDK headers. Examples are `IDiaSession2`/`3`, `IDiaLoadCallback`/`2`,
   `IDiaReadExeAtOffsetCallback`, `IDiaReadExeAtRVACallback`, `IDiaAddressMap`,
   `IDiaPropertyStorage`, `IDiaImageData`, `IDiaEnumFrameData` and `IDiaStackWalkHelper2`.
-  This list is from memory and has not been checked. Their IIDs and method
-  order have to come from Microsoft's public documentation and from
-  observation, such as `QueryInterface` probing and vtable-call tracing with
-  the oracle. Phase 0b covers that.
+  Their IIDs and method order have to come from Microsoft's public
+  documentation and from observation, such as `QueryInterface` probing and
+  vtable-call tracing with the oracle (phase 0b). Done for the four
+  callback interfaces of `loadDataForExe` (see "Load callbacks" below):
+  the real DLL queries the callback for their IIDs, so they can be
+  observed. Interfaces the DLL implements itself (`IDiaEnumFrameData`,
+  `IDiaSession2`...) cannot be found that way: a client has to ask for
+  them, and their IIDs are in no public, non-header source.
 
 ## Design
 
@@ -51,7 +55,7 @@ tool ──COM──▶ COM objects (src/com.cpp; declarations generated from th
            PdbFile (src/pdb.*): stream access, RVA <-> section:offset
                   ▼
            LLVM low-level readers: MSF container, PDB streams, CodeView
-           records, Microsoft demangler
+           records
 ```
 
 - **LLVM is used for the file format only:** the MSF container
@@ -62,7 +66,8 @@ tool ──COM──▶ COM objects (src/com.cpp; declarations generated from th
   `GlobalsStream`, `PublicsStream`, `SymbolStream`, `PDBStringTable`),
   CodeView record deserialization (`SymbolDeserializer`,
   `TypeDeserializer`, `LazyRandomTypeCollection`, `CVTypeVisitor` for
-  field lists, `TypeIndex`) and `microsoftDemangle`.
+  field lists, `TypeIndex`). Names are undecorated by our own
+  `src/undname.cpp`, not by LLVM's `microsoftDemangle`.
 - **The DIA object model is ours.** LLVM's own DIA emulation
   (`NativeSession`, `NativeRawSymbol` and its subclasses, `SymbolCache`,
   `NativeEnum*`, the `IPDB*`/`PDBSymbol*` interfaces and their `PDB_*`
@@ -81,8 +86,10 @@ tool ──COM──▶ COM objects (src/com.cpp; declarations generated from th
   x86 and arm64 with the runner's Visual Studio. 14.51 exports a seventh
   name, `CompareRE`, which OpenMSDIA does not implement (signature unknown).
 - **Phase 0b:** fill in the interfaces that are not in the type library, from
-  docs and observation.
-- **Phase 1, behaviour oracle (done):**
+  docs and observation. Done for the load and read callbacks
+  (`include/openmsdia/dia2_extra.h`).
+- **Phase 1, behaviour oracle (done):** (plus, since then, the name,
+  executable-loading and PGO tests below)
   - `corpus/`: freestanding C and C++ sources, built by `corpus/build.sh`
     with clang + lld (`-O0` and `-O2`, deterministic) and by
     `corpus/build_msvc.ps1` with cl/link in CI. PDBs are never committed;
@@ -126,6 +133,13 @@ tool ──COM──▶ COM objects (src/com.cpp; declarations generated from th
 - `src/types.cpp`: the exe, compiland and type symbols (UDT, enum,
   pointer, array, base type, function type, typedef, vtable shape).
 - `src/cvutil.h`: CodeView deserialization helpers.
+- `src/undname.h`, `src/undname.cpp`: the undecorator (no dependencies;
+  `tests/undname_cli.cpp` runs it on any host).
+- `src/exeload.h`, `src/exeload.cpp`: finding the PDB of an executable;
+  `include/openmsdia/dia2_extra.h`: the callback interfaces it uses.
+- `walker/name_probe.cpp`, `walker/exe_probe.cpp`: oracles for names and
+  for `loadDataForExe`; `tools/undname_test.py`, `tools/exeload_test.py`
+  compare their outputs.
 
 ### Design decisions
 
@@ -180,6 +194,86 @@ tool ──COM──▶ COM objects (src/com.cpp; declarations generated from th
   coffGroup, `get_inlinee` failing with 0x806D000E, RVA lookups failing
   with E_UNEXPECTED in the last section of lld-linked images), OpenMSDIA
   follows 14.51, the version CI scores against.
+- **Undecorated names.** `src/undname.cpp` parses a decorated name into
+  a small tree and renders it C-declarator style around the name, with
+  the real undecorator's spacing and quirks (for example `int * __ptr64
+  __ptr64 x`: the pointer's and the variable's `__ptr64`; `(void)const `
+  with a trailing space; the `const` of a variable's own pointer printed
+  from the storage class, not from the pointer; `{for `A's `B'}`;
+  `[thunk]: __cdecl X::`vcall'{8,{flat}}' }'`; class-type template
+  arguments `struct Lit{int:7}`). `get_undecoratedName` is
+  `get_undecoratedNameEx(0x20000)` (no `__ptr64`); DIA drops a leading
+  `.` first. Option bits as observed: 0x1 drops leading underscores of
+  keywords, 0x2 all Microsoft keywords, 0x4 return types, 0x10 the
+  calling convention of the outermost function, 0x60 (only both bits)
+  the `this` qualifiers, 0x80 access, 0x200 `static`/`virtual`, 0x1000
+  everything but the name (template arguments without
+  class/struct/union, enums keep `enum`), 0x8000 class/struct/union/enum
+  keywords, 0x20000 `__ptr64`, 0x40000 prints `...` as `<ellipsis>`;
+  0x8, 0x100, 0x400, 0x800, 0x4000, 0x10000 (but for one malformed
+  string literal), 0x80000 change nothing. 0x2000 decodes the input as a
+  type (`?AUBase@@` is `struct Base`); applied to a symbol name the real
+  undecorator prints fragments (`this ?? :: ?? ::Z::YAXPAX`,
+  `Access::b` for `Access::pub` with 0x3000) that are not emulated.
+  14.30 differs from 14.51 in two places: with 0x2 a function type in a
+  template argument loses its parameter list (`Class<int >`), and calling
+  convention `C` is `__pascal` (14.51: `__preserve_none`).
+- **The Symbols table** is fixed when it is created, not a cache: the
+  exe, the compilands, each compiland's symbols depth first, then the
+  globals, publics and types in TPI order, each type followed by its
+  children again for every type that has them (a const-modified class
+  repeats its class's members, function types sharing an argument list
+  repeat its arguments). Its count also includes the S_LOCAL and
+  S_FILESTATIC symbols, which are listed there and in no findChildren.
+  Found by enumerating the real table (`IDiaTable` as
+  `IDiaEnumSymbols`): its count is the same right after loading.
+- **Frame data** (x86 NEWFPO): the FrameData table's rows, by
+  `IDiaTable::Item` or `IEnumUnknown::Next`, are `IDiaFrameData` objects;
+  `get_functionParent` fails with E_UNEXPECTED for every row and
+  `get_allocatesBasePointer` is S_FALSE. `execute` reproduces what the
+  real DLL does with the walker's fake frame: it reads the general
+  registers and the 7 code bytes before EIP, fails with E_UNEXPECTED on
+  a block that does not start a function, pops the return address at a
+  function's first byte (setting the virtual frame and parameter base;
+  an EBP-based frame program counts the saved EBP) and unwinds through
+  EBP elsewhere. The real DLL was not seen to evaluate the program
+  string in these cases. x64 images have no frame data rows.
+- **Load callbacks.** `loadDataForExe` and `loadDataFromCodeViewInfo`
+  query the callback for `IDiaLoadCallback`
+  (C32ADB82-73F4-421B-95D5-A4706EDF5DBE), `IDiaLoadCallback2`
+  (4688A074-5A4D-4486-AEA8-7B90711D9F7C), `IDiaReadExeAtOffsetCallback`
+  (587A461C-B80B-4F54-9194-5032589A6319) and `IDiaReadExeAtRVACallback`
+  (8E3F80CA-7517-432A-BA07-285134AAEA8E), in this order. Slots, from
+  which slot is called with which arguments: `NotifyDebugDir` 3 (once per
+  28-byte debug directory entry), `NotifyOpenDBG` 4, `NotifyOpenPDB` 5
+  (every path tried, with E_PDB_NOT_FOUND 0x806D0005, E_PDB_INVALID_SIG
+  0x806D0006 or S_OK), `RestrictRegistryAccess` 6,
+  `RestrictSymbolServerAccess` 7, then in `IDiaLoadCallback2`
+  `RestrictOriginalPathAccess` 8, `RestrictReferencePathAccess` 9,
+  `RestrictDBGAccess` 10, `RestrictSystemRootAccess` 11 (S_OK allows);
+  `ReadExecutableAt` and `ReadExecutableAtRVA` are slot 3 of theirs.
+  `NotifyDebugDir` is only called through an `IDiaLoadCallback`
+  obtained by QueryInterface. With a read callback the executable is not
+  opened: the DOS header, the NT headers (264 bytes), the section headers
+  one at a time (offset reads only), the debug directory entry by entry
+  and the CodeView record are read through it.
+- **PDB search order:** the executable's directory, the recorded path
+  (with backslashes), then for every `;`-separated search path entry D:
+  `D\symbols\<ext>\<pdb>`, `D\<ext>\<pdb>`, `D\<pdb>` (`<ext>` the
+  executable's extension; no trimming of spaces), `srv*` entries as local
+  symbol stores (`<store>\<pdb>\<GUID><age>\<pdb>`; 14.51 has a symbol
+  server DLL beside it, 14.30 on the test machine did not find them),
+  `cache*` entries skipped, then the registry (not used here), then
+  `%SystemRoot%` like a search path entry. `loadDataFromCodeViewInfo`
+  skips the executable's directory and has no `<ext>`. Not found:
+  E_PDB_NOT_FOUND with the recorded path as `get_lastError`; a missing
+  executable: E_PDB_NOT_FOUND with its path; not a PE image:
+  E_PDB_INVALID_EXECUTABLE 0x806D0012; no CodeView record:
+  E_PDB_NO_DEBUG_INFO 0x806D0014; a second load: E_UNEXPECTED.
+  `_NT_SYMBOL_PATH` and `_NT_ALT_SYMBOL_PATH` are not read.
+- **Short PDB files.** MSVC's linker can leave a PDB one partial block
+  short of a whole block; LLVM's MSF reader rejects that, so the buffer
+  is padded with zeros.
 - **Static, self-contained DLL.** LLVM, libc++ and libunwind are linked
   statically (`LLVM_BUILD_STATIC`, `-static`; without that define the
   installed headers declare LLVM's API dllimport and calls can go through
@@ -192,7 +286,8 @@ tool ──COM──▶ COM objects (src/com.cpp; declarations generated from th
 
 - `IDiaDataSource`/`IDiaDataSourceEx`: `loadDataFromPdb(Ex)`,
   `loadAndValidateDataFromPdb(Ex)`, `loadDataFromIStream(Ex)`,
-  `openSession`, `get_lastError`. Error codes as observed: 0x806D0005 (not
+  `loadDataForExe(Ex)`, `loadDataFromCodeViewInfo`, `openSession`,
+  `get_lastError`. Error codes as observed: 0x806D0005 (not
   found), 0x806D0006 (GUID/signature mismatch), 0x806D0007 (age
   mismatch), 0x806D000C (not a PDB), E_UNEXPECTED (second load, session
   before load).
@@ -202,7 +297,8 @@ tool ──COM──▶ COM objects (src/com.cpp; declarations generated from th
   `findLines`, `findLinesByAddr/RVA/VA/Linenum`, `getEnumTables`,
   `getSymbolsByAddr`, `getEnumDebugStreams`.
 - `IDiaSymbol`..`IDiaSymbol11`: every single-value property getter goes
-  through the model; `findChildren(Ex)`, `get_undecoratedNameEx`.
+  through the model; `findChildren(Ex)`, `get_undecoratedNameEx` with
+  all options.
   Symbol kinds: Exe, Compiland, CompilandDetails, CompilandEnv, Function
   (with frame data and class-method binding), declaration-only methods,
   Block, FuncDebugStart/End, Data (globals, file statics, static locals,
@@ -211,18 +307,25 @@ tool ──COM──▶ COM objects (src/com.cpp; declarations generated from th
   UDT, Enum, nested types, PointerType, ArrayType, BaseType, FunctionType,
   FunctionArgType, Typedef (global and function-local), BaseClass (incl.
   virtual bases), VTable, InlineSite, CoffGroup, UsingNamespace, CallSite,
-  Callee (S_CALLEES), Thunk.
+  Callee (S_CALLEES), Caller (S_CALLERS, written but not in any corpus
+  PDB), Thunk.
 - Enumerators: `IDiaEnumSymbols`, `IDiaEnumLineNumbers`,
   `IDiaEnumSourceFiles`, `IDiaEnumSectionContribs`, `IDiaEnumTables`,
   `IDiaEnumSymbolsByAddr` (`symbolByAddr/RVA/VA`, `Next`, `Prev`),
   `IDiaEnumDebugStreams`, `IDiaEnumDebugStreamData`, and empty
   `IDiaEnumInjectedSources`/`IDiaEnumInputAssemblyFiles`.
-- `IDiaLineNumber`, `IDiaSourceFile`, `IDiaSectionContrib`, `IDiaTable`.
+- `IDiaLineNumber`, `IDiaSourceFile`, `IDiaSectionContrib`, `IDiaTable`
+  (`Item` and `Next` for the FrameData table), `IDiaFrameData` (all
+  getters and `execute`).
 
 ### Not implemented (E_NOTIMPL or missing)
 
-- `loadDataForExe`, `loadDataFromCodeViewInfo`, `loadDataFromMiscInfo`,
-  `getStreamSize`/`getStreamRawData`, `ValidatePdb`, registration.
+- `loadDataFromMiscInfo` (.dbg files), `getStreamSize`/`getStreamRawData`,
+  `ValidatePdb`, registration; symbol server downloads (only local
+  symbol stores are searched); the registry search paths.
+- `IDiaEnumFrameData` (its IID is not observable, see above); frame
+  data lookups by address; `IDiaTable::Item` for tables other than
+  FrameData.
 - Session: `findChildrenExByAddr/VA/RVA`, `findSymbolByToken`, inline
   frame and inlinee line queries, IL offsets, input assemblies, MD token
   maps, function fragments, exports, heap allocation sites.
@@ -232,9 +335,8 @@ tool ──COM──▶ COM objects (src/com.cpp; declarations generated from th
 - Symbol kinds: Label, Caller, Friend, CustomType,
   ManagedType, Dimension, HeapAllocationSite, Export, Annotation; S_LOCAL
   variables are deliberately not listed (the real DLL does not either).
-- Frame data (`IDiaFrameData`; the FrameData table only reports its
-  count), injected sources, stack walking, x86 and arm64 builds of the
-  DLL (x86 PDBs are read).
+- Injected sources, stack walking (`IDiaStackWalker`), x86 and arm64
+  builds of the DLL (x86 PDBs are read), HeapAllocationSite symbols.
 
 ### Score
 
@@ -243,16 +345,22 @@ tool ──COM──▶ COM objects (src/com.cpp; declarations generated from th
 line, source file, address lookup, table or debug stream is one
 comparison; getters that return S_FALSE count too, so the second line
 (fields where the real DLL returned a value) is the stricter number.
-See the README for the current numbers (CI run 38562770962: 17 PDBs,
-1247208/1247229 fields, 267813/267834 value fields).
+See the README for the current numbers (CI run 38577421642: 17 PDBs,
+1255651/1255651 fields, 276256/276256 value fields).
 
-Remaining known differences against 14.51: the Symbols table count
-(follows DIA's internal symbol cache), and the complete undecorated names
-of pointers to members (`__ptr64` placement, see the demangler note
-below). Not covered by the corpus at all: managed code, injected
-sources, frame data records, OMAP-mapped (optimized/instrumented) images,
-S_CALLERS, S_SEPCODE, labels of x64 clang code (clang emits none),
-`IDiaStackWalker`.
+Further tests in CI: the undecorator on 2170 names times 26 option sets
+(`tools/undname_test.py`; every name matches for every documented
+option), `loadDataForExe` in 44 scenarios on 4 executables
+(`tools/exeload_test.py`), and the PGO build that links the C runtime
+(`corpus/pgo`, 97.6% of 14.2 million fields).
+
+Not covered by the corpus at all: managed code, injected sources,
+OMAP-mapped (optimized/instrumented) images, S_CALLERS, S_SEPCODE,
+labels of x64 clang code (clang emits none), `IDiaStackWalker`. S_CALLERS
+and S_SEPCODE could not be produced: an MSVC 14.51 x64 PGO build
+(instrumented build, training run that never takes the error paths,
+optimized build) with small and with large never-executed blocks emits
+S_CALLEES (3528, mostly in the CRT) and S_INLINEES but neither record.
 
 ### LLVM: worth upstreaming (documentation only)
 
@@ -293,12 +401,10 @@ works on LLVM's reader. Nothing is sent upstream from this project.
 8. The Microsoft demangler has no way to print `__ptr64` (undname's
    complete form), abbreviates special names ("`vector deleting
    dtor'"), glues cv-qualifiers to `*` and omits the space between a
-   declarator's `*` and the name. OpenMSDIA post-processes its output for
-   these. What post-processing cannot do and would need an undname of our
-   own: the complete form of pointers to members, where undname prints
-   the `__ptr64` of the pointer type and of the variable's storage class
-   (`int C::* __ptr64 __ptr64 p`), and generally any qualifier the
-   demangler's AST drops.
+   declarator's `*` and the name; its AST merges the `__ptr64` of a
+   pointer and of the variable's storage class (`int C::* __ptr64
+   __ptr64 p`). OpenMSDIA now has its own undecorator and no longer uses
+   it.
 9. The installed headers declare LLVM's API `dllimport` unless
    `LLVM_BUILD_STATIC` is defined; linking the static libraries without
    it compiles but can call through a bogus import thunk.

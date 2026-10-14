@@ -13,8 +13,7 @@ Ghidra's PDB analyzer on Windows. Others are believed to include PerfView/TraceE
 and Breakpad's `dump_syms`, but that has not been checked here.
 
 **How:** the PDB file format is read with LLVM's low-level readers (the
-MSF container, the PDB streams and the CodeView records, plus LLVM's
-Microsoft demangler). Everything DIA-shaped on top of that is OpenMSDIA's
+MSF container, the PDB streams and the CodeView records). Everything DIA-shaped on top of that is OpenMSDIA's
 own: symbols and their ids, lexical and class parents, children, address
 maps, line tables and source files, and the property semantics of the
 real DLL, quirks included. LLVM's own DIA emulation (`NativeSession` and
@@ -42,17 +41,22 @@ Phases 0 to 3 of `docs/plan.md` are in place, up to a useful subset:
   corpus in `oracle/`, and `tools/diff_walk.py` to compare.
 - **`msdia140.dll`**: data source, session, symbols (functions, blocks,
   data, publics, types, classes, base classes, methods, inline sites,
-  callees, thunks, compilands, COFF groups...), line numbers, source
-  files, address lookups, section contributions, tables and debug
-  streams, on our own symbol model over LLVM's low-level PDB readers
-  (`tools/check_layers.sh` keeps LLVM's high-level layer out). It is
+  callers and callees, thunks, compilands, COFF groups...), line
+  numbers, source files, address lookups, section contributions, tables
+  (the Symbols table as the real DLL lists it, x86 frame data rows as
+  `IDiaFrameData`) and debug streams, on our own symbol model over
+  LLVM's low-level PDB readers (`tools/check_layers.sh` keeps LLVM's
+  high-level layer out). `loadDataForExe` and `loadDataFromCodeViewInfo`
+  find a PDB the way the real DLL does, with its load and read
+  callbacks. Names are undecorated by our own undecorator
+  (`src/undname.cpp`) with every `get_undecoratedNameEx` option. It is
   statically linked and imports only Windows system DLLs; it also runs
   under Wine 11 with the same output as on Windows. Unimplemented
   methods return E_NOTIMPL; see `docs/plan.md`.
 
 ### Score
 
-CI (run 38562770962, GitHub `windows-latest`) walks 17 PDBs with the
+CI (run 38577421642, GitHub `windows-latest`) walks 17 PDBs with the
 runner's `msdia140.dll` 14.51.36257.0 and with ours: 9 built with clang 23
 + lld (`c_basic`, `c_more`, `cpp_classes`, `cpp_more`; `-O0`, `-O2`, and
 32-bit x86 `c_basic_x86`, `cpp_more_x86`) and 8 with MSVC 14.51 (`/Od`,
@@ -60,25 +64,46 @@ runner's `msdia140.dll` 14.51.36257.0 and with ours: 9 built with clang 23
 
 | section | matched | total | % |
 |---|---:|---:|---:|
-| symbols | 1177745 | 1177749 | 100.0 |
+| symbols | 1183363 | 1183363 | 100.0 |
 | lines | 11832 | 11832 | 100.0 |
 | files | 256 | 256 | 100.0 |
 | byaddr | 43396 | 43396 | 100.0 |
 | symbolsByAddr | 617 | 617 | 100.0 |
-| tables | 13086 | 13103 | 99.9 |
+| tables | 15911 | 15911 | 100.0 |
 | debugStreams | 21 | 21 | 100.0 |
 | load | 255 | 255 | 100.0 |
-| **overall** | 1247208 | 1247229 | 99.998 |
-| fields where the real DLL returned a value (not S_FALSE) | 267813 | 267834 | 99.992 |
+| **overall** | 1255651 | 1255651 | 100.0 |
+| fields where the real DLL returned a value (not S_FALSE) | 276256 | 276256 | 100.0 |
 
-Every PDB is at 99.97% or more of its value fields. The 21 remaining
-differences: the `count` of the Symbols table (17; it follows DIA's
-internal symbol cache, not a PDB structure), and 4 complete undecorated
-names of pointers to members, which need an undname of our own (see
-`docs/plan.md`). For comparison, the DLL before the switch to our own
-symbol model scored 98.4% (98.3% of value fields) on the same 17 PDBs and
-99.7% (99.3%) on the 9 PDBs CI walked then, which are now at 100.0%
-(155539/155550 value fields).
+Every field the walker records matches on all 17 PDBs, including the
+frame data rows of the x86 PDBs (156 rows, with `execute` against a fake
+stack frame) and `get_undecoratedNameEx` with three option sets on every
+symbol. The previous release scored 1247208/1247229 (21 differences: the
+Symbols table count and 4 complete names of pointers to members).
+
+Three more tests run in CI against the same real DLL:
+
+- **Undecorated names** (`walker/name_probe.cpp`, `tools/undname_test.py`):
+  2170 decorated names (the publics of the corpus, of a C++ name corpus
+  built with MSVC and clang-cl, and the inputs of LLVM's demangler tests)
+  times 26 `get_undecoratedNameEx` option sets. Ours matches on every
+  name for all documented options (0, 0x1-0x10, 0x60, 0x80, 0x200,
+  0x1000, 0x8000, 0x20000, 0x40000, 0x87FE, `get_undecoratedName`);
+  `UNDNAME_NO_ARGUMENTS` (0x2000, alone 97.9%, combined with
+  `NAME_ONLY` 16.8%) makes the real undecorator decode the name as a type
+  and print fragments of anything else, which is not emulated.
+- **`loadDataForExe`** (`walker/exe_probe.cpp`, `tools/exeload_test.py`):
+  44 scenarios (PDB beside the executable, at the recorded path, in the
+  search path, in a local symbol store, mismatched, missing; each load
+  and read callback interface; CodeView info) on lld and MSVC
+  executables, x64 and x86: return codes, `get_lastError` and every
+  callback call match.
+- **A PGO build linking the C runtime** (`corpus/pgo`, walked on its own):
+  97.6% of 14.2 million fields (96.6% of value fields). It is the first
+  corpus PDB with the static CRT's debug information and shows what the
+  small corpus does not cover yet (heap allocation sites, labels, CRT
+  typedefs, control-flow-guard and noexcept function flags, symbol ids in
+  large PDBs).
 
 Against the local 14.30.30626.0 oracle (`oracle/`, 9 clang PDBs) the
 score is 99.9% overall, 99.7% on value fields; OpenMSDIA follows 14.51
@@ -94,6 +119,8 @@ make check              # exports, vtable layouts, no high-level LLVM PDB layer
 make corpus             # build/corpus/*.pdb
 make score              # walk the corpus with ours, compare with oracle/
 make oracle MSDIA=/c/path/to/msdia140.dll   # walk with a real DLL
+make undname-test       # the undecorator against oracle/undname (any host)
+corpus/names/build.sh build/names   # the name corpus (clang-cl, lld)
 ```
 
 Requires `mingw-w64-clang-x86_64-{clang,lld,llvm,llvm-tools,libc++,zlib,zstd,python}`.

@@ -30,8 +30,11 @@
   tables, so the C++ ABI does not matter here, unlike openmfc. Keep the COM
   surface in C or C-compatible C++ anyway.
 - The PDB file format comes from LLVM's low-level readers (MSF container,
-  PDB streams, CodeView records, the Microsoft demangler). Do not write a
-  second parser.
+  PDB streams, CodeView records). Do not write a second parser.
+- Decorated names are undecorated by our own `src/undname.cpp`, written
+  from the published mangling scheme and the oracle (`oracle/undname`);
+  it must match the real DLL's spelling, which LLVM's demangler does
+  not. Do not copy Wine's undname (LGPL) or Microsoft's.
 - The DIA object model is ours (`src/model.*`, `src/types.cpp`). Do not
   use LLVM's high-level DIA emulation (`NativeSession`, `NativeRawSymbol`
   and subclasses, `SymbolCache`, `NativeEnum*`, `IPDB*`, `PDBSymbol*`,
