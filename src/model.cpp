@@ -3507,6 +3507,7 @@ std::vector<SymIndexId> Model::allSymbols()
     // list repeat its arguments).
     std::vector<SymIndexId> out{exe};
     std::set<SymIndexId> seen{exe};
+    memberRows.clear();
     std::vector<SymIndexId> top = children(exe);
     auto add = [&](SymIndexId id) { return seen.insert(id).second ? (out.push_back(id), true) : false; };
     std::function<void(SymIndexId)> below = [&](SymIndexId id) {
@@ -3548,6 +3549,8 @@ std::vector<SymIndexId> Model::allSymbols()
             for (SymIndexId k : std::vector<SymIndexId>(children(c))) {
                 out.push_back(k);
                 seen.insert(k);
+                // A class's members are listed as reached through the class.
+                if (t == SymTag::UDT) memberRows.insert(out.size() - 1);
             }
         } else {
             below(c);

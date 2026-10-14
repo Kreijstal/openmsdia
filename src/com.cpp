@@ -1622,6 +1622,8 @@ HRESULT DiaEnumTables::make(size_t i, IDiaTable **out)
     case 0: {
         std::vector<SymIndexId> all = m.allSymbols();
         auto *e = new DiaEnumSymbols(s, all);
+        e->memberFlags.assign(all.size(), 0);
+        for (size_t r : m.memberRows) e->memberFlags[r] = 1;
         *out = new DiaTable(s, "Symbols", (LONG)all.size(), e, IID_IDiaEnumSymbols);
         return S_OK;
     }
