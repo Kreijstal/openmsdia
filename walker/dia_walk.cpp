@@ -305,40 +305,59 @@ static void collect_props(IUnknown *obj, const char *iface, JObj &out)
         std::string kind = g.kind;
         HRESULT hr;
         std::string val;
+        // Outputs start as sentinels: a getter that fails without writing
+        // its output is recorded as "!<HRESULT>(kept)" (the real DLL zeroes
+        // outputs on S_FALSE; tools such as Dia2Dump print them anyway).
+        const uintptr_t kPtr = 0x5A5A5A50;
+        bool kept = false;
         if (kind == "LONG" || kind == "ULONG") {
-            ULONG v = 0;
+            ULONG v = 0xA5A5A5A5;
             hr = ((HRESULT(STDMETHODCALLTYPE *)(void *, ULONG *))fn)(p, &v);
+            kept = v == 0xA5A5A5A5;
             val = kind == "LONG" ? snum((LONG)v) : num(v);
         } else if (kind == "USHORT" || kind == "BYTE") {
-            ULONG v = 0;
+            ULONG v = 0xA5A5A5A5;
             hr = ((HRESULT(STDMETHODCALLTYPE *)(void *, ULONG *))fn)(p, &v);
+            kept = (kind == "BYTE" ? (v & 0xff) == 0xA5 : (v & 0xffff) == 0xA5A5);
             val = num(kind == "BYTE" ? (v & 0xff) : (v & 0xffff));
         } else if (kind == "ULONGLONG") {
-            ULONGLONG v = 0;
+            ULONGLONG v = 0xA5A5A5A5A5A5A5A5ull;
             hr = ((HRESULT(STDMETHODCALLTYPE *)(void *, ULONGLONG *))fn)(p, &v);
+            kept = v == 0xA5A5A5A5A5A5A5A5ull;
             val = num(v);
         } else if (kind == "BSTR") {
-            BSTR v = nullptr;
+            BSTR v = (BSTR)kPtr;
             hr = ((HRESULT(STDMETHODCALLTYPE *)(void *, BSTR *))fn)(p, &v);
+            kept = v == (BSTR)kPtr;
+            if (kept) v = nullptr;
             std::string s = bstr_take(v);
             val = jstr(s);
         } else if (kind == "GUID") {
-            GUID v = {};
+            GUID v;
+            memset(&v, 0xA5, sizeof v);
             hr = ((HRESULT(STDMETHODCALLTYPE *)(void *, GUID *))fn)(p, &v);
+            kept = ((unsigned char *)&v)[0] == 0xA5 && ((unsigned char *)&v)[15] == 0xA5;
             val = jstr(guidstr(v));
         } else if (kind == "VARIANT") {
             VARIANT v;
             VariantInit(&v);
+            v.vt = VT_I4;
+            v.lVal = (LONG)0xA5A5A5A5;
             hr = ((HRESULT(STDMETHODCALLTYPE *)(void *, VARIANT *))fn)(p, &v);
+            kept = v.vt == VT_I4 && v.lVal == (LONG)0xA5A5A5A5;
             val = variantstr(v);
         } else if (kind == "IFACE:IDiaSymbol") {
-            IDiaSymbol *v = nullptr;
+            IDiaSymbol *v = (IDiaSymbol *)kPtr;
             hr = ((HRESULT(STDMETHODCALLTYPE *)(void *, IDiaSymbol **))fn)(p, &v);
+            kept = v == (IDiaSymbol *)kPtr;
+            if (kept) v = nullptr;
             val = jstr(describe(v));
             if (v) v->Release();
         } else if (kind == "IFACE:IDiaSourceFile") {
-            IDiaSourceFile *v = nullptr;
+            IDiaSourceFile *v = (IDiaSourceFile *)kPtr;
             hr = ((HRESULT(STDMETHODCALLTYPE *)(void *, IDiaSourceFile **))fn)(p, &v);
+            kept = v == (IDiaSourceFile *)kPtr;
+            if (kept) v = nullptr;
             std::string s = "null";
             if (v) {
                 BSTR b = nullptr;
@@ -347,8 +366,10 @@ static void collect_props(IUnknown *obj, const char *iface, JObj &out)
             }
             val = jstr(s);
         } else if (kind.rfind("IFACE:", 0) == 0 || kind == "UNKNOWN") {
-            IUnknown *v = nullptr;
+            IUnknown *v = (IUnknown *)kPtr;
             hr = ((HRESULT(STDMETHODCALLTYPE *)(void *, IUnknown **))fn)(p, &v);
+            kept = v == (IUnknown *)kPtr;
+            if (kept) v = nullptr;
             val = jstr(v ? "<object>" : "null");
             if (v) v->Release();
         } else {
@@ -357,7 +378,7 @@ static void collect_props(IUnknown *obj, const char *iface, JObj &out)
         if (hr == S_OK)
             out[name] = val;
         else
-            failed[hrstr(hr)].push_back(name);
+            failed[hrstr(hr) + (kept ? "(kept)" : "")].push_back(name);
     }
     for (auto &kv : qi)
         if (kv.second) kv.second->Release();

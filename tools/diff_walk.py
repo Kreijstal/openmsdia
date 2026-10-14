@@ -21,10 +21,17 @@ GETTER_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 META = {"children"}
 
 
+IGNORE_KEPT = False
+
+
 def expand(obj, universe):
     """Symbol object -> {field: value} with S_FALSE defaults filled in."""
     out = {}
     for k, v in obj.items():
+        if IGNORE_KEPT and k.endswith("(kept)"):
+            k = k[:-len("(kept)")]
+            if k == "!S_FALSE":
+                continue
         if k.startswith("!"):
             for n in v:
                 if n.startswith("<"):      # interface availability (DLL version)
@@ -119,7 +126,22 @@ class Score:
         return m, t
 
 
+def unkept(d):
+    """With --ignore-kept: drop '!S_FALSE(kept)', '!X(kept)' -> '!X'."""
+    if not IGNORE_KEPT or not isinstance(d, dict):
+        return d
+    out = {}
+    for k, v in d.items():
+        if k.endswith("(kept)"):
+            k = k[:-len("(kept)")]
+            if k == "!S_FALSE":
+                continue
+        out[k] = v
+    return out
+
+
 def norm_line(e):
+    e = unkept(e)
     return {k: v for k, v in e.items() if k not in ID_PROPS} if isinstance(e, dict) else {"value": e}
 
 
@@ -172,7 +194,8 @@ def compare(real, ours, sc, name):
             if ov is None:
                 sc.missing[sect] += 1
             if isinstance(rv, dict):
-                od = ov if isinstance(ov, dict) else {}
+                rv = unkept(rv)
+                od = unkept(ov) if isinstance(ov, dict) else {}
                 for f, v in rv.items():
                     if f in ID_PROPS:
                         continue
@@ -202,7 +225,12 @@ def main():
     ap.add_argument("--top", type=int, default=25)
     ap.add_argument("--json", help="write the score as JSON")
     ap.add_argument("--markdown", help="write a Markdown summary")
+    ap.add_argument("--ignore-kept", action="store_true",
+                    help="treat '!HRESULT(kept)' (a failing getter left its output alone) as '!HRESULT', "
+                         "for oracles recorded before the walker noted it")
     a = ap.parse_args()
+    global IGNORE_KEPT
+    IGNORE_KEPT = a.ignore_kept
     pairs = []
     if a.dirs:
         for f in sorted(os.listdir(a.real)):
