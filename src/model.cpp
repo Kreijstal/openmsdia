@@ -138,6 +138,14 @@ Variant variantOf(const APSInt &v)
     if (w <= 8) {
         r.type = v.isSigned() ? Variant::I1 : Variant::UI1;
     } else if (w <= 16) {
+        // Values below 0x8000 are stored as the leaf itself and read back as
+        // unsigned; the real DLL reports them as VT_I2. An LF_USHORT (0x8000
+        // and up) is VT_UI2 (as observed).
+        if (!v.isSigned() && v.getZExtValue() >= 0x8000) {
+            r.type = Variant::UI2;
+            r.u = v.getZExtValue();
+            return r;
+        }
         r.type = Variant::I2;
         r.i = (int16_t)v.getZExtValue();
         return r;
