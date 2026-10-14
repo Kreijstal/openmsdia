@@ -2841,7 +2841,6 @@ bool Model::publicSignature(SymIndexId fn, unsigned options, std::string &out)
     auto *f = dynamic_cast<OmFunction *>(ours(fn));
     if (!f) return false;
     std::string nm = name(fn);
-    std::string first;
     for (SymIndexId p : publics()) {
         auto *pub = static_cast<OmPublic *>(ours(p));
         if (pub->ps.Segment != f->ps.Segment || pub->ps.Offset != f->ps.CodeOffset) continue;
@@ -2856,16 +2855,16 @@ bool Model::publicSignature(SymIndexId fn, unsigned options, std::string &out)
             out = pn.str();
             return true;
         }
+        // A decorated public names the function when its name-only form
+        // is the function's name, spelled the same (as observed: template
+        // arguments with pointers carry __ptr64 there and do not match).
         if (!pub->ps.Name.starts_with("?")) continue;
-        std::string u = undname(pub->ps.Name.str(), UND_NO_PTR64);
-        if (u.find(nm) != std::string::npos) {
+        if (undname(pub->ps.Name.str(), UND_NAME_ONLY) == nm) {
             out = undname(pub->ps.Name.str(), options);
             return true;
         }
-        if (first.empty()) first = undname(pub->ps.Name.str(), options);
     }
-    out = first;
-    return !first.empty();
+    return false;
 }
 
 std::string Model::functionSignature(SymIndexId fn, bool isStatic, unsigned options)
