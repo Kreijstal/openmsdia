@@ -2539,6 +2539,25 @@ void Model::buildAddressMap()
         e.name = name(k);
         return true;
     };
+    // Module data are found by address only when named and when the section
+    // contribution at their address belongs to their own module (as
+    // observed: LTCG can place a module's static elsewhere).
+    std::vector<const SectionContrib *> sc;
+    for (auto &c : sectionContribs()) sc.push_back(&c);
+    std::sort(sc.begin(), sc.end(), [](const SectionContrib *a, const SectionContrib *b) {
+        return a->sect != b->sect ? a->sect < b->sect : a->off < b->off;
+    });
+    auto contribModule = [&](uint32_t sect, uint32_t off) -> int {
+        auto it = std::upper_bound(sc.begin(), sc.end(), std::make_pair(sect, off),
+                                   [](const std::pair<uint32_t, uint32_t> &k, const SectionContrib *c) {
+                                       return k.first != c->sect ? k.first < c->sect : k.second < c->off;
+                                   });
+        if (it == sc.begin()) return -1;
+        const SectionContrib *c = *--it;
+        if (c->sect != sect || off >= c->off + c->size) return -1;
+        return c->modi;
+    };
+    int curModule = -1;
     // Functions, their blocks and static locals; module-level data.
     std::function<void(SymIndexId, SymIndexId)> scope = [&](SymIndexId parent, SymIndexId func) {
         for (SymIndexId k : children(parent)) {
@@ -2554,7 +2573,10 @@ void Model::buildAddressMap()
                 blockMap.push_back(e);
                 scope(k, func);
             } else if (kt == SymTag::Data) {
-                if (entry(k, e)) dataMap.push_back(e);
+                Val off;
+                if (entry(k, e) && !e.name.empty() && get(k, P_addressOffset, off) &&
+                    contribModule(e.sect, (uint32_t)off.u) == curModule)
+                    dataMap.push_back(e);
             } else if (kt == SymTag::Thunk && !func) {
                 if (entry(k, e)) thunkMap.push_back(e);
             }
@@ -2564,6 +2586,7 @@ void Model::buildAddressMap()
         SymTag t = tag(c);
         AddrEntry e;
         if (t == SymTag::Compiland) {
+            curModule = moduleOf(c);
             scope(c, 0);
         } else if (t == SymTag::PublicSymbol) {
             if (entry(c, e)) publicMap.push_back(e);
