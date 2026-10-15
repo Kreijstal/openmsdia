@@ -154,3 +154,15 @@ phase0/scripts/harvest.sh "/c/path/to/msdia140.dll" /tmp/snapshot
 
 The GitHub Actions workflow `phase0_harvest.yml` does the same with the DIA
 SDK of the runner's Visual Studio for amd64, x86 and arm64.
+
+## License
+
+Copyright (C) 2026 Kreijstal
+
+openmsdia is free software: you can redistribute it and/or modify it under
+the terms of the GNU Affero General Public License as published by the Free
+Software Foundation, either version 3 of the License, or (at your option)
+any later version. See [LICENSE](LICENSE).
+
+The JSON files under `oracle/` record the observed output of Microsoft's
+`msdia140.dll` on the test corpus; they contain no Microsoft code.
