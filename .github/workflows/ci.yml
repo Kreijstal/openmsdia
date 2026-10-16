@@ -138,7 +138,7 @@ jobs:
           done
           python3 tools/exeload_test.py --markdown build/exeload-score.md "${pairs[@]}" | tee build/exeload-score.txt
           cat build/exeload-score.md >> "$GITHUB_STEP_SUMMARY"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: openmsdia-amd64
@@ -223,7 +223,7 @@ jobs:
             echo "== $n"; python3 tools/diff_walk.py "$f" build/ms-ours/$n.json --top 0 | head -2
           done | tee build/ms-score-each.txt
           { echo "### Microsoft public PDBs"; cat build/ms-score.md; echo '```'; cat build/ms-score-each.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: openmsdia-mspdb
@@ -314,7 +314,7 @@ jobs:
           done
           python3 tools/probe_diff.py "${pairs[@]}" --top 3 | tee build/cons/probe-score.txt
           { echo '```'; head -40 build/cons/probe-score.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: openmsdia-consumers

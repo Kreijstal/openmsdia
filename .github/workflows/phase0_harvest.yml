@@ -41,7 +41,7 @@ jobs:
           dll=$(cygpath -u "$MSDIA_DLL")
           ver=$(powershell -NoProfile -Command "(Get-Item -LiteralPath '$MSDIA_DLL').VersionInfo.FileVersion" | tr -d '\r' | cut -d' ' -f1)
           phase0/scripts/harvest.sh "$dll" "snapshot/msdia140-$ver-${{ matrix.arch }}"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: phase0-msdia140-${{ matrix.arch }}
           path: snapshot/
