@@ -174,7 +174,7 @@ jobs:
           msystem: CLANG64
           update: false
           install: mingw-w64-clang-x86_64-python
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: openmsdia-amd64
           path: build
@@ -256,7 +256,7 @@ jobs:
             diffutils
             git
             mingw-w64-clang-x86_64-python
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: openmsdia-amd64
           path: build
