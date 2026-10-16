@@ -193,7 +193,7 @@ jobs:
           $hash = [BitConverter]::ToString([Security.Cryptography.SHA256]::Create().ComputeHash([Text.Encoding]::UTF8.GetBytes($vers -join ';'))).Replace('-','').Substring(0,16)
           "MSPDB_KEY=$hash" | Out-File -FilePath $env:GITHUB_ENV -Append
           "MS_BINARIES=" + (($bins | ForEach-Object { $_ -replace '\\','/' }) -join ' ') | Out-File -FilePath $env:GITHUB_ENV -Append
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: build/mspdb
           key: mspdb-${{ env.MSPDB_KEY }}
